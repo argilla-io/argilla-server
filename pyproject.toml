@@ -1,0 +1,19 @@
+[project]
+name = "argilla-server"
+version = "1.21.0"
+description = "Open-source tool for exploring, labeling, and monitoring data for NLP projects."
+authors = [
+    {name = "argilla", email = "contact@argilla.io"},
+]
+dependencies = []
+requires-python = ">=3.8,<3.12"
+readme = "README.md"
+license = {text = "Apache-2.0"}
+
+[build-system]
+requires = ["pdm-backend"]
+build-backend = "pdm.backend"
+
+
+[tool.pdm]
+distribution = true
