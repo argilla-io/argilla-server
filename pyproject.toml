@@ -1,6 +1,6 @@
 [project]
 name = "argilla-server"
-version = "1.21.0"
+dynamic = ["version"]
 description = "Open-source tool for exploring, labeling, and monitoring data for NLP projects."
 authors = [
     {name = "argilla", email = "contact@argilla.io"},
@@ -33,8 +33,14 @@ dependencies = [
     "psutil >= 5.8, <5.10",
     # Telemetry
     "segment-analytics-python == 2.2.0",
+
+    # Moved from optional dependencies (REVIEW)
+    # for logging, tracebacks, printing, progressbars
+    "rich != 13.1.0",
+    # for CLI
+    "typer >= 0.6.0, < 0.10.0", # spaCy only supports typer<0.10.0
 ]
-requires-python = ">=3.8,<3.12"
+requires-python = ">=3.8,<3.11"
 readme = "README.md"
 license = {text = "Apache-2.0"}
 
@@ -54,6 +60,10 @@ build-backend = "pdm.backend"
 [tool.pdm]
 distribution = true
 
+[tool.pdm.version]
+source = "file"
+path = "src/argilla_server/_version.py"
+
 [tool.pdm.dev-dependencies]
 test = [
     "pytest>=7.4.4",
@@ -62,4 +72,5 @@ test = [
     "pytest-asyncio>=0.23.3",
     "pytest-env>=1.1.3",
     "factory-boy~=3.2.1",
+    "httpx>=0.26.0",
 ]
