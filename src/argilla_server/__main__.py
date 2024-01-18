@@ -12,16 +12,8 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-import warnings
-
 if __name__ == "__main__":
     import uvicorn
-
-    warnings.warn(
-        "\n'python -m argilla_server' command is deprecated and will be removed in the next major release. "
-        "\nPlease use 'python -m argilla' instead",
-        category=FutureWarning,
-    )
 
     uvicorn.run(
         "argilla_server:app",
