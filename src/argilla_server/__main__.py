@@ -12,12 +12,7 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-if __name__ == "__main__":
-    import uvicorn
+from argilla_server.cli import app
 
-    uvicorn.run(
-        "argilla_server:app",
-        port=6900,
-        host="0.0.0.0",
-        access_log=True,
-    )
+if __name__ == "__main__":
+    app()
