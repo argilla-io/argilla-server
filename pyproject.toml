@@ -159,3 +159,4 @@ line-length = 120
 
 [tool.pdm.scripts]
 build-server-image = { shell = "cp -R dist docker/server && docker build -t argilla/argilla-server docker/server" }
+build-quickstart-image = { shell ="cp -R dist docker/quickstart && docker build -t argilla/argilla-quickstart docker/quickstart" }
