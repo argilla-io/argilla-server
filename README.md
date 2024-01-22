@@ -2,6 +2,14 @@
 
 The repository for backend argilla server.
 
+## Clone repository
+
+`argilla-server` is using `argilla` as submodule to build frontend statics so when cloning use the following:
+
+```sh
+git clone --recurse-submodules git@github.com:argilla-io/argilla-server.git
+```
+
 ## Run database migrations
 
 ```sh
