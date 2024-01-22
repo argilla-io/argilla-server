@@ -23,7 +23,7 @@ def start(
     import uvicorn
 
     uvicorn.run(
-        "argilla:app",
+        "argilla_server:app",
         port=port,
         host=host,
         access_log=access_log,

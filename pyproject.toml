@@ -54,6 +54,7 @@ dependencies = [
     "rich != 13.1.0",
     # for CLI
     "typer >= 0.6.0, < 0.10.0", # spaCy only supports typer<0.10.0
+    "packaging>=23.2",
 ]
 
 [project.optional-dependencies]
@@ -71,7 +72,7 @@ documentation = "https://docs.argilla.io"
 repository = "https://github.com/argilla-io/argilla"
 
 [project.scripts]
-argilla_server = "argilla_server.cli.app:app"
+argilla_server = "argilla_server.cli:app"
 
 [build-system]
 requires = ["pdm-backend"]
@@ -158,3 +159,7 @@ line-length = 120
 
 [tool.black]
 line-length = 120
+
+[tool.pdm.scripts]
+build-server-image = { shell = "cp -R dist docker/server && docker build -t argilla/argilla-server docker/server" }
+build-quickstart-image = { shell ="cp -R dist docker/quickstart && docker build -t argilla/argilla-quickstart docker/quickstart" }
