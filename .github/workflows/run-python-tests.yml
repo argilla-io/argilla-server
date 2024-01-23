@@ -85,5 +85,5 @@ jobs:
         env:
           ARGILLA_ENABLE_TELEMETRY: 0
         run: |
-          pmd install "pydantic~=2.0" pytest-custom_exit_code
+          pmd add pydantic~=2.0 pytest-custom_exit_code
           pdm run pytest --suppress-no-test-exit-code ${{ inputs.pytestArgs }} -vs
