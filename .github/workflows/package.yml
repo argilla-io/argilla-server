@@ -24,6 +24,8 @@ on:
       - "feature/**"
       - "feat/**"
       - "fix/**"
+      # TODO: Delete this after we check that everything is working as expected.
+      - "project-creation-with-pdm"
     types:
       - opened
       - reopened
