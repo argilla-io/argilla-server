@@ -25,6 +25,7 @@ on:
         default: '{"discovery.type": "single-node", "xpack.security.enabled": "false"}'
         required: false
         type: string
+
 env:
   # Increase this value to reset cache if etc/example-environment.yml has not changed
   CACHE_NUMBER: 5
