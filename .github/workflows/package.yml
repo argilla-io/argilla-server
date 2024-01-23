@@ -66,8 +66,8 @@ jobs:
             runsOn: ubuntu-latest
     name: Run unit tests
     uses: ./.github/workflows/run-python-tests.yml
-    needs: check_repo_files
-    if: needs.check_repo_files.outputs.pythonChanges == 'true'
+    # needs: check_repo_files
+    # if: needs.check_repo_files.outputs.pythonChanges == 'true'
     with:
       searchEngineDockerImage: ${{ matrix.searchEngineDockerImage }}
       searchEngineDockerEnv: ${{ matrix.searchEngineDockerEnv }}
