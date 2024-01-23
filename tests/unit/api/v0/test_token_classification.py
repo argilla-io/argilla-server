@@ -15,7 +15,6 @@
 from typing import Callable
 
 import pytest
-from argilla_server.models import User
 from argilla_server.apis.v0.models.commons.model import BulkResponse, SortableField
 from argilla_server.apis.v0.models.token_classification import (
     TokenClassificationBulkRequest,
@@ -26,6 +25,7 @@ from argilla_server.apis.v0.models.token_classification import (
 )
 from argilla_server.commons.models import TaskType
 from argilla_server.constants import API_KEY_HEADER_NAME
+from argilla_server.models import User
 
 
 @pytest.mark.asyncio

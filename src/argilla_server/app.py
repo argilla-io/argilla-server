@@ -28,9 +28,8 @@ from fastapi.exceptions import RequestValidationError
 from starlette.middleware.cors import CORSMiddleware
 from starlette.responses import RedirectResponse
 
-from argilla_server._version import __version__ as argilla_version
-from argilla_server.logging import configure_logging
 from argilla_server import helpers
+from argilla_server._version import __version__ as argilla_version
 from argilla_server.constants import DEFAULT_API_KEY, DEFAULT_PASSWORD, DEFAULT_USERNAME
 from argilla_server.contexts import accounts
 from argilla_server.daos.backend import GenericElasticEngineBackend
@@ -50,6 +49,7 @@ from argilla_server.errors import (
     UnauthorizedError,
     WrongTaskError,
 )
+from argilla_server.logging import configure_logging
 from argilla_server.models import User
 from argilla_server.pydantic_v1 import ValidationError
 from argilla_server.pydantic_v1.errors import ConfigError

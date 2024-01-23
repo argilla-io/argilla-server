@@ -17,9 +17,9 @@ from typing import TYPE_CHECKING, List, Optional
 import typer
 import yaml
 
-from argilla_server.pydantic_v1 import BaseModel, Field, constr
 from argilla_server.database import AsyncSessionLocal
 from argilla_server.models import User, UserRole
+from argilla_server.pydantic_v1 import BaseModel, Field, constr
 from argilla_server.security.auth_provider.db.settings import settings
 from argilla_server.security.model import USER_USERNAME_REGEX, WORKSPACE_NAME_REGEX
 
