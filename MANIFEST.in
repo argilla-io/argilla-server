@@ -1,2 +1,0 @@
-include src/argilla_server/alembic.ini
-graft src/argilla_server/static
