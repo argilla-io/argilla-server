@@ -25,5 +25,8 @@ jobs:
       - name: Build Package 🍟
         run: scripts/build_distribution.sh
       - name: Upload package artifact
+        env:
+          PDM_PUBLISH_USERNAME: ${{ secrets.PDM_PUBLISH_USERNAME }}
+          PDM_PUBLISH_PASSWORD: ${{ secrets.PDM_PUBLISH_PASSWORD }}
         # TODO: Delete option `--repository testpypi` once we finish the testing process
         run: pdm publish --no-build --repository testpypi
