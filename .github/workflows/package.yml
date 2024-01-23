@@ -178,36 +178,38 @@ jobs:
   #     image-version: ${{ needs.build_quickstart_docker_image.outputs.version }}
   #   secrets: inherit
 
-  # This job will upload a Python Package using Twine when a release is created
-  # For more information see:
-  # https://help.github.com/en/actions/language-and-framework-guides/using-python-with-github-actions#publishing-to-package-registries
-  # publish_release:
-  #   name: Publish Release
-  #   runs-on: ubuntu-latest
-  #   if: ${{ github.event_name == 'release' }}
-  #   needs:
-  #     - build_quickstart_docker_image
-  #   defaults:
-  #     run:
-  #       shell: bash -l {0}
-  #   steps:
-  #     - name: Checkout Code 🛎
-  #       uses: actions/checkout@v3
-  #     - name: Download python package
-  #       uses: actions/download-artifact@v2
-  #       with:
-  #         name: python-package
-  #         path: dist
-  #     - name: Publish Package to TestPyPI 🥪
-  #       uses: pypa/gh-action-pypi-publish@master
-  #       with:
-  #         user: __token__
-  #         password: ${{ secrets.AR_TEST_PYPI_API_TOKEN }}
-  #         repository_url: https://test.pypi.org/legacy/
-  #     - name: Test Installing 🍿
-  #       run: pip install --index-url https://test.pypi.org/simple --no-deps argilla==${GITHUB_REF#refs/*/v}
-  #     - name: Publish Package to PyPI 🥩
-  #       uses: pypa/gh-action-pypi-publish@master
-  #       with:
-  #         user: __token__
-  #         password: ${{ secrets.AR_PYPI_API_TOKEN }}
+  # This job will publish argilla-server python package into PyPI repository
+  publish_release:
+    name: Publish Release
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'release' }}
+    needs:
+      - build_quickstart_docker_image
+    permissions:
+      # This permission is needed for private repositories.
+      # contents: read
+      # IMPORTANT: this permission is mandatory for trusted publishing on PyPI
+      id-token: write
+    defaults:
+      run:
+        shell: bash -l {0}
+    steps:
+      - name: Checkout Code 🛎
+        uses: actions/checkout@v3
+        with:
+          submodules: "recursive"
+      - name: Download python package
+        uses: actions/download-artifact@v2
+        with:
+          name: python-package
+          path: dist
+      - name: Setup PDM
+        uses: pdm-project/setup-pdm@v3
+        with:
+          cache: true
+      - name: Publish Package to PyPI test environment 🥪
+        run: pdm publish --no-build --repository testpypi
+      - name: Test Installing 🍿
+        run: pip install --index-url https://test.pypi.org/simple --no-deps argilla-server==${GITHUB_REF#refs/*/v}
+      - name: Publish Package to PyPI 🥩
+        run: pdm publish --no-build

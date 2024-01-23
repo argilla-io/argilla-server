@@ -7,11 +7,6 @@ jobs:
   build:
     name: Build the python package
     runs-on: ubuntu-latest
-    permissions:
-      # This permission is needed for private repositories.
-      # contents: read
-      # IMPORTANT: this permission is mandatory for trusted publishing
-      id-token: write
     steps:
       - name: Checkout Code 🛎
         uses: actions/checkout@v3
@@ -30,5 +25,7 @@ jobs:
       - name: Build Package 🍟
         run: scripts/build_distribution.sh
       - name: Upload package artifact
-        # TODO: Delete option `--repository testpypi` once we finish the testing process
-        run: pdm publish --no-build --repository testpypi
+        uses: actions/upload-artifact@v3
+        with:
+          name: python-package
+          path: dist
