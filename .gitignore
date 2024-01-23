@@ -162,5 +162,8 @@ cython_debug/
 # PDM
 .pdm-python
 
+# Argilla frontend generated statics
+src/argilla_server/static/
+
 # Misc
 .DS_Store
