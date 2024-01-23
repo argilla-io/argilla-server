@@ -23,4 +23,5 @@ jobs:
       - name: Build Package 🍟
         run: scripts/build_distribution.sh
       - name: Upload package artifact
-        run: pdm publish --no-build
+        # TODO: Delete option `--repository testpypi` once we finish the testing process
+        run: pdm publish --no-build --repository testpypi

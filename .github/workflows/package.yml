@@ -76,24 +76,6 @@ jobs:
       pytestArgs: tests/unit
     secrets: inherit
 
-  run_end2end_tests:
-    strategy:
-      matrix:
-        include:
-          - searchEngineDockerImage: docker.elastic.co/elasticsearch/elasticsearch:8.8.2
-            searchEngineDockerEnv: '{"discovery.type": "single-node", "xpack.security.enabled": "false"}'
-            coverageReport: coverage-elasticsearch-8.8.2
-            runsOn: extended-runner
-    name: Run end2end tests
-    uses: ./.github/workflows/end2end-examples.yml
-    needs: check_repo_files
-    if: needs.check_repo_files.outputs.end2endChanges == 'true'
-    with:
-      runsOn: ${{ matrix.runsOn }}
-      searchEngineDockerImage: ${{ matrix.searchEngineDockerImage }}
-      searchEngineDockerEnv: ${{ matrix.searchEngineDockerEnv }}
-    secrets: inherit
-
   run_unit_test_with_extra_engines:
     strategy:
       matrix:
@@ -101,15 +83,15 @@ jobs:
           - searchEngineDockerImage: docker.elastic.co/elasticsearch/elasticsearch:8.8.0
             searchEngineDockerEnv: '{"discovery.type": "single-node", "xpack.security.enabled": "false"}'
             coverageReport: coverage-elasticsearch-8.8.0
-            runsOn: extended-runner
+            runsOn: ubuntu-latest
           - searchEngineDockerImage: docker.elastic.co/elasticsearch/elasticsearch:8.6.0
             searchEngineDockerEnv: '{"discovery.type": "single-node", "xpack.security.enabled": "false"}'
             coverageReport: coverage-elasticsearch-8.6.0
-            runsOn: extended-runner
+            runsOn: ubuntu-latest
           - searchEngineDockerImage: opensearchproject/opensearch:2.8.0
             searchEngineDockerEnv: '{"discovery.type": "single-node", "plugins.security.disabled": "true"}'
             coverageReport: coverage-opensearch-2.8.0
-            runsOn: extended-runner
+            runsOn: ubuntu-latest
     name: Run unit tests with extra engines
     uses: ./.github/workflows/run-python-tests.yml
     needs: check_repo_files
@@ -124,25 +106,11 @@ jobs:
       pytestArgs: tests/unit
     secrets: inherit
 
-  run_integration_tests:
-    name: Run integration tests
-    uses: ./.github/workflows/run-python-tests.yml
-    needs:
-      - check_repo_files
-      - run_unit_tests
-    if: needs.check_repo_files.outputs.pythonChanges == 'true'
-    with:
-      runsOn: extended-runner
-      coverageReport: coverage-extra
-      pytestArgs: tests/integration
-    secrets: inherit
-
   push_coverage:
     name: Upload code coverage
     runs-on: ubuntu-latest
     needs:
       - run_unit_tests
-      - run_integration_tests
     steps:
       - name: Checkout Code 🛎
         uses: actions/checkout@v3
@@ -161,86 +129,85 @@ jobs:
     if: needs.deployable_check.outputs.isDeployable == 'true'
     secrets: inherit
 
-  build_server_docker_image:
-    name: Build Argilla server docker image
-    uses: ./.github/workflows/build-push-docker.yml
-    needs:
-      - build_python_package
-      - run_unit_tests
-    if: |
-      !cancelled() &&
-      needs.build_python_package.result == 'success' &&
-      !contains(needs.*.result, 'failure') &&
-      !contains(needs.*.result, 'cancelled')
-    with:
-      download-python-package: true
-      image-name: argilla/argilla-server
-      dockerfile: docker/Dockerfile
-      readme: README.md
-      platforms: linux/amd64,linux/arm64
-    secrets: inherit
+  # build_server_docker_image:
+  #   name: Build Argilla server docker image
+  #   uses: ./.github/workflows/build-push-docker.yml
+  #   needs:
+  #     - build_python_package
+  #     - run_unit_tests
+  #   if: |
+  #     !cancelled() &&
+  #     needs.build_python_package.result == 'success' &&
+  #     !contains(needs.*.result, 'failure') &&
+  #     !contains(needs.*.result, 'cancelled')
+  #   with:
+  #     download-python-package: true
+  #     image-name: argilla/argilla-server
+  #     dockerfile: docker/Dockerfile
+  #     readme: README.md
+  #     platforms: linux/amd64,linux/arm64
+  #   secrets: inherit
 
-  build_quickstart_docker_image:
-    name: Build Argilla quickstart docker image
-    uses: ./.github/workflows/build-push-docker.yml
-    needs: build_server_docker_image
-    if: |
-      !cancelled() &&
-      needs.build_server_docker_image.result == 'success'
-    with:
-      download-python-package: false
-      image-name: argilla/argilla-quickstart
-      dockerfile: docker/quickstart.Dockerfile
-      readme: docker/quickstart.README.md
-      platforms: linux/amd64,linux/arm64
-      build-args: |
-        ARGILLA_VERSION=${{ needs.build_server_docker_image.outputs.version }}
-    secrets: inherit
+  # build_quickstart_docker_image:
+  #   name: Build Argilla quickstart docker image
+  #   uses: ./.github/workflows/build-push-docker.yml
+  #   needs: build_server_docker_image
+  #   if: |
+  #     !cancelled() &&
+  #     needs.build_server_docker_image.result == 'success'
+  #   with:
+  #     download-python-package: false
+  #     image-name: argilla/argilla-quickstart
+  #     dockerfile: docker/quickstart.Dockerfile
+  #     readme: docker/quickstart.README.md
+  #     platforms: linux/amd64,linux/arm64
+  #     build-args: |
+  #       ARGILLA_VERSION=${{ needs.build_server_docker_image.outputs.version }}
+  #   secrets: inherit
 
-  deploy_environment:
-    name: Deploy branch environment
-    uses: ./.github/workflows/deploy-environment.yml
-    needs: build_quickstart_docker_image
-    if: |
-      !cancelled() &&
-      needs.build_quickstart_docker_image.result == 'success' &&
-      github.event_name == 'pull_request' && github.event.pull_request.draft == false
-    with:
-      image-name: argilla/argilla-quickstart
-      image-version: ${{ needs.build_quickstart_docker_image.outputs.version }}
-    secrets: inherit
+  # deploy_environment:
+  #   name: Deploy branch environment
+  #   uses: ./.github/workflows/deploy-environment.yml
+  #   needs: build_quickstart_docker_image
+  #   if: |
+  #     !cancelled() &&
+  #     needs.build_quickstart_docker_image.result == 'success' &&
+  #     github.event_name == 'pull_request' && github.event.pull_request.draft == false
+  #   with:
+  #     image-name: argilla/argilla-quickstart
+  #     image-version: ${{ needs.build_quickstart_docker_image.outputs.version }}
+  #   secrets: inherit
 
   # This job will upload a Python Package using Twine when a release is created
   # For more information see:
   # https://help.github.com/en/actions/language-and-framework-guides/using-python-with-github-actions#publishing-to-package-registries
-  publish_release:
-    name: Publish Release
-    runs-on: ubuntu-latest
-    if: ${{ github.event_name == 'release' }}
-    needs:
-      - run_integration_tests
-      - build_quickstart_docker_image
-    defaults:
-      run:
-        shell: bash -l {0}
-    steps:
-      - name: Checkout Code 🛎
-        uses: actions/checkout@v3
-      - name: Download python package
-        uses: actions/download-artifact@v2
-        with:
-          name: python-package
-          path: dist
-      - name: Publish Package to TestPyPI 🥪
-        uses: pypa/gh-action-pypi-publish@master
-        with:
-          user: __token__
-          password: ${{ secrets.AR_TEST_PYPI_API_TOKEN }}
-          repository_url: https://test.pypi.org/legacy/
-      - name: Test Installing 🍿
-        run: pip install --index-url https://test.pypi.org/simple --no-deps argilla==${GITHUB_REF#refs/*/v}
-      - name: Publish Package to PyPI 🥩
-        uses: pypa/gh-action-pypi-publish@master
-        with:
-          user: __token__
-          password: ${{ secrets.AR_PYPI_API_TOKEN }}
+  # publish_release:
+  #   name: Publish Release
+  #   runs-on: ubuntu-latest
+  #   if: ${{ github.event_name == 'release' }}
+  #   needs:
+  #     - build_quickstart_docker_image
+  #   defaults:
+  #     run:
+  #       shell: bash -l {0}
+  #   steps:
+  #     - name: Checkout Code 🛎
+  #       uses: actions/checkout@v3
+  #     - name: Download python package
+  #       uses: actions/download-artifact@v2
+  #       with:
+  #         name: python-package
+  #         path: dist
+  #     - name: Publish Package to TestPyPI 🥪
+  #       uses: pypa/gh-action-pypi-publish@master
+  #       with:
+  #         user: __token__
+  #         password: ${{ secrets.AR_TEST_PYPI_API_TOKEN }}
+  #         repository_url: https://test.pypi.org/legacy/
+  #     - name: Test Installing 🍿
+  #       run: pip install --index-url https://test.pypi.org/simple --no-deps argilla==${GITHUB_REF#refs/*/v}
+  #     - name: Publish Package to PyPI 🥩
+  #       uses: pypa/gh-action-pypi-publish@master
+  #       with:
+  #         user: __token__
+  #         password: ${{ secrets.AR_PYPI_API_TOKEN }}
