@@ -10,14 +10,6 @@ jobs:
     steps:
       - name: Checkout Code 🛎
         uses: actions/checkout@v3
-      - name: Cache pip 👜
-        uses: actions/cache@v3
-        env:
-          # Increase this value to reset cache if pyproject.toml has not changed
-          CACHE_NUMBER: 0
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ env.CACHE_NUMBER }}-${{ hashFiles('pyproject.toml') }}
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
@@ -26,9 +18,9 @@ jobs:
         uses: pdm-project/setup-pdm@v3
         with:
           cache: true
+      - name: Install dependencies
+        run: pdm install
       - name: Build Package 🍟
-        run: |
-          pmd install
-          scripts/build_distribution.sh
+        run: scripts/build_distribution.sh
       - name: Upload package artifact
         run: pdm publish --no-build
