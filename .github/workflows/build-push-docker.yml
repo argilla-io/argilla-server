@@ -15,6 +15,10 @@ on:
         description: "Path to the Dockerfile to build"
         required: true
         type: string
+      context:
+        description: "Dockerfile build context"
+        required: true
+        type: string
       platforms:
         description: "Platforms to build for"
         required: true
@@ -117,7 +121,7 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v4
         with:
-          context: docker/server
+          context: ${{ inputs.context }}
           file: ${{ inputs.dockerfile }}
           platforms: ${{ inputs.platforms }}
           tags: ${{ steps.generate-docker-tags.outputs.tags }}
