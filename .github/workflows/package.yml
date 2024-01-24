@@ -142,7 +142,8 @@ jobs:
       !contains(needs.*.result, 'cancelled')
     with:
       download-python-package: true
-      image-name: argilla/argilla-server
+      # TODO: Change after testing
+      image-name: testingarpush/argilla-server
       dockerfile: docker/server/Dockerfile
       readme: README.md
       platforms: linux/amd64,linux/arm64
