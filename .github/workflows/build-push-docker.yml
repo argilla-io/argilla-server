@@ -45,7 +45,6 @@ jobs:
     permissions:
       contents: read
       id-token: write
-
     outputs:
       version: ${{ steps.docker-image-tag-from-ref.outputs.docker-image-tag }}
     steps:
