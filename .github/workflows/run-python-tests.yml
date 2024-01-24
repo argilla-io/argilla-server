@@ -75,7 +75,7 @@ jobs:
       - name: Run tests 📈
         env:
           ARGILLA_ENABLE_TELEMETRY: 0
-        run: pdm run pytest --cov=argilla --cov-report=xml:${{ env.COVERAGE_REPORT }}.xml ${{ inputs.pytestArgs }} -vs
+        run: pdm run pytest --cov=argilla-server --cov-report=xml:${{ env.COVERAGE_REPORT }}.xml ${{ inputs.pytestArgs }} -vs
       - name: Upload coverage report artifact
         uses: actions/upload-artifact@v3
         with:
