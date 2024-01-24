@@ -7,11 +7,6 @@ jobs:
   build:
     name: Build the python package
     runs-on: ubuntu-latest
-    permissions:
-      # This permission is needed for private repositories.
-      # contents: read
-      # IMPORTANT: this permission is mandatory for trusted publishing
-      id-token: write
     steps:
       - name: Checkout Code 🛎
         uses: actions/checkout@v3
@@ -30,4 +25,7 @@ jobs:
       - name: Build Package 🍟
         run: scripts/build_distribution.sh
       - name: Upload package artifact
-        run: pdm publish --no-build
+        uses: actions/upload-artifact@v3
+        with:
+          name: python-package
+          path: dist
