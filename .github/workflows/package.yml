@@ -129,24 +129,24 @@ jobs:
     if: needs.deployable_check.outputs.isDeployable == 'true'
     secrets: inherit
 
-  # build_server_docker_image:
-  #   name: Build Argilla server docker image
-  #   uses: ./.github/workflows/build-push-docker.yml
-  #   needs:
-  #     - build_python_package
-  #     - run_unit_tests
-  #   if: |
-  #     !cancelled() &&
-  #     needs.build_python_package.result == 'success' &&
-  #     !contains(needs.*.result, 'failure') &&
-  #     !contains(needs.*.result, 'cancelled')
-  #   with:
-  #     download-python-package: true
-  #     image-name: argilla/argilla-server
-  #     dockerfile: docker/Dockerfile
-  #     readme: README.md
-  #     platforms: linux/amd64,linux/arm64
-  #   secrets: inherit
+  build_server_docker_image:
+    name: Build Argilla server docker image
+    uses: ./.github/workflows/build-push-docker.yml
+    needs:
+      - build_python_package
+      - run_unit_tests
+    if: |
+      !cancelled() &&
+      needs.build_python_package.result == 'success' &&
+      !contains(needs.*.result, 'failure') &&
+      !contains(needs.*.result, 'cancelled')
+    with:
+      download-python-package: true
+      image-name: argilla/argilla-server
+      dockerfile: docker/Dockerfile
+      readme: README.md
+      platforms: linux/amd64,linux/arm64
+    secrets: inherit
 
   # build_quickstart_docker_image:
   #   name: Build Argilla quickstart docker image
@@ -194,6 +194,7 @@ jobs:
   #     run:
   #       shell: bash -l {0}
   #   steps:
+  #     # TODO: Git checkout argilla submodule to use specific tag
   #     - name: Checkout Code 🛎
   #       uses: actions/checkout@v3
   #       with:
@@ -211,5 +212,5 @@ jobs:
   #       run: pdm publish --no-build --repository testpypi
   #     - name: Test Installing 🍿
   #       run: pip install --index-url https://test.pypi.org/simple --no-deps argilla-server==${GITHUB_REF#refs/*/v}
-  #     - name: Publish Package to PyPI 🥩
-  #       run: pdm publish --no-build
+  #     # - name: Publish Package to PyPI 🥩
+  #     #   run: pdm publish --no-build
