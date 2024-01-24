@@ -55,7 +55,7 @@ jobs:
         if: ${{ inputs.download-python-package }}
         with:
           name: python-package
-          path: docker/dist
+          path: docker/server/dist
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
@@ -107,7 +107,7 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v4
         with:
-          context: docker
+          context: docker/server
           file: ${{ inputs.dockerfile }}
           platforms: ${{ inputs.platforms }}
           tags: ${{ steps.generate-docker-tags.outputs.tags }}
