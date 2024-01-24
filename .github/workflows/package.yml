@@ -150,22 +150,24 @@ jobs:
       platforms: linux/amd64,linux/arm64
     secrets: inherit
 
-  # build_quickstart_docker_image:
-  #   name: Build Argilla quickstart docker image
-  #   uses: ./.github/workflows/build-push-docker.yml
-  #   needs: build_server_docker_image
-  #   if: |
-  #     !cancelled() &&
-  #     needs.build_server_docker_image.result == 'success'
-  #   with:
-  #     download-python-package: false
-  #     image-name: argilla/argilla-quickstart
-  #     dockerfile: docker/quickstart.Dockerfile
-  #     readme: docker/quickstart.README.md
-  #     platforms: linux/amd64,linux/arm64
-  #     build-args: |
-  #       ARGILLA_VERSION=${{ needs.build_server_docker_image.outputs.version }}
-  #   secrets: inherit
+  build_quickstart_docker_image:
+    name: Build Argilla quickstart docker image
+    uses: ./.github/workflows/build-push-docker.yml
+    needs: build_server_docker_image
+    if: |
+      !cancelled() &&
+      needs.build_server_docker_image.result == 'success'
+    with:
+      download-python-package: false
+      # TODO: Change after testing to argilla/argilla-quickstart
+      image-name: testingarpush/argilla-quickstart
+      dockerfile: docker/quickstart/Dockerfile
+      context: docker/quickstart
+      readme: docker/quickstart/README.md
+      platforms: linux/amd64,linux/arm64
+      build-args: |
+        ARGILLA_VERSION=${{ needs.build_server_docker_image.outputs.version }}
+    secrets: inherit
 
   # deploy_environment:
   #   name: Deploy branch environment
