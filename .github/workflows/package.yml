@@ -169,19 +169,6 @@ jobs:
         ARGILLA_VERSION=${{ needs.build_server_docker_image.outputs.version }}
     secrets: inherit
 
-  # deploy_environment:
-  #   name: Deploy branch environment
-  #   uses: ./.github/workflows/deploy-environment.yml
-  #   needs: build_quickstart_docker_image
-  #   if: |
-  #     !cancelled() &&
-  #     needs.build_quickstart_docker_image.result == 'success' &&
-  #     github.event_name == 'pull_request' && github.event.pull_request.draft == false
-  #   with:
-  #     image-name: argilla/argilla-quickstart
-  #     image-version: ${{ needs.build_quickstart_docker_image.outputs.version }}
-  #   secrets: inherit
-
   # This job will publish argilla-server python package into PyPI repository
   # publish_release:
   #   name: Publish Release
@@ -198,11 +185,8 @@ jobs:
   #     run:
   #       shell: bash -l {0}
   #   steps:
-  #     # TODO: Git checkout argilla submodule to use specific tag
   #     - name: Checkout Code 🛎
   #       uses: actions/checkout@v3
-  #       with:
-  #         submodules: "recursive"
   #     - name: Download python package
   #       uses: actions/download-artifact@v2
   #       with:
@@ -216,5 +200,5 @@ jobs:
   #       run: pdm publish --no-build --repository testpypi
   #     - name: Test Installing 🍿
   #       run: pip install --index-url https://test.pypi.org/simple --no-deps argilla-server==${GITHUB_REF#refs/*/v}
-  #     # - name: Publish Package to PyPI 🥩
-  #     #   run: pdm publish --no-build
+  #     - name: Publish Package to PyPI 🥩
+  #       run: pdm publish --no-build

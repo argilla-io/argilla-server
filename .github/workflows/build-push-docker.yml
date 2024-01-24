@@ -37,19 +37,11 @@ on:
       version:
         description: "Version of the Docker image"
         value: ${{ jobs.build.outputs.version }}
-      # TODO: Once we manage to use GCP uncomment this section
-      # google-docker-image:
-      #   description: The name of the Docker image uploaded to Google Artifact Registry.
-      #   value: ${{ jobs.build.outputs.google-docker-image }}
 
 jobs:
   build:
     name: Build Docker image
     runs-on: ubuntu-latest
-    # Grant permissions to `GITHUB_TOKEN` for Google Cloud Workload Identity Provider
-    permissions:
-      contents: read
-      id-token: write
     outputs:
       version: ${{ steps.docker-image-tag-from-ref.outputs.docker-image-tag }}
     steps:
@@ -74,16 +66,6 @@ jobs:
 
       - name: Generate Docker tags
         id: generate-docker-tags
-        # TODO: Once GCP registry is working uncomment this section and delete the next one
-        # run: |
-        #   DOCKER_HUB_TAGS="$IMAGE_NAME:$DOCKER_IMAGE_TAG"
-        #   GCP_REGISTRY_TAG="europe-docker.pkg.dev/argilla-ci/$IMAGE_NAME:$DOCKER_IMAGE_TAG"
-
-        #   if [[ $GITHUB_REF == refs/tags/* ]]; then
-        #     DOCKER_HUB_TAGS="$DOCKER_HUB_TAGS,$IMAGE_NAME:latest"
-        #   fi
-
-        #   echo "tags=$DOCKER_HUB_TAGS,$GCP_REGISTRY_TAG" >> $GITHUB_OUTPUT
         run: |
           DOCKER_HUB_TAGS="$IMAGE_NAME:$DOCKER_IMAGE_TAG"
 
@@ -101,22 +83,6 @@ jobs:
         with:
           username: ${{ secrets.AR_DOCKER_USERNAME }}
           password: ${{ secrets.AR_DOCKER_PASSWORD }}
-
-      # Authenticate in GCP using Workload Identity Federation, so we can push the Docker image to the Google Cloud Artifact Registry
-      # - name: Authenticate to Google Cloud
-      #   id: google-auth
-      #   uses: 'google-github-actions/auth@v1'
-      #   with:
-      #     token_format: access_token
-      #     workload_identity_provider: ${{ secrets.GOOGLE_CLOUD_WIP }}
-      #     service_account: ${{ secrets.GOOGLE_CLOUD_SERVICE_ACCOUNT }}
-
-      # - name: Login to Google Artifact Registry
-      #   uses: docker/login-action@v2
-      #   with:
-      #     registry: europe-docker.pkg.dev
-      #     username: oauth2accesstoken
-      #     password: ${{ steps.google-auth.outputs.access_token }}
 
       - name: Build and push
         uses: docker/build-push-action@v4
