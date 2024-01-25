@@ -16,11 +16,10 @@ from typing import Optional, Union
 
 from fastapi import APIRouter, Depends, Query, Security
 
-from argilla_server.apis.v0.models.token_classification import TokenClassificationQuery
 from argilla_server.apis.v0.models.commons.params import CommonTaskHandlerDependencies
 from argilla_server.apis.v0.models.text2text import Text2TextQuery, Text2TextRecord
 from argilla_server.apis.v0.models.text_classification import TextClassificationQuery, TextClassificationRecord
-from argilla_server.apis.v0.models.token_classification import TokenClassificationRecord
+from argilla_server.apis.v0.models.token_classification import TokenClassificationQuery, TokenClassificationRecord
 from argilla_server.commons.config import TasksFactory
 from argilla_server.models import User
 from argilla_server.pydantic_v1 import BaseModel

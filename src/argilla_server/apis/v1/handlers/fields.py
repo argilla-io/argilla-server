@@ -39,6 +39,7 @@ async def _get_field(db: "AsyncSession", field_id: UUID) -> "Field":
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Field with id `{field_id}` not found",
         )
+
     return field
 
 
