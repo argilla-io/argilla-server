@@ -1,7 +1,6 @@
 # TODO(gabrielmbmb): update this `Dockerfile` to multi-staged build to reduce the image size
 ARG ARGILLA_VERSION=latest
-# TODO: Change this to argilla/argilla-server once we finish the testing
-FROM testingarpush/argilla-server:${ARGILLA_VERSION}
+FROM argilla/argilla-server:${ARGILLA_VERSION}
 
 USER root
 

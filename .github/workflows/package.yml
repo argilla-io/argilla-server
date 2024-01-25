@@ -142,8 +142,7 @@ jobs:
       !contains(needs.*.result, 'cancelled')
     with:
       download-python-package: true
-      # TODO: Change after testing to argilla/argilla-server
-      image-name: testingarpush/argilla-server
+      image-name: argilla/argilla-server
       dockerfile: docker/server/Dockerfile
       context: docker/server
       readme: README.md
@@ -159,8 +158,7 @@ jobs:
       needs.build_server_docker_image.result == 'success'
     with:
       download-python-package: false
-      # TODO: Change after testing to argilla/argilla-quickstart
-      image-name: testingarpush/argilla-quickstart
+      image-name: argilla/argilla-quickstart
       dockerfile: docker/quickstart/Dockerfile
       context: docker/quickstart
       readme: docker/quickstart/README.md
