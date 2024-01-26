@@ -24,8 +24,6 @@ on:
       - "feature/**"
       - "feat/**"
       - "fix/**"
-      # TODO: Delete this after we check that everything is working as expected.
-      - "project-creation-with-pdm"
     types:
       - opened
       - reopened
@@ -191,7 +189,7 @@ jobs:
           name: python-package
           path: dist
       - name: Setup PDM
-        uses: pdm-project/setup-pdm@v3
+        uses: pdm-project/setup-pdm@v4
         with:
           cache: true
       - name: Publish Package to PyPI test environment 🥪
