@@ -12,16 +12,29 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-__all__ = ["NotFoundError", "AuthenticationError"]
+from datetime import datetime
+from uuid import UUID
+
+from argilla_server.constants import ES_INDEX_REGEX_PATTERN
+from argilla_server.pydantic_v1 import BaseModel, Field
+
+WORKSPACE_NAME_REGEX = ES_INDEX_REGEX_PATTERN
 
 
-class NotFoundError(Exception):
-    """Custom Argilla not found error. Use it for situations where an Argilla domain entity has not be found on the system."""
+class Workspace(BaseModel):
+    id: UUID
+    name: str
+    inserted_at: datetime
+    updated_at: datetime
 
-    pass
+    class Config:
+        orm_mode = True
 
 
-class AuthenticationError(Exception):
-    """Custom Argilla unauthorized error. Use it for situations where an request is not authorized to perform an action."""
+class WorkspaceUserCreate(BaseModel):
+    user_id: UUID
+    workspace_id: UUID
 
-    pass
+
+class WorkspaceCreate(BaseModel):
+    name: str = Field(..., regex=WORKSPACE_NAME_REGEX, min_length=1)

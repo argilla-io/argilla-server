@@ -271,4 +271,3 @@ def configure_database(app: FastAPI):
 
 
 app = create_server_app()
-app._get_db_wrapper = _get_db_wrapper

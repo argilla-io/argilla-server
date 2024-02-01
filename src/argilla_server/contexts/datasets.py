@@ -51,6 +51,7 @@ from argilla_server.models import (
     VectorSettings,
 )
 from argilla_server.models.suggestions import SuggestionCreateWithRecordId
+from argilla_server.schemas.v0.users import User
 from argilla_server.schemas.v1.datasets import (
     DatasetCreate,
 )
@@ -79,7 +80,6 @@ from argilla_server.schemas.v1.vector_settings import (
 )
 from argilla_server.schemas.v1.vectors import Vector as VectorSchema
 from argilla_server.search_engine import SearchEngine
-from argilla_server.security.model import User
 
 if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncSession
