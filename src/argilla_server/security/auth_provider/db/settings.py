@@ -19,7 +19,6 @@ from argilla_server.settings import settings as server_settings
 
 
 class Settings(BaseSettings):
-
     """
     Attributes
     ----------

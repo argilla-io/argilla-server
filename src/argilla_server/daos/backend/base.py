@@ -52,7 +52,6 @@ class GenericSearchError(Exception):
 
 @dataclasses.dataclass
 class BackendErrorHandler(ABC):
-
     """Implements the error handler base class"""
 
     RequestError: Type[Exception]
