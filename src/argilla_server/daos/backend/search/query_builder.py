@@ -285,17 +285,19 @@ class EsQueryBuilder:
 
         boolean_filter_query = filters.boolean_filter(
             must_query=query_text or filters.match_all(),
-            filter_query=filters.boolean_filter(
-                should_filters=all_filters,
-                minimum_should_match=len(all_filters),
-            )
-            if all_filters
-            else None,
-            must_not_query=filters.boolean_filter(
-                should_filters=[filters.text_query(q) for q in query.uncovered_by_rules]
-            )
-            if hasattr(query, "uncovered_by_rules") and query.uncovered_by_rules
-            else None,
+            filter_query=(
+                filters.boolean_filter(
+                    should_filters=all_filters,
+                    minimum_should_match=len(all_filters),
+                )
+                if all_filters
+                else None
+            ),
+            must_not_query=(
+                filters.boolean_filter(should_filters=[filters.text_query(q) for q in query.uncovered_by_rules])
+                if hasattr(query, "uncovered_by_rules") and query.uncovered_by_rules
+                else None
+            ),
         )
 
         return boolean_filter_query

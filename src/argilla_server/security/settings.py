@@ -23,7 +23,6 @@ if TYPE_CHECKING:
 
 
 class Settings(BaseSettings):
-
     """
     Attributes
     ----------

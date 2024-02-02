@@ -28,7 +28,6 @@ class AllowedWorkspace:
 
 
 class OAuth2Settings:
-
     """
     OAuth2 settings model.
 

@@ -13,9 +13,9 @@
 #  limitations under the License.
 
 import pytest
+from argilla_server.models import User
 from httpx import AsyncClient
 
-from argilla_server.models import User
 from tests.factories import UserFactory
 
 
