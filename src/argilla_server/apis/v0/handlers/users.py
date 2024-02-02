@@ -25,8 +25,8 @@ from argilla_server.database import get_async_db
 from argilla_server.errors import EntityAlreadyExistsError, EntityNotFoundError
 from argilla_server.policies import UserPolicy, authorize
 from argilla_server.pydantic_v1 import parse_obj_as
+from argilla_server.schemas.v0.users import User, UserCreate
 from argilla_server.security import auth
-from argilla_server.security.model import User, UserCreate
 
 router = APIRouter(tags=["users"])
 
@@ -53,7 +53,7 @@ async def whoami(
 
     """
 
-    await telemetry.track_login(request, username=current_user.username)
+    await telemetry.track_login(request, current_user)
 
     user = User.from_orm(current_user)
     # TODO: The current client checks if a user can work on a specific workspace
@@ -96,6 +96,7 @@ async def create_user(
 
     try:
         user = await accounts.create_user(db, user_create)
+        telemetry.track_user_created(user)
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e))
 
