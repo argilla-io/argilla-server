@@ -55,9 +55,6 @@ class OAuth2Settings:
         self.enabled = enabled
         self.allow_http_redirect = allow_http_redirect
         self.allowed_workspaces = allowed_workspaces or []
-
-        if not enabled:
-            providers = []
         self._providers = providers or []
 
         if self.allow_http_redirect:
