@@ -119,9 +119,7 @@ class TestOauth2:
         default_oauth_settings: OAuth2Settings,
     ):
         default_oauth_settings.enabled = False
-        with mock.patch(
-            "argilla_server.security.settings.Settings.oauth", new_callable=lambda: default_oauth_settings
-        ):
+        with mock.patch("argilla_server.security.settings.Settings.oauth", new_callable=lambda: default_oauth_settings):
             response = await async_client.get(
                 "/api/v1/oauth2/providers/huggingface/authentication", headers=owner_auth_header
             )
