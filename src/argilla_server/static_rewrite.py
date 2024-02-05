@@ -25,9 +25,6 @@ class RewriteStaticFiles(StaticFiles):
 
     async def get_response(self, path: str, scope: Scope) -> Response:
         try:
-            # Normalize path to avoid redirections
-            if not scope["path"].endswith("/"):
-                scope["path"] += "/"
             response = await super().get_response(path, scope)
             return await self._handle_response(response, scope)
         except HTTPException as ex:
@@ -39,7 +36,7 @@ class RewriteStaticFiles(StaticFiles):
         scope,
     ):
         if self.html and (response_or_error.status_code == 404):
-            return await super().get_response(path="", scope=scope)
+            return await super().get_response(path="/", scope=scope)
         if isinstance(response_or_error, HTTPException):
             raise response_or_error
         return response_or_error
