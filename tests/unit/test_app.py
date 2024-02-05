@@ -14,11 +14,11 @@
 from typing import cast
 
 import pytest
+from argilla_server._app import create_server_app
+from argilla_server.settings import Settings, settings
 from starlette.routing import Mount
 from starlette.testclient import TestClient
 
-from argilla_server._app import create_server_app
-from argilla_server.settings import Settings, settings
 
 @pytest.fixture
 def test_settings():
