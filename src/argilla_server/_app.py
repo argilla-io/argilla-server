@@ -95,12 +95,10 @@ def create_server_app() -> FastAPI:
     ]:
         app_configure(app)
 
-    if settings.base_url and settings.base_url != "/":
-        _app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
-        _app.mount(settings.base_url, app)
-        return _app
-    else:
-        return app
+    _app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
+    _app.mount(settings.base_url, app)
+
+    return _app
 
 
 def configure_middleware(app: FastAPI):
