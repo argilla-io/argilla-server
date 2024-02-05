@@ -11,33 +11,41 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-
 from typing import cast
 
-from argilla_server._app import create_server_app
-from argilla_server.settings import settings
+import pytest
 from starlette.routing import Mount
 from starlette.testclient import TestClient
 
+from argilla_server._app import create_server_app
+from argilla_server.settings import Settings, settings
+
+@pytest.fixture
+def test_settings():
+    yield settings
+
+    settings.base_url = "/"
+
 
 class TestApp:
-    def test_create_app_with_base_url(self, owner_auth_header: dict):
-        settings.base_url = "/new/base/url"
-        app = create_server_app()
+    def test_create_app_with_base_url(self, test_settings: Settings):
+        base_url = "/base/url"
+        settings.base_url = base_url
 
+        app = create_server_app()
         client = TestClient(app)
 
-        response = client.get("/")
+        response = client.get("/api/docs")
         assert response.status_code == 404
 
-        response = client.get("/new/base/url")
+        response = client.get(f"{base_url}/api/docs")
         assert response.status_code == 200
 
         response = client.get("/api/_info")
         assert response.status_code == 404
 
-        response = client.get("/new/base/url/api/_info")
+        response = client.get(f"{base_url}/api/_info")
         assert response.status_code == 200
 
         assert len(app.routes) == 1
-        assert cast(Mount, app.routes[0]).path == "/new/base/url"
+        assert cast(Mount, app.routes[0]).path == base_url
