@@ -16,6 +16,10 @@ These are the section headers that we use:
 
 ## [Unreleased]()
 
+### Fixed
+
+- Fixed problems using `ARGILLA_BASE_URL` environment variable. ([#14](https://github.com/argilla-io/argilla-server/pull/14))
+
 ## [1.23.0](https://github.com/argilla-io/argilla/compare/v1.22.0...v1.23.0)
 
 ### Added
