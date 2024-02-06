@@ -47,6 +47,7 @@ dependencies = [
     "python-jose[cryptography] >= 3.2,< 3.4",
     "passlib[bcrypt] ~= 1.7.4",
     # OAuth2 integration
+    "httpx>=0.26.0",
     "oauthlib ~= 3.2.0",
     "social-auth-core ~= 4.5.0",
     # Info status
@@ -164,5 +165,5 @@ line-length = 120
 line-length = 120
 
 [tool.pdm.scripts]
-build-server-image = { shell = "cp -R dist docker/server && docker build -t argilla/argilla-server docker/server" }
-build-quickstart-image = { shell ="cp -R dist docker/quickstart && docker build -t argilla/argilla-quickstart docker/quickstart" }
+build-server-image = { shell = "cp -R dist docker/server && docker build -t argilla/argilla-server:local docker/server" }
+build-quickstart-image = { shell ="docker build --build-arg ARGILLA_VERSION=local -t argilla/argilla-quickstart:local docker/quickstart" }
