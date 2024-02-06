@@ -16,10 +16,4 @@ fi
 #   with the prefix UVICORN_. For example, in case you want to
 #   run the app on port 5000, just set the environment variable
 #   UVICORN_PORT to 5000.
-
-# Check for ARGILLA_BASE_URL and add --root-path if present
-if [ -n "$ARGILLA_BASE_URL" ]; then
-	python -m uvicorn argilla_server:app --host "0.0.0.0" --root-path "$ARGILLA_BASE_URL"
-else
-	python -m uvicorn argilla_server:app --host "0.0.0.0"
-fi
+python -m uvicorn argilla_server:app --host "0.0.0.0"

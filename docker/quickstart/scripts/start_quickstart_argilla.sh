@@ -42,8 +42,4 @@ python load_data.py "$OWNER_API_KEY" "$LOAD_DATASETS" &
 
 # Start Argilla
 echo "Starting Argilla"
-if [ -n "$ARGILLA_BASE_URL" ]; then
-	uvicorn argilla_server:app --host "0.0.0.0" --root-path "$ARGILLA_BASE_URL"
-else
-	uvicorn argilla_server:app --host "0.0.0.0"
-fi
+python -m uvicorn argilla_server:app --host "0.0.0.0"
