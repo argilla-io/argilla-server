@@ -36,7 +36,7 @@ class RewriteStaticFiles(StaticFiles):
         scope,
     ):
         if self.html and (response_or_error.status_code == 404):
-            return await super().get_response(path="/", scope=scope)
+            return await super().get_response(path="index.html", scope=scope)
         if isinstance(response_or_error, HTTPException):
             raise response_or_error
         return response_or_error
