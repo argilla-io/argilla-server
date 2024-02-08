@@ -16,7 +16,7 @@ These are the section headers that we use:
 
 ## [Unreleased]()
 
-## [1.24.0](https://github.com/argilla-io/argilla-server/releases/tag/v1.24.0.rc4)
+## [1.24.0](https://github.com/argilla-io/argilla-server/releases/tag/v1.24.0)
 
 ### Fixed
 
