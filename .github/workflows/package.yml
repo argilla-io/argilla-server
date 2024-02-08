@@ -94,6 +94,7 @@ jobs:
     uses: ./.github/workflows/run-python-tests.yml
     needs: check_repo_files
     if: |
+      github.event_name == 'release' ||
       needs.check_repo_files.outputs.pythonChanges == 'true' &&
       startsWith(github.event.ref, 'refs/tags/v')
     with:
