@@ -94,6 +94,7 @@ jobs:
     uses: ./.github/workflows/run-python-tests.yml
     needs: check_repo_files
     if: |
+      github.event_name == 'release' ||
       needs.check_repo_files.outputs.pythonChanges == 'true' &&
       startsWith(github.event.ref, 'refs/tags/v')
     with:
@@ -183,18 +184,23 @@ jobs:
     steps:
       - name: Checkout Code 🛎
         uses: actions/checkout@v3
+
       - name: Download python package
         uses: actions/download-artifact@v2
         with:
           name: python-package
           path: dist
+
       - name: Setup PDM
         uses: pdm-project/setup-pdm@v4
         with:
           cache: true
+
       - name: Publish Package to PyPI test environment 🥪
         run: pdm publish --no-build --repository testpypi
+
       - name: Test Installing 🍿
         run: pip install --index-url https://test.pypi.org/simple --no-deps argilla-server==${GITHUB_REF#refs/*/v}
+
       - name: Publish Package to PyPI 🥩
         run: pdm publish --no-build

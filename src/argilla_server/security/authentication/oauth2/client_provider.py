@@ -104,7 +104,7 @@ class OAuth2ClientProvider:
         response.set_cookie(
             self.OAUTH_STATE_COOKIE_NAME,
             value=state,
-            secure=not settings.oauth.allow_http_redirect,
+            secure=True,
             httponly=True,
             max_age=self.OAUTH_STATE_COOKIE_MAX_AGE,
             samesite="none",

@@ -16,6 +16,12 @@ These are the section headers that we use:
 
 ## [Unreleased]()
 
+## [1.24.0](https://github.com/argilla-io/argilla-server/releases/tag/v1.24.0)
+
+>[!NOTE]
+> This version is the first release of the Argilla Server. Before this release, the Argilla Server was part of the [Argilla SDK](https://github.com/argilla-io/argilla).
+> Now, the Argilla Server is a separate package that can be installed and used independently of the [Argilla SDK](https://github.com/argilla-io/argilla).
+
 ### Fixed
 
 - Fixed problems using `ARGILLA_BASE_URL` environment variable. ([#14](https://github.com/argilla-io/argilla-server/pull/14))
