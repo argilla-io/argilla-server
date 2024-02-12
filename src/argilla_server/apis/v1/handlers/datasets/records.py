@@ -22,7 +22,7 @@ from typing_extensions import Annotated
 
 import argilla_server.errors.future as errors
 import argilla_server.search_engine as search_engine
-from argilla_server.apis.v1.handlers.datasets.datasets import _get_dataset
+from argilla_server.apis.v1.handlers.datasets.datasets import _get_dataset_or_raise
 from argilla_server.contexts import datasets, search
 from argilla_server.database import get_async_db
 from argilla_server.enums import MetadataPropertyType, RecordSortField, ResponseStatusFilter, SortOrder
@@ -406,7 +406,7 @@ async def list_current_user_dataset_records(
     limit: int = Query(default=LIST_DATASET_RECORDS_LIMIT_DEFAULT, ge=1, le=LIST_DATASET_RECORDS_LIMIT_LE),
     current_user: User = Security(auth.get_current_user),
 ):
-    dataset = await _get_dataset(db, dataset_id)
+    dataset = await _get_dataset_or_raise(db, dataset_id)
 
     await authorize(current_user, DatasetPolicyV1.get(dataset))
 
@@ -440,7 +440,7 @@ async def list_dataset_records(
     limit: int = Query(default=LIST_DATASET_RECORDS_LIMIT_DEFAULT, ge=1, le=LIST_DATASET_RECORDS_LIMIT_LE),
     current_user: User = Security(auth.get_current_user),
 ):
-    dataset = await _get_dataset(db, dataset_id)
+    dataset = await _get_dataset_or_raise(db, dataset_id)
 
     await authorize(current_user, DatasetPolicyV1.list_records_with_all_responses(dataset))
 
@@ -469,7 +469,7 @@ async def create_dataset_records(
     records_create: RecordsCreate,
     current_user: User = Security(auth.get_current_user),
 ):
-    dataset = await _get_dataset(
+    dataset = await _get_dataset_or_raise(
         db, dataset_id, with_fields=True, with_questions=True, with_metadata_properties=True, with_vectors_settings=True
     )
 
@@ -494,7 +494,7 @@ async def update_dataset_records(
     records_update: RecordsUpdate,
     current_user: User = Security(auth.get_current_user),
 ):
-    dataset = await _get_dataset(db, dataset_id, with_fields=True, with_questions=True, with_metadata_properties=True)
+    dataset = await _get_dataset_or_raise(db, dataset_id, with_fields=True, with_questions=True, with_metadata_properties=True)
 
     await authorize(current_user, DatasetPolicyV1.update_records(dataset))
 
@@ -514,7 +514,7 @@ async def delete_dataset_records(
     current_user: User = Security(auth.get_current_user),
     ids: str = Query(..., description="A comma separated list with the IDs of the records to be removed"),
 ):
-    dataset = await _get_dataset(db, dataset_id)
+    dataset = await _get_dataset_or_raise(db, dataset_id)
 
     await authorize(current_user, DatasetPolicyV1.delete_records(dataset))
 
@@ -554,7 +554,7 @@ async def search_current_user_dataset_records(
     limit: int = Query(default=LIST_DATASET_RECORDS_LIMIT_DEFAULT, ge=1, le=LIST_DATASET_RECORDS_LIMIT_LE),
     current_user: User = Security(auth.get_current_user),
 ):
-    dataset = await _get_dataset(db, dataset_id, with_fields=True)
+    dataset = await _get_dataset_or_raise(db, dataset_id, with_fields=True)
 
     await authorize(current_user, DatasetPolicyV1.search_records(dataset))
 
@@ -616,7 +616,7 @@ async def search_dataset_records(
     limit: int = Query(default=LIST_DATASET_RECORDS_LIMIT_DEFAULT, ge=1, le=LIST_DATASET_RECORDS_LIMIT_LE),
     current_user: User = Security(auth.get_current_user),
 ):
-    dataset = await _get_dataset(db, dataset_id, with_fields=True)
+    dataset = await _get_dataset_or_raise(db, dataset_id, with_fields=True)
 
     await authorize(current_user, DatasetPolicyV1.search_records_with_all_responses(dataset))
 
@@ -667,7 +667,7 @@ async def list_dataset_records_search_suggestions_options(
     dataset_id: UUID,
     current_user: User = Security(auth.get_current_user),
 ):
-    dataset = await _get_dataset(db, dataset_id)
+    dataset = await _get_dataset_or_raise(db, dataset_id)
 
     await authorize(current_user, DatasetPolicyV1.search_records(dataset))
 
