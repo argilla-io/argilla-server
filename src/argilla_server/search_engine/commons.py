@@ -250,15 +250,6 @@ def is_response_status_scope(scope: FilterScope) -> bool:
     return True
 
 
-def is_only_pending_response_status_filter(filter: Optional[Filter] = None) -> bool:
-    return (
-        bool(filter)
-        and not isinstance(filter, AndFilter)
-        and is_response_status_scope(filter.scope)
-        and filter.values == ["pending"]
-    )
-
-
 @dataclasses.dataclass
 class BaseElasticAndOpenSearchEngine(SearchEngine):
     """
@@ -591,16 +582,12 @@ class BaseElasticAndOpenSearchEngine(SearchEngine):
         if filter:
             bool_query["filter"] = self.build_elasticsearch_filter(filter)
 
-        es_query = {"bool": bool_query}
-
-        # special kellogs case to display the records with pending status
-        if is_only_pending_response_status_filter(filter):
-            es_query = {
-                "function_score": {
-                    "query": es_query,
-                    "functions": [{"random_score": {"seed": str(user_id), "field": "_seq_no"}}],
-                }
+        es_query = {
+            "function_score": {
+                "query": {"bool": bool_query},
+                "functions": [{"random_score": {"seed": str(user_id), "field": "_seq_no"}}],
             }
+        }
 
         index = await self._get_dataset_index(dataset)
 
