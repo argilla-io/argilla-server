@@ -494,7 +494,9 @@ async def update_dataset_records(
     records_update: RecordsUpdate,
     current_user: User = Security(auth.get_current_user),
 ):
-    dataset = await _get_dataset_or_raise(db, dataset_id, with_fields=True, with_questions=True, with_metadata_properties=True)
+    dataset = await _get_dataset_or_raise(
+        db, dataset_id, with_fields=True, with_questions=True, with_metadata_properties=True
+    )
 
     await authorize(current_user, DatasetPolicyV1.update_records(dataset))
 
