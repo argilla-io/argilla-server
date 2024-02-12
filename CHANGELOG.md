@@ -16,6 +16,10 @@ These are the section headers that we use:
 
 ## [Unreleased]()
 
+### Added
+
+- Add support for creating and listing quetions with `SpansQuestionSettings`. ([#24](https://github.com/argilla-io/argilla-server/pull/24))
+
 ## [1.24.0](https://github.com/argilla-io/argilla-server/releases/tag/v1.24.0)
 
 >[!NOTE]
