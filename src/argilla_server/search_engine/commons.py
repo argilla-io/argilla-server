@@ -582,12 +582,18 @@ class BaseElasticAndOpenSearchEngine(SearchEngine):
         if filter:
             bool_query["filter"] = self.build_elasticsearch_filter(filter)
 
-        es_query = {
-            "function_score": {
-                "query": {"bool": bool_query},
-                "functions": [{"random_score": {"seed": str(user_id), "field": "_seq_no"}}],
+        es_query = {"bool": bool_query}
+
+        if user_id:
+            # See https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-function-score-query.html#function-random
+            # If an `user_id` is provided we use it as seed for the `random_score` function to sort the records for the
+            # user in a "random" and different way for each user, but still deterministic for the same user.
+            es_query = {
+                "function_score": {
+                    "query": es_query,
+                    "functions": [{"random_score": {"seed": str(user_id), "field": "_seq_no"}}],
+                }
             }
-        }
 
         index = await self._get_dataset_index(dataset)
 
