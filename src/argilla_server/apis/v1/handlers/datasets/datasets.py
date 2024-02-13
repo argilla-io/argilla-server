@@ -17,7 +17,6 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Security, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from starlette import status
 
 from argilla_server.contexts import accounts, datasets
 from argilla_server.database import get_async_db

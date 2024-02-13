@@ -100,7 +100,7 @@ class SpansQuestionSettings(BaseModel):
     type: Literal[QuestionType.spans]
     options: conlist(item_type=OptionSettings)
     # These attributes are read-only for now
-    allow_span_overlapping: bool = Field(default=False, description="Allow overlapping spans")
+    allow_overlapping: bool = Field(default=False, description="Allow spans overlapping")
     allow_character_annotation: bool = Field(default=True, description="Allow character-level annotation")
     fields: Literal["all"] = "all"
 
