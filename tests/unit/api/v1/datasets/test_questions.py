@@ -26,7 +26,7 @@ from argilla_server.schemas.v1.questions import (
     RANKING_OPTIONS_MAX_ITEMS,
     RATING_OPTIONS_MAX_ITEMS,
     RATING_OPTIONS_MIN_ITEMS,
-    SPANS_OPTIONS_MAX_ITEMS,
+    SPAN_OPTIONS_MAX_ITEMS,
     VALUE_TEXT_OPTION_DESCRIPTION_MAX_LENGTH,
     VALUE_TEXT_OPTION_TEXT_MAX_LENGTH,
     VALUE_TEXT_OPTION_VALUE_MAX_LENGTH,
@@ -137,7 +137,7 @@ class TestDatasetQuestions:
             ),
             (
                 {
-                    "type": "spans",
+                    "type": "span",
                     "options": [
                         {"value": "label-a", "text": "Label A"},
                         {"value": "label-b", "text": "Label B"},
@@ -146,7 +146,7 @@ class TestDatasetQuestions:
                     ],
                 },
                 {
-                    "type": "spans",
+                    "type": "span",
                     "options": [
                         {"value": "label-a", "text": "Label A", "description": None},
                         {"value": "label-b", "text": "Label B", "description": None},
@@ -154,7 +154,7 @@ class TestDatasetQuestions:
                         {"value": "label-d", "text": "Label D", "description": None},
                     ],
                     "allow_character_annotation": True,
-                    "allow_span_overlapping": False,
+                    "allow_overlapping": False,
                     "fields": "all",
                 },
             ),
@@ -544,10 +544,10 @@ class TestDatasetQuestions:
                     {"value": "b", "text": "b", "description": "b"},
                 ],
             },
-            {"type": "spans", "options": []},
+            {"type": "span", "options": []},
             {
-                "type": "spans",
-                "options": [{"value": value, "text": value} for value in range(0, SPANS_OPTIONS_MAX_ITEMS + 1)],
+                "type": "span",
+                "options": [{"value": value, "text": value} for value in range(0, SPAN_OPTIONS_MAX_ITEMS + 1)],
             },
         ],
     )

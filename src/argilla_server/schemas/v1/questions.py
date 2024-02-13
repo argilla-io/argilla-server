@@ -13,10 +13,8 @@
 #  limitations under the License.
 
 from datetime import datetime
-from typing import Annotated, Any, Dict, List, Literal, Optional, Union
+from typing import Any, Dict, List, Literal, Optional, Union
 from uuid import UUID
-
-from typing_extensions import Annotated
 
 from argilla_server.models import QuestionType
 from argilla_server.pydantic_v1 import BaseModel, Field, PositiveInt, conlist, constr, root_validator, validator
@@ -57,8 +55,8 @@ RATING_OPTIONS_MAX_ITEMS = 10
 RATING_LOWER_VALUE_ALLOWED = 1
 RATING_UPPER_VALUE_ALLOWED = 10
 
-SPANS_OPTIONS_MIN_ITEMS = 1
-SPANS_OPTIONS_MAX_ITEMS = 500
+SPAN_OPTIONS_MIN_ITEMS = 1
+SPAN_OPTIONS_MAX_ITEMS = 500
 
 
 class TextQuestionSettings(BaseModel):
@@ -96,8 +94,8 @@ class RankingQuestionSettings(BaseModel):
     options: conlist(item_type=OptionSettings)
 
 
-class SpansQuestionSettings(BaseModel):
-    type: Literal[QuestionType.spans]
+class SpanQuestionSettings(BaseModel):
+    type: Literal[QuestionType.span]
     options: conlist(item_type=OptionSettings)
     # These attributes are read-only for now
     allow_overlapping: bool = Field(default=False, description="Allow spans overlapping")
@@ -112,7 +110,7 @@ QuestionSettings = Annotated[
         LabelSelectionQuestionSettings,
         MultiLabelSelectionQuestionSettings,
         RankingQuestionSettings,
-        SpansQuestionSettings,
+        SpanQuestionSettings,
     ],
     Field(..., discriminator="type"),
 ]
@@ -275,12 +273,12 @@ class RankingQuestionSettingsCreate(UniqueValuesCheckerMixin):
     )
 
 
-class SpansQuestionSettingsCreate(UniqueValuesCheckerMixin):
-    type: Literal[QuestionType.spans]
+class SpanQuestionSettingsCreate(UniqueValuesCheckerMixin):
+    type: Literal[QuestionType.span]
     options: conlist(
         item_type=OptionSettingsCreate,
-        min_items=SPANS_OPTIONS_MIN_ITEMS,
-        max_items=SPANS_OPTIONS_MAX_ITEMS,
+        min_items=SPAN_OPTIONS_MIN_ITEMS,
+        max_items=SPAN_OPTIONS_MAX_ITEMS,
     )
 
 
@@ -291,7 +289,7 @@ QuestionSettingsCreate = Annotated[
         LabelSelectionQuestionSettingsCreate,
         MultiLabelSelectionQuestionSettingsCreate,
         RankingQuestionSettingsCreate,
-        SpansQuestionSettingsCreate,
+        SpanQuestionSettingsCreate,
     ],
     Field(discriminator="type"),
 ]

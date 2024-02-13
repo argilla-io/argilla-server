@@ -61,7 +61,7 @@ class QuestionType(str, Enum):
     label_selection = "label_selection"
     multi_label_selection = "multi_label_selection"
     ranking = "ranking"
-    spans = "spans"
+    span = "span"
 
 
 class MetadataPropertyType(str, Enum):
