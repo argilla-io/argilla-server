@@ -1029,7 +1029,7 @@ class TestBaseElasticAndOpenSearchEngine:
         results = opensearch.get(index=index_name, id=record.id)
 
         assert results["_source"]["responses"] == {
-            response.user.username: {
+            f"{response.user.id}": {
                 "values": {question.name: "test"},
                 "status": response.status.value,
             }
@@ -1039,7 +1039,7 @@ class TestBaseElasticAndOpenSearchEngine:
         assert index["mappings"]["properties"]["responses"] == {
             "dynamic": "true",
             "properties": {
-                response.user.username: {
+                f"{response.user.id}": {
                     "properties": {
                         "status": {"type": "keyword", "copy_to": [ALL_RESPONSES_STATUSES_FIELD]},
                         "values": {"properties": {question.name: {"index": False, "type": "text"}}},
@@ -1067,7 +1067,7 @@ class TestBaseElasticAndOpenSearchEngine:
 
         results = opensearch.get(index=index_name, id=record.id)
         assert results["_source"]["responses"] == {
-            response.user.username: {
+            str(response.user.id): {
                 "values": {question.name: "test"},
                 "status": response.status.value,
             }
@@ -1312,7 +1312,7 @@ class TestBaseElasticAndOpenSearchEngine:
         another_user = await UserFactory.create()
 
         for record in records:
-            users_responses = {f"{another_user.username}.status": status.value}
+            users_responses = {f"{another_user.id}.status": status.value}
             if user:
-                users_responses.update({f"{user.username}.status": status.value})
+                users_responses.update({f"{user.id}.status": status.value})
             opensearch.update(index_name, id=record.id, body={"doc": {"responses": users_responses}})
