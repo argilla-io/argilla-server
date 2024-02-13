@@ -26,8 +26,8 @@ from argilla_server.models import (
     QuestionType,
     Record,
     Response,
-    ResponseStatus,
     Suggestion,
+    User,
     Vector,
     VectorSettings,
 )
@@ -104,8 +104,12 @@ def es_ids_query(ids: List[str]) -> dict:
     return {"ids": {"values": ids}}
 
 
-def es_field_for_response_value(user: str, question: str) -> str:
-    return f"responses.{user}.values.{question}"
+def es_field_for_response_value(user: User, question: str) -> str:
+    return f"responses.{es_path_for_user(user)}.values.{question}"
+
+
+def es_field_for_response_status(user: User) -> str:
+    return f"responses.{es_path_for_user(user)}.status"
 
 
 def es_field_for_suggestion_property(question: str, property: str) -> str:
@@ -113,7 +117,7 @@ def es_field_for_suggestion_property(question: str, property: str) -> str:
 
 
 def es_field_for_vector_settings(vector_settings: VectorSettings) -> str:
-    return f"vectors.{vector_settings.id}"
+    return f"vectors.{es_path_for_vector_settings(vector_settings)}"
 
 
 def es_field_for_record_property(property: str) -> str:
@@ -186,6 +190,18 @@ def es_mapping_for_question_suggestion(question: Question) -> dict:
             },
         }
     }
+
+
+def es_script_for_delete_user_response(user: User) -> str:
+    return f'ctx._source["responses"].remove("{es_path_for_user(user)}")'
+
+
+def es_path_for_user(user: User) -> str:
+    return f"{user.id}"
+
+
+def es_path_for_vector_settings(vector_settings: VectorSettings) -> str:
+    return f"{vector_settings.id}"
 
 
 # This function will be moved once the `metadata_filters` argument is removed from search and similarity_search methods
@@ -315,7 +331,7 @@ class BaseElasticAndOpenSearchEngine(SearchEngine):
         index_name = await self._get_dataset_index(record.dataset)
 
         await self._update_document_request(
-            index_name, id=record.id, body={"script": f'ctx._source["responses"].remove("{response.user.username}")'}
+            index_name, id=record.id, body={"script": es_script_for_delete_user_response(response.user)}
         )
 
     async def update_record_suggestion(self, suggestion: Suggestion):
@@ -458,7 +474,7 @@ class BaseElasticAndOpenSearchEngine(SearchEngine):
         elif isinstance(scope, SuggestionFilterScope):
             return es_field_for_suggestion_property(question=scope.question, property=scope.property)
         elif isinstance(scope, ResponseFilterScope):
-            return es_field_for_response_value(scope.user.username, question=scope.question)
+            return es_field_for_response_value(scope.user, question=scope.question)
         elif isinstance(scope, RecordFilterScope):
             return es_field_for_record_property(scope.property)
         raise ValueError(f"Cannot process request for search scope {scope}")
@@ -468,7 +484,7 @@ class BaseElasticAndOpenSearchEngine(SearchEngine):
         if status_filter.user is None:
             response_field = ALL_RESPONSES_STATUSES_FIELD
         else:
-            response_field = f"responses.{status_filter.user.username}.status"
+            response_field = es_field_for_response_status(status_filter.user)
 
         filters = []
         if status_filter.has_pending_status:
@@ -506,7 +522,7 @@ class BaseElasticAndOpenSearchEngine(SearchEngine):
     @staticmethod
     def _map_record_responses_to_es(responses: List[Response]) -> Dict[str, Any]:
         return {
-            response.user.username: {
+            es_path_for_user(response.user): {
                 "values": {k: v["value"] for k, v in response.values.items()} if response.values else None,
                 "status": response.status,
             }
@@ -527,7 +543,7 @@ class BaseElasticAndOpenSearchEngine(SearchEngine):
 
     @staticmethod
     def _map_record_vectors_to_es(vectors: List[Vector]) -> Dict[str, List[float]]:
-        return {str(vector.vector_settings.id): vector.value for vector in vectors}
+        return {es_path_for_vector_settings(vector.vector_settings): vector.value for vector in vectors}
 
     @staticmethod
     def _map_record_metadata_to_es(
