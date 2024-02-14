@@ -238,11 +238,7 @@ def _unify_sort_by_with_order(sort_by: List[SortBy], order: List[Order]) -> List
 
 
 def is_response_status_scope(scope: FilterScope) -> bool:
-    return (
-        isinstance(scope, ResponseFilterScope) and
-        scope.property == "status" and 
-        scope.question is None
-    )
+    return isinstance(scope, ResponseFilterScope) and scope.property == "status" and scope.question is None
 
 
 @dataclasses.dataclass
