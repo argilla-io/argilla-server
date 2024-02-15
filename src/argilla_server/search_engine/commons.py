@@ -197,11 +197,11 @@ def es_script_for_delete_user_response(user: User) -> str:
 
 
 def es_path_for_user(user: User) -> str:
-    return f"{user.id}"
+    return str(user.id)
 
 
 def es_path_for_vector_settings(vector_settings: VectorSettings) -> str:
-    return f"{vector_settings.id}"
+    return str(vector_settings.id)
 
 
 # This function will be moved once the `metadata_filters` argument is removed from search and similarity_search methods

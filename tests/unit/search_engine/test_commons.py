@@ -1029,7 +1029,7 @@ class TestBaseElasticAndOpenSearchEngine:
         results = opensearch.get(index=index_name, id=record.id)
 
         assert results["_source"]["responses"] == {
-            f"{response.user.id}": {
+            str(response.user.id): {
                 "values": {question.name: "test"},
                 "status": response.status.value,
             }
@@ -1039,7 +1039,7 @@ class TestBaseElasticAndOpenSearchEngine:
         assert index["mappings"]["properties"]["responses"] == {
             "dynamic": "true",
             "properties": {
-                f"{response.user.id}": {
+                str(response.user.id): {
                     "properties": {
                         "status": {"type": "keyword", "copy_to": [ALL_RESPONSES_STATUSES_FIELD]},
                         "values": {"properties": {question.name: {"index": False, "type": "text"}}},
