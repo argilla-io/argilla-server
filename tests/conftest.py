@@ -31,11 +31,11 @@ if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncConnection
 
 
-# @pytest.fixture(scope="session")
-# def event_loop() -> Generator["asyncio.AbstractEventLoop", None, None]:
-#     loop = asyncio.get_event_loop_policy().get_event_loop()
-#     yield loop
-#     loop.close()
+@pytest.fixture(scope="session")
+def event_loop() -> Generator["asyncio.AbstractEventLoop", None, None]:
+    loop = asyncio.get_event_loop_policy().get_event_loop()
+    yield loop
+    loop.close()
 
 
 @pytest.fixture(scope="function")
