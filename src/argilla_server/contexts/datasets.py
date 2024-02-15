@@ -290,6 +290,9 @@ async def create_question(db: "AsyncSession", dataset: Dataset, question_create:
     if dataset.is_ready:
         raise ValueError("Question cannot be created for a published dataset")
 
+    # TODO: Add question level validation
+    #  For example, for span questions, we should validate that provided field names are valid
+
     return await Question.create(
         db,
         name=question_create.name,

@@ -13,10 +13,8 @@
 #  limitations under the License.
 
 from datetime import datetime
-from typing import Annotated, Any, Dict, List, Literal, Optional, Union
+from typing import Any, Dict, List, Literal, Optional, Union
 from uuid import UUID
-
-from typing_extensions import Annotated
 
 from argilla_server.models import QuestionType
 from argilla_server.pydantic_v1 import BaseModel, Field, PositiveInt, conlist, constr, root_validator, validator
@@ -57,6 +55,9 @@ RATING_OPTIONS_MAX_ITEMS = 10
 RATING_LOWER_VALUE_ALLOWED = 1
 RATING_UPPER_VALUE_ALLOWED = 10
 
+SPAN_OPTIONS_MIN_ITEMS = 1
+SPAN_OPTIONS_MAX_ITEMS = 500
+
 
 class TextQuestionSettings(BaseModel):
     type: Literal[QuestionType.text]
@@ -72,7 +73,7 @@ class RatingQuestionSettings(BaseModel):
     options: conlist(item_type=RatingQuestionSettingsOption)
 
 
-class ValueTextQuestionSettingsOption(BaseModel):
+class OptionSettings(BaseModel):
     value: str
     text: str
     description: Optional[str] = None
@@ -80,7 +81,7 @@ class ValueTextQuestionSettingsOption(BaseModel):
 
 class LabelSelectionQuestionSettings(BaseModel):
     type: Literal[QuestionType.label_selection]
-    options: conlist(item_type=ValueTextQuestionSettingsOption)
+    options: conlist(item_type=OptionSettings)
     visible_options: Optional[int] = None
 
 
@@ -90,7 +91,16 @@ class MultiLabelSelectionQuestionSettings(LabelSelectionQuestionSettings):
 
 class RankingQuestionSettings(BaseModel):
     type: Literal[QuestionType.ranking]
-    options: conlist(item_type=ValueTextQuestionSettingsOption)
+    options: conlist(item_type=OptionSettings)
+
+
+class SpanQuestionSettings(BaseModel):
+    type: Literal[QuestionType.span]
+    options: conlist(item_type=OptionSettings)
+    # These attributes are read-only for now
+    allow_overlapping: bool = Field(default=False, description="Allow spans overlapping")
+    allow_character_annotation: bool = Field(default=True, description="Allow character-level annotation")
+    fields: Literal["all"] = "all"
 
 
 QuestionSettings = Annotated[
@@ -100,6 +110,7 @@ QuestionSettings = Annotated[
         LabelSelectionQuestionSettings,
         MultiLabelSelectionQuestionSettings,
         RankingQuestionSettings,
+        SpanQuestionSettings,
     ],
     Field(..., discriminator="type"),
 ]
@@ -210,7 +221,7 @@ class RatingQuestionSettingsCreate(UniqueValuesCheckerMixin):
         return options
 
 
-class ValueTextQuestionSettingsOptionCreate(BaseModel):
+class OptionSettingsCreate(BaseModel):
     value: constr(
         min_length=VALUE_TEXT_OPTION_VALUE_MIN_LENGTH,
         max_length=VALUE_TEXT_OPTION_VALUE_MAX_LENGTH,
@@ -230,7 +241,7 @@ class ValueTextQuestionSettingsOptionCreate(BaseModel):
 class LabelSelectionQuestionSettingsCreate(UniqueValuesCheckerMixin):
     type: Literal[QuestionType.label_selection]
     options: conlist(
-        item_type=ValueTextQuestionSettingsOptionCreate,
+        item_type=OptionSettingsCreate,
         min_items=LABEL_SELECTION_OPTIONS_MIN_ITEMS,
         max_items=LABEL_SELECTION_OPTIONS_MAX_ITEMS,
     )
@@ -256,9 +267,18 @@ class MultiLabelSelectionQuestionSettingsCreate(LabelSelectionQuestionSettingsCr
 class RankingQuestionSettingsCreate(UniqueValuesCheckerMixin):
     type: Literal[QuestionType.ranking]
     options: conlist(
-        item_type=ValueTextQuestionSettingsOptionCreate,
+        item_type=OptionSettingsCreate,
         min_items=RANKING_OPTIONS_MIN_ITEMS,
         max_items=RANKING_OPTIONS_MAX_ITEMS,
+    )
+
+
+class SpanQuestionSettingsCreate(UniqueValuesCheckerMixin):
+    type: Literal[QuestionType.span]
+    options: conlist(
+        item_type=OptionSettingsCreate,
+        min_items=SPAN_OPTIONS_MIN_ITEMS,
+        max_items=SPAN_OPTIONS_MAX_ITEMS,
     )
 
 
@@ -269,6 +289,7 @@ QuestionSettingsCreate = Annotated[
         LabelSelectionQuestionSettingsCreate,
         MultiLabelSelectionQuestionSettingsCreate,
         RankingQuestionSettingsCreate,
+        SpanQuestionSettingsCreate,
     ],
     Field(discriminator="type"),
 ]
