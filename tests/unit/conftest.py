@@ -25,6 +25,7 @@ from argilla_server.daos.datasets import DatasetsDAO
 from argilla_server.daos.records import DatasetRecordsDAO
 from argilla_server.database import get_async_db
 from argilla_server.models import User, UserRole, Workspace
+from argilla_server.apis.routes import api_v0, api_v1
 from argilla_server.search_engine import SearchEngine, get_search_engine
 from argilla_server.settings import settings
 from argilla_server.telemetry import TelemetryClient
@@ -94,8 +95,9 @@ async def async_client(
 
     mocker.patch("argilla_server._app._get_db_wrapper", wraps=contextlib.asynccontextmanager(override_get_async_db))
 
-    app.dependency_overrides[get_async_db] = override_get_async_db
-    app.dependency_overrides[get_search_engine] = override_get_search_engine
+    for api in [api_v0, api_v1]:
+        api.dependency_overrides[get_async_db] = override_get_async_db
+        api.dependency_overrides[get_search_engine] = override_get_search_engine
 
     async with AsyncClient(app=app, base_url="http://testserver") as async_client:
         yield async_client
