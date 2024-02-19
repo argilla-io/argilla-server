@@ -13,7 +13,6 @@
 #  limitations under the License.
 
 import pytest
-
 from argilla_server.errors import APIErrorHandler
 from argilla_server.errors.base_errors import (
     EntityAlreadyExistsError,
