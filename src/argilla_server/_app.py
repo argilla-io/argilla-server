@@ -24,12 +24,12 @@ from pathlib import Path
 import backoff
 from brotli_asgi import BrotliMiddleware
 from fastapi import FastAPI
-from fastapi.exceptions import RequestValidationError
 from starlette.middleware.cors import CORSMiddleware
 from starlette.responses import RedirectResponse
 
 from argilla_server import helpers
 from argilla_server._version import __version__ as argilla_version
+from argilla_server.apis.routes import api_v0, api_v1
 from argilla_server.constants import DEFAULT_API_KEY, DEFAULT_PASSWORD, DEFAULT_USERNAME
 from argilla_server.contexts import accounts
 from argilla_server.daos.backend import GenericElasticEngineBackend
@@ -37,23 +37,9 @@ from argilla_server.daos.backend.base import GenericSearchError
 from argilla_server.daos.datasets import DatasetsDAO
 from argilla_server.daos.records import DatasetRecordsDAO
 from argilla_server.database import get_async_db
-from argilla_server.errors import (
-    APIErrorHandler,
-    BadRequestError,
-    ClosedDatasetError,
-    EntityAlreadyExistsError,
-    EntityNotFoundError,
-    ForbiddenOperationError,
-    InvalidTextSearchError,
-    MissingInputParamError,
-    UnauthorizedError,
-    WrongTaskError,
-)
 from argilla_server.logging import configure_logging
 from argilla_server.models import User
-from argilla_server.pydantic_v1 import ValidationError
 from argilla_server.pydantic_v1.errors import ConfigError
-from argilla_server.routes import api_router
 from argilla_server.security import auth
 from argilla_server.settings import settings
 from argilla_server.static_rewrite import RewriteStaticFiles
@@ -67,9 +53,7 @@ def create_server_app() -> FastAPI:
     app = FastAPI(
         title="Argilla",
         description="Argilla API",
-        # Disable default openapi configuration
-        openapi_url="/api/docs/spec.json",
-        docs_url="/api/docs" if settings.docs_enabled else None,
+        docs_url=None,
         redoc_url=None,
         version=str(argilla_version),
     )
@@ -88,7 +72,6 @@ def create_server_app() -> FastAPI:
         configure_storage,
         configure_telemetry,
         configure_middleware,
-        configure_api_exceptions,
         configure_app_security,
         configure_api_router,
         configure_app_statics,
@@ -119,26 +102,10 @@ def configure_middleware(app: FastAPI):
     app.add_middleware(BrotliMiddleware, minimum_size=512, quality=7)
 
 
-def configure_api_exceptions(api: FastAPI):
-    """Configures fastapi exception handlers"""
-    api.exception_handler(Exception)(APIErrorHandler.common_exception_handler)
-    api.exception_handler(EntityNotFoundError)(APIErrorHandler.common_exception_handler)
-    api.exception_handler(UnauthorizedError)(APIErrorHandler.common_exception_handler)
-    api.exception_handler(ForbiddenOperationError)(APIErrorHandler.common_exception_handler)
-    api.exception_handler(EntityAlreadyExistsError)(APIErrorHandler.common_exception_handler)
-    api.exception_handler(ClosedDatasetError)(APIErrorHandler.common_exception_handler)
-    api.exception_handler(ValidationError)(APIErrorHandler.common_exception_handler)
-    api.exception_handler(AssertionError)(APIErrorHandler.common_exception_handler)
-    api.exception_handler(WrongTaskError)(APIErrorHandler.common_exception_handler)
-    api.exception_handler(MissingInputParamError)(APIErrorHandler.common_exception_handler)
-    api.exception_handler(RequestValidationError)(APIErrorHandler.common_exception_handler)
-    api.exception_handler(InvalidTextSearchError)(APIErrorHandler.common_exception_handler)
-    api.exception_handler(BadRequestError)(APIErrorHandler.common_exception_handler)
-
-
 def configure_api_router(app: FastAPI):
     """Configures and set the api router to app"""
-    app.include_router(api_router, prefix="/api")
+    app.mount("/api/v1", api_v1)
+    app.mount("/api", api_v0)
 
 
 def configure_app_statics(app: FastAPI):
