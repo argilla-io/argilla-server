@@ -36,15 +36,35 @@ from argilla_server.apis.v0.handlers import (
 )
 from argilla_server.apis.v1.handlers import (
     datasets as datasets_v1,
+)
+from argilla_server.apis.v1.handlers import (
     fields as fields_v1,
+)
+from argilla_server.apis.v1.handlers import (
     metadata_properties as metadata_properties_v1,
+)
+from argilla_server.apis.v1.handlers import (
     oauth2 as oauth2_v1,
+)
+from argilla_server.apis.v1.handlers import (
     questions as questions_v1,
+)
+from argilla_server.apis.v1.handlers import (
     records as records_v1,
+)
+from argilla_server.apis.v1.handlers import (
     responses as responses_v1,
+)
+from argilla_server.apis.v1.handlers import (
     suggestions as suggestions_v1,
+)
+from argilla_server.apis.v1.handlers import (
     users as users_v1,
+)
+from argilla_server.apis.v1.handlers import (
     vectors_settings as vectors_settings_v1,
+)
+from argilla_server.apis.v1.handlers import (
     workspaces as workspaces_v1,
 )
 from argilla_server.errors import APIErrorHandler
