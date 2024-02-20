@@ -413,6 +413,9 @@ class BaseElasticAndOpenSearchEngine(SearchEngine):
             # Wrapping filter in a list to use easily on each engine implementation
             query_filters = [self.build_elasticsearch_filter(filter)]
 
+        if query:
+            query_filters.append(self._build_text_query(dataset, text=query))
+
         index = await self._get_dataset_index(dataset)
         response = await self._request_similarity_search(
             index=index,
