@@ -19,7 +19,7 @@ These are the section headers that we use:
 ## [1.25.0-dev](https://github.com/argilla-io/argilla-server/compare/v1.24.0...v1.25.0)
 
 >[!IMPORTANT]
-> This version include changes related to the search index. So, a reindex is needed. 
+> This version include changes related to the search index. So, a reindex is needed.
 > Visit the [docs](https://docs.argilla.io/en/latest/getting_started/installation/configurations/database_migrations.html#feedback-datasets) for more info.
 
 ### Changed
@@ -29,7 +29,7 @@ These are the section headers that we use:
 ### Fixed
 
 - Max size parameter for getting the metadata property metrics is currently set as 2^14(=12) instead of 2 ** 14 ([#30](https://github.com/argilla-io/argilla-server/pull/30)) ([v1.24-fix](https://github.com/bharath97-git/argilla-server/releases/tag/v1.24-fix))
-- Fixed error when combining similarity search with text search. ([#32](https://github.com/argilla-io/argilla-server/pull/32)) 
+- Fixed error when combining similarity search with text search. ([#32](https://github.com/argilla-io/argilla-server/pull/32))
 
 ## [1.24.0](https://github.com/argilla-io/argilla-server/releases/tag/v1.24.0)
 
