@@ -273,7 +273,7 @@ class BaseElasticAndOpenSearchEngine(SearchEngine):
     number_of_replicas: int
 
     # See https://www.elastic.co/guide/en/elasticsearch/reference/current/search-settings.html#search-settings-max-buckets
-    max_terms_size: int = 2 ^ 14
+    max_terms_size: int = 2 ** 14
     # See https://www.elastic.co/guide/en/elasticsearch/reference/5.1/index-modules.html#dynamic-index-settings
     max_result_window: int = 500000
 
