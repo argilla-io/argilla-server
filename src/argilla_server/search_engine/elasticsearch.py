@@ -58,17 +58,11 @@ class ElasticSearchEngine(BaseElasticAndOpenSearchEngine):
             config=config,
             number_of_shards=settings.es_records_index_shards,
             number_of_replicas=settings.es_records_index_replicas,
+            default_total_fields_limit=settings.es_mapping_total_fields_limit,
         )
 
     async def close(self):
         await self.client.close()
-
-    def _configure_index_settings(self) -> Dict[str, Any]:
-        return {
-            "max_result_window": self.max_result_window,
-            "number_of_shards": self.number_of_shards,
-            "number_of_replicas": self.number_of_replicas,
-        }
 
     def _mapping_for_vector_settings(self, vector_settings: VectorSettings) -> dict:
         return {

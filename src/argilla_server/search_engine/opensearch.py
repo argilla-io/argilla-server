@@ -50,18 +50,15 @@ class OpenSearchEngine(BaseElasticAndOpenSearchEngine):
             config=config,
             number_of_shards=settings.es_records_index_shards,
             number_of_replicas=settings.es_records_index_replicas,
+            default_total_fields_limit=settings.es_mapping_total_fields_limit,
         )
 
     async def close(self):
         await self.client.close()
 
     def _configure_index_settings(self):
-        return {
-            "index.knn": False,
-            "max_result_window": self.max_result_window,
-            "number_of_shards": self.number_of_shards,
-            "number_of_replicas": self.number_of_replicas,
-        }
+        base_settings = super()._configure_index_settings()
+        return {**base_settings , "index.knn": False}
 
     def _mapping_for_vector_settings(self, vector_settings: VectorSettings) -> dict:
         return {
