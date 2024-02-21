@@ -20,7 +20,7 @@ These are the section headers that we use:
 
 >[!IMPORTANT]
 > This version include changes related to the search index. So, a reindex is needed.
-> Visit the [docs](https://docs.argilla.io/en/latest/getting_started/installation/configurations/database_migrations.html#feedback-datasets) for more info
+> Visit the [docs](https://docs.argilla.io/en/latest/getting_started/installation/configurations/database_migrations.html#feedback-datasets) for more info.
 
 ### Added
 
