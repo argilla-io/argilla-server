@@ -81,6 +81,9 @@ build-backend = "pdm.backend"
 [tool.pdm]
 distribution = true
 
+[tool.pdm.build]
+excludes = [".env.dev", ".env.test"]
+
 [tool.pdm.version]
 source = "file"
 path = "src/argilla_server/_version.py"
@@ -162,5 +165,11 @@ line-length = 120
 line-length = 120
 
 [tool.pdm.scripts]
+_.env_file = ".env.dev"
+cli = { cmd = "python -m argilla_server.cli" }
+server = { cmd = "uvicorn argilla_server:app --reload" }
+migrate = { cmd = "alembic upgrade head" }
+test = { cmd = "pytest", env_file = ".env.test" }
+
 build-server-image = { shell = "cp -R dist docker/server && docker build -t argilla/argilla-server:local docker/server" }
 build-quickstart-image = { shell = "docker build --build-arg ARGILLA_VERSION=local -t argilla/argilla-quickstart:local docker/quickstart" }

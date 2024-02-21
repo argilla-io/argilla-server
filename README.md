@@ -32,22 +32,32 @@ git checkout v1.22.0
 > [!NOTE]
 > You should see some changes on the `argilla-server` root folder where the subproject commit is now changed to the one from the tag version. Feel free to commit these changes.
 
-## Run database migrations
+## Development environment
+
+By default all commands executed with `pdm run` will get environment variables from `.env.dev` except command `pdm test` that will overwrite some of them using values coming from `.env.test` file.
+
+These environment variables can be overrided if necessary so feel free to defined your own ones locally.
+
+### Run cli
 
 ```sh
-pdm run alembic -c src/argilla_server/alembic.ini upgrade head
+pdm cli
 ```
 
-## Run tests
+### Run database migrations
+
+By default a SQLite located at `~/.argilla/argilla.db` will be used. You can create the database and run migrations with the following custom PDM command:
 
 ```sh
-pdm run pytest
+pdm migrate
 ```
 
-## Run cli
+### Run tests
+
+A SQLite database located at `~/.argilla/argilla-test.db` will be automatically created to run tests. You can run the entire test suite using the following custom PDM command:
 
 ```sh
-pdm run python -m argilla_server.cli
+pdm test
 ```
 
 ## Run development server
@@ -71,5 +81,5 @@ After running the previous script you should have a folder at `src/argilla_serve
 ### Run uvicorn development server
 
 ```sh
-pdm run uvicorn argilla_server:app --reload
+pdm server
 ```
