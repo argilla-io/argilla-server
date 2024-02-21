@@ -14,8 +14,10 @@
 
 from typing import Any, Optional, Type, Union
 
-import pydantic
+from fastapi.exceptions import RequestValidationError
 from starlette import status
+
+import argilla_server.pydantic_v1 as pydantic
 
 
 class ServerError(Exception):
@@ -59,7 +61,7 @@ class ValidationError(ServerError):
 
     HTTP_STATUS = status.HTTP_422_UNPROCESSABLE_ENTITY
 
-    def __init__(self, error: pydantic.ValidationError):
+    def __init__(self, error: Union[pydantic.ValidationError, RequestValidationError]):
         self.errors = error.errors()
 
 
