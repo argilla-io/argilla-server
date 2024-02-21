@@ -729,7 +729,7 @@ class BaseElasticAndOpenSearchEngine(SearchEngine):
                 }
             },
             *[
-            {
+                {
                     f"{question.name}_responses": {
                         "path_match": f"responses.*.values.{question.name}",
                         "mapping": es_mapping_for_question(question),

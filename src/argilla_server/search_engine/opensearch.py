@@ -58,7 +58,7 @@ class OpenSearchEngine(BaseElasticAndOpenSearchEngine):
 
     def _configure_index_settings(self):
         base_settings = super()._configure_index_settings()
-        return {**base_settings , "index.knn": False}
+        return {**base_settings, "index.knn": False}
 
     def _mapping_for_vector_settings(self, vector_settings: VectorSettings) -> dict:
         return {
