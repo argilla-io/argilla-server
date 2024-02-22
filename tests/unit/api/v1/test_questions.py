@@ -286,6 +286,19 @@ async def test_update_question_with_invalid_description(
                 }
             },
         ),
+        (
+            LabelSelectionQuestionFactory,
+            {
+                "settings": {
+                    "type": "label_selection",
+                    "options": [
+                        {"value": "undefined-option-01", "text": "Undefined option"},
+                        {"value": "undefined-option-02", "text": "Undefined option"},
+                        {"value": "undefined-option-03", "text": "Undefined option"},
+                    ],
+                }
+            },
+        ),
         (MultiLabelSelectionQuestionFactory, {"settings": {"type": "multi_label_selection", "visible_options": -5}}),
         (
             MultiLabelSelectionQuestionFactory,
@@ -293,6 +306,19 @@ async def test_update_question_with_invalid_description(
                 "settings": {
                     "type": "multi_label_selection",
                     "options": [{"value": "undefined-option", "text": "Undefined option"}],
+                }
+            },
+        ),
+        (
+            MultiLabelSelectionQuestionFactory,
+            {
+                "settings": {
+                    "type": "multi_label_selection",
+                    "options": [
+                        {"value": "undefined-option-01", "text": "Undefined option"},
+                        {"value": "undefined-option-02", "text": "Undefined option"},
+                        {"value": "undefined-option-03", "text": "Undefined option"},
+                    ],
                 }
             },
         ),
