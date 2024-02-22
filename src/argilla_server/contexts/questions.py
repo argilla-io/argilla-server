@@ -36,13 +36,13 @@ class NotFoundError(Exception):
     pass
 
 
-class UpdateValidationError(Exception):
+class InvalidQuestionSettings(Exception):
     pass
 
 
 def _validate_settings_type(settings: QuestionSettings, settings_update: QuestionSettingsUpdate):
     if settings.type != settings_update.type:
-        raise UpdateValidationError(
+        raise InvalidQuestionSettings(
             f"Question type cannot be changed. Expected '{settings.type}' but got '{settings_update.type}'"
         )
 
@@ -52,7 +52,7 @@ def _validate_label_options(settings: LabelSelectionQuestionSettings, settings_u
         return
 
     if len(settings.options) != len(settings_update.options):
-        raise UpdateValidationError(
+        raise InvalidQuestionSettings(
             "The number of options cannot be modified. "
             f"Expected {len(settings.options)} but got {len(settings_update.options)}"
         )
@@ -66,7 +66,7 @@ def _validate_label_options(settings: LabelSelectionQuestionSettings, settings_u
             unexpected_options.append(update_option.value)
 
     if unexpected_options:
-        raise UpdateValidationError(
+        raise InvalidQuestionSettings(
             f"The option values cannot be modified. " f"Found unexpected option values: {unexpected_options!r}"
         )
 

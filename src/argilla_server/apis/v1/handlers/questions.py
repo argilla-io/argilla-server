@@ -50,7 +50,7 @@ async def update_question(
         return await questions.update_question(db, question_id, question_update, current_user)
     except questions.NotFoundError as err:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Question with id `{question_id}` not found")
-    except questions.UpdateValidationError as err:
+    except questions.InvalidQuestionSettings as err:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(err))
 
 
