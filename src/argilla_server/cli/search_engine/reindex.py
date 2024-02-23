@@ -22,10 +22,10 @@ from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from argilla_server.cli.rich import echo_in_panel
 from argilla_server.database import AsyncSessionLocal
 from argilla_server.models import Dataset, Record, Response, Suggestion
 from argilla_server.search_engine import SearchEngine, get_search_engine
-from argilla_server.cli.rich import echo_in_panel
 
 
 class Reindexer:
