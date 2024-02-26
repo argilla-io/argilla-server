@@ -119,6 +119,7 @@ class RatingQuestionSettingsUpdate(UpdateSchema):
 class LabelSelectionSettingsUpdate(UpdateSchema):
     type: Literal[QuestionType.label_selection]
     visible_options: Optional[PositiveInt]
+    options: Optional[conlist(item_type=ValueTextQuestionSettingsOption)]
 
 
 class MultiLabelSelectionQuestionSettingsUpdate(LabelSelectionSettingsUpdate):

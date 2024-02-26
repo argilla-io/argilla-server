@@ -338,11 +338,6 @@ async def update_metadata_property(
     )
 
 
-async def update_question(db: "AsyncSession", question: Question, question_update: "QuestionUpdate") -> Question:
-    params = question_update.dict(exclude_unset=True)
-    return await question.update(db, **params)
-
-
 async def delete_question(db: "AsyncSession", question: Question) -> Question:
     if question.dataset.is_ready:
         raise ValueError("Questions cannot be deleted for a published dataset")

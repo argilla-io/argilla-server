@@ -22,6 +22,10 @@ These are the section headers that we use:
 > This version include changes related to the search index. So, a reindex is needed.
 > Visit the [docs](https://docs.argilla.io/en/latest/getting_started/installation/configurations/database_migrations.html#feedback-datasets) for more info.
 
+### Added
+
+- Added support for update options for label and multi-label selection questions. ([#34](https://github.com/argilla-io/argilla-server/pull/34))
+
 ### Changed
 
 - Changed indexing responses for search to use user `id` instead of `username`. **[Reindex needed](https://docs.argilla.io/en/latest/getting_started/installation/configurations/database_migrations.html#feedback-datasets)** ([#26](https://github.com/argilla-io/argilla-server/pull/26))

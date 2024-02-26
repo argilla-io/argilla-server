@@ -107,6 +107,29 @@ if TYPE_CHECKING:
             },
         ),
         (
+            MultiLabelSelectionQuestionFactory,
+            {
+                "settings": {
+                    "type": "multi_label_selection",
+                    "visible_options": None,
+                    "options": [
+                        {"value": "option3", "text": "Option 3", "description": None},
+                        {"value": "option1", "text": "Option 1", "description": None},
+                        {"value": "option2", "text": "Option 2", "description": None},
+                    ],
+                }
+            },
+            {
+                "type": "multi_label_selection",
+                "visible_options": None,
+                "options": [
+                    {"value": "option3", "text": "Option 3", "description": None},
+                    {"value": "option1", "text": "Option 1", "description": None},
+                    {"value": "option2", "text": "Option 2", "description": None},
+                ],
+            },
+        ),
+        (
             LabelSelectionQuestionFactory,
             {"settings": {"type": "label_selection", "visible_options": None}},
             {
@@ -117,6 +140,29 @@ if TYPE_CHECKING:
                     {"value": "option3", "text": "Option 3", "description": None},
                 ],
                 "visible_options": None,
+            },
+        ),
+        (
+            LabelSelectionQuestionFactory,
+            {
+                "settings": {
+                    "type": "label_selection",
+                    "visible_options": None,
+                    "options": [
+                        {"value": "option3", "text": "Option 3", "description": None},
+                        {"value": "option2", "text": "Option 2", "description": None},
+                        {"value": "option1", "text": "Option 1", "description": None},
+                    ],
+                }
+            },
+            {
+                "type": "label_selection",
+                "visible_options": None,
+                "options": [
+                    {"value": "option3", "text": "Option 3", "description": None},
+                    {"value": "option2", "text": "Option 2", "description": None},
+                    {"value": "option1", "text": "Option 1", "description": None},
+                ],
             },
         ),
         (
@@ -231,7 +277,51 @@ async def test_update_question_with_invalid_description(
         (TextQuestionFactory, {"settings": {"type": "text", "use_markdown": None}}),
         (TextQuestionFactory, {"title": "New Title", "settings": {"type": "label_selection"}}),
         (LabelSelectionQuestionFactory, {"settings": {"type": "label_selection", "visible_options": -5}}),
+        (
+            LabelSelectionQuestionFactory,
+            {
+                "settings": {
+                    "type": "label_selection",
+                    "options": [{"value": "undefined-option", "text": "Undefined option"}],
+                }
+            },
+        ),
+        (
+            LabelSelectionQuestionFactory,
+            {
+                "settings": {
+                    "type": "label_selection",
+                    "options": [
+                        {"value": "undefined-option-01", "text": "Undefined option"},
+                        {"value": "undefined-option-02", "text": "Undefined option"},
+                        {"value": "undefined-option-03", "text": "Undefined option"},
+                    ],
+                }
+            },
+        ),
         (MultiLabelSelectionQuestionFactory, {"settings": {"type": "multi_label_selection", "visible_options": -5}}),
+        (
+            MultiLabelSelectionQuestionFactory,
+            {
+                "settings": {
+                    "type": "multi_label_selection",
+                    "options": [{"value": "undefined-option", "text": "Undefined option"}],
+                }
+            },
+        ),
+        (
+            MultiLabelSelectionQuestionFactory,
+            {
+                "settings": {
+                    "type": "multi_label_selection",
+                    "options": [
+                        {"value": "undefined-option-01", "text": "Undefined option"},
+                        {"value": "undefined-option-02", "text": "Undefined option"},
+                        {"value": "undefined-option-03", "text": "Undefined option"},
+                    ],
+                }
+            },
+        ),
     ],
 )
 @pytest.mark.asyncio

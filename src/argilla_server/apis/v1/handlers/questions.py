@@ -17,7 +17,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Security, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from argilla_server.contexts import datasets
+from argilla_server.contexts import datasets, questions
 from argilla_server.database import get_async_db
 from argilla_server.models import Question, User
 from argilla_server.policies import QuestionPolicyV1, authorize
@@ -46,17 +46,12 @@ async def update_question(
     question_update: QuestionUpdate,
     current_user: User = Security(auth.get_current_user),
 ):
-    question = await _get_question(db, question_id)
-
-    await authorize(current_user, QuestionPolicyV1.update(question))
-
-    if question_update.settings and question_update.settings.type != question.settings["type"]:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=f"Question type cannot be changed. Expected '{question.settings['type']}' but got '{question_update.settings.type}'",
-        )
-
-    return await datasets.update_question(db, question, question_update)
+    try:
+        return await questions.update_question(db, question_id, question_update, current_user)
+    except questions.NotFoundError as err:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Question with id `{question_id}` not found")
+    except questions.InvalidQuestionSettings as err:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(err))
 
 
 @router.delete("/questions/{question_id}", response_model=QuestionSchema)
