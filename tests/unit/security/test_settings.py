@@ -58,5 +58,3 @@ def test_configure_oauth_cfg():
         settings = Settings()
 
         assert settings.oauth_cfg == oauth_cfg
-
-
