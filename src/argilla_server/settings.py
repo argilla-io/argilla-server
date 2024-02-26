@@ -90,6 +90,8 @@ class Settings(BaseSettings):
     es_records_index_shards: int = 1
     es_records_index_replicas: int = 0
 
+    es_mapping_total_fields_limit: int = 2000
+
     search_engine: str = "elasticsearch"
 
     vectors_fields_limit: int = Field(

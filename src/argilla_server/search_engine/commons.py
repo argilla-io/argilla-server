@@ -165,17 +165,13 @@ def es_mapping_for_question(question: Question) -> dict:
     if question_type == QuestionType.rating:
         # See https://www.elastic.co/guide/en/elasticsearch/reference/current/number.html
         return {"type": "integer"}
-    elif question_type == QuestionType.text:
-        # TODO: Review mapping for label selection. Could make sense to use `keyword` mapping instead.
-        #  See https://www.elastic.co/guide/en/elasticsearch/reference/current/keyword.html
-        #  See https://www.elastic.co/guide/en/elasticsearch/reference/current/text.html
-        return {"type": "text", "index": False}
     elif question_type in [QuestionType.label_selection, QuestionType.multi_label_selection]:
         return {"type": "keyword"}
-    elif question_type == QuestionType.ranking:
-        return {"type": "nested", "properties": {"rank": {"type": "integer"}, "value": {"type": "keyword"}}}
     else:
-        raise Exception(f"ElasticSearch mappings for Question of type {question_type} cannot be generated")
+        # The rest of the question types will be ignored for now. Once we have a filters feat we can design
+        # the proper mappings.
+        # See https://www.elastic.co/guide/en/elasticsearch/reference/current/enabled.html#enabled
+        return {"type": "object", "enabled": False}
 
 
 def es_mapping_for_question_suggestion(question: Question) -> dict:
@@ -280,6 +276,8 @@ class BaseElasticAndOpenSearchEngine(SearchEngine):
     max_terms_size: int = 2**14
     # See https://www.elastic.co/guide/en/elasticsearch/reference/5.1/index-modules.html#dynamic-index-settings
     max_result_window: int = 500000
+    # See https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-settings-limit.html#mapping-settings-limit
+    default_total_fields_limit: int = 2000
 
     async def create_index(self, dataset: Dataset):
         settings = self._configure_index_settings()
@@ -525,7 +523,7 @@ class BaseElasticAndOpenSearchEngine(SearchEngine):
         }
 
     @staticmethod
-    def _map_record_suggestions_to_es(suggestions: List[Suggestion]) -> Dict[str, str]:
+    def _map_record_suggestions_to_es(suggestions: List[Suggestion]) -> dict:
         return {
             suggestion.question.name: {
                 "type": suggestion.type,
@@ -786,10 +784,15 @@ class BaseElasticAndOpenSearchEngine(SearchEngine):
         response = await self._index_search_request(index_name, query=query, aggregations=stats_agg, size=0)
         return response["aggregations"][aggregation_name]
 
-    @abstractmethod
     def _configure_index_settings(self) -> dict:
         """Defines settings configuration for the index. Depending on which backend is used, this may differ"""
-        pass
+        return {
+            # See https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-settings-limit.html#mapping-settings-limit
+            "index.mapping.total_fields.limit": self.default_total_fields_limit,
+            "max_result_window": self.max_result_window,
+            "number_of_shards": self.number_of_shards,
+            "number_of_replicas": self.number_of_replicas,
+        }
 
     @abstractmethod
     def _mapping_for_vector_settings(self, vector_settings: VectorSettings) -> dict:
