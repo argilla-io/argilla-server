@@ -37,6 +37,11 @@ python -m argilla_server database users create \
 	--role annotator \
 	--workspace "$ARGILLA_WORKSPACE"
 
+if [ "$REINDEX_DATASETS" == "true" ] || [ "$REINDEX_DATASETS" == "1" ]; then
+  echo "Reindexing existing datasets"
+  python -m argilla_server search-engine reindex
+fi
+
 # Load data
 python load_data.py "$OWNER_API_KEY" "$LOAD_DATASETS" &
 

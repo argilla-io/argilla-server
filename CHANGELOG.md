@@ -26,6 +26,7 @@ These are the section headers that we use:
 
 - Added `ARGILLA_ES_MAPPING_TOTAL_FIELDS_LIMIT` to work with large dataset annotation flows. ([#31](https://github.com/argilla-io/argilla-server/pull/31))
 - Added support for update options for label and multi-label selection questions. ([#34](https://github.com/argilla-io/argilla-server/pull/34))
+- Added `REINDEX_DATASETS` quickstart environment variable to reindex datasets and records into the search engine. ([#39](https://github.com/argilla-io/argilla-server/pull/39))
 
 ### Changed
 
