@@ -25,6 +25,7 @@ These are the section headers that we use:
 ### Added
 
 - Added `ARGILLA_ES_MAPPING_TOTAL_FIELDS_LIMIT` to work with large dataset annotation flows. ([#31](https://github.com/argilla-io/argilla-server/pull/31))
+- Added support for update options for label and multi-label selection questions. ([#34](https://github.com/argilla-io/argilla-server/pull/34))
 
 ### Changed
 

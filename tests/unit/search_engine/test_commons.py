@@ -776,13 +776,12 @@ class TestBaseElasticAndOpenSearchEngine:
         offset: int,
         limit: int,
     ):
+        all_results = await search_engine.search(dataset_for_pagination, query="documents", offset=0, limit=100)
         results = await search_engine.search(dataset_for_pagination, query="documents", offset=offset, limit=limit)
 
         assert len(results.items) == min(len(dataset_for_pagination.records) - offset, limit)
         assert results.total == 100
-
-        records = sorted(dataset_for_pagination.records, key=lambda r: r.id)
-        assert [record.id for record in records[offset : offset + limit]] == [item.record_id for item in results.items]
+        assert all_results.items[offset : offset + limit] == results.items
 
     @pytest.mark.parametrize(
         ("sort_by"),

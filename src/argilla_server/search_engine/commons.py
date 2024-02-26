@@ -221,7 +221,7 @@ def _unify_metadata_filters_with_filter(metadata_filters: List[MetadataFilter], 
 
 # This function will be moved once the response status filter is removed from search and similarity_search methods
 def _unify_user_response_status_filter_with_filter(
-    user_response_status_filter: UserResponseStatusFilter, filter: Optional[Filter]
+    user_response_status_filter: UserResponseStatusFilter, filter: Optional[Filter] = None
 ) -> Filter:
     scope = ResponseFilterScope(user=user_response_status_filter.user, property="status")
     response_filter = TermsFilter(scope=scope, values=[status.value for status in user_response_status_filter.statuses])
@@ -247,6 +247,10 @@ def _unify_sort_by_with_order(sort_by: List[SortBy], order: List[Order]) -> List
         new_order.append(Order(scope=scope, order=sort.order))
 
     return new_order
+
+
+def is_response_status_scope(scope: FilterScope) -> bool:
+    return isinstance(scope, ResponseFilterScope) and scope.property == "status" and scope.question is None
 
 
 @dataclasses.dataclass
@@ -427,18 +431,6 @@ class BaseElasticAndOpenSearchEngine(SearchEngine):
         return await self._process_search_response(response, threshold)
 
     def build_elasticsearch_filter(self, filter: Filter) -> Dict[str, Any]:
-        def is_response_status_scope(scope: FilterScope) -> bool:
-            if not isinstance(scope, ResponseFilterScope):
-                return False
-
-            if not scope.property == "status":
-                return False
-
-            if scope.question is not None:
-                return False
-
-            return True
-
         if isinstance(filter, AndFilter):
             filters = [self.build_elasticsearch_filter(f) for f in filter.filters]
             return es_bool_query(should=filters, minimum_should_match=len(filters))
@@ -578,6 +570,7 @@ class BaseElasticAndOpenSearchEngine(SearchEngine):
         # END TODO
         offset: int = 0,
         limit: int = 100,
+        user_id: Optional[str] = None,
     ) -> SearchResponses:
         # See https://www.elastic.co/guide/en/elasticsearch/reference/current/search-search.html
 
@@ -598,6 +591,18 @@ class BaseElasticAndOpenSearchEngine(SearchEngine):
             bool_query["filter"] = self.build_elasticsearch_filter(filter)
 
         es_query = {"bool": bool_query}
+
+        if user_id:
+            # See https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-function-score-query.html#function-random
+            # If an `user_id` is provided we use it as seed for the `random_score` function to sort the records for the
+            # user in a "random" and different way for each user, but still deterministic for the same user.
+            es_query = {
+                "function_score": {
+                    "query": es_query,
+                    "functions": [{"random_score": {"seed": str(user_id), "field": "_seq_no"}}],
+                }
+            }
+
         index = await self._get_dataset_index(dataset)
 
         es_sort = self.build_elasticsearch_sort(sort) if sort else None
