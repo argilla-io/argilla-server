@@ -32,6 +32,12 @@ These are the section headers that we use:
 - Changed indexing responses for search to use user `id` instead of `username`. **[Reindex needed](https://docs.argilla.io/en/latest/getting_started/installation/configurations/database_migrations.html#feedback-datasets)** ([#26](https://github.com/argilla-io/argilla-server/pull/26))
 - Changed search index mappings definition to optimize the number of fields. **[Reindex needed](https://docs.argilla.io/en/latest/getting_started/installation/configurations/database_migrations.html#feedback-datasets)** ([#31](https://github.com/argilla-io/argilla-server/pull/31))
 
+### Removed
+
+- Removed `ARGILLA_LOCAL_AUTH_TOKEN_EXPIRATION_IN_MINUTES` environment variable. ([#38](https://github.com/argilla-io/argilla-server/pull/38))
+- Removed `ARGILLA_LOCAL_AUTH_ALGORITHM` environment variable. ([#38](https://github.com/argilla-io/argilla-server/pull/38))
+- Removed `ARGILLA_LOCAL_AUTH_SECRET_KEY` environment variable. ([#38](https://github.com/argilla-io/argilla-server/pull/38))
+
 ### Fixed
 
 - Max size parameter for getting the metadata property metrics is currently set as 2^14(=12) instead of 2 ** 14 ([#30](https://github.com/argilla-io/argilla-server/pull/30)) ([v1.24-fix](https://github.com/bharath97-git/argilla-server/releases/tag/v1.24-fix))
