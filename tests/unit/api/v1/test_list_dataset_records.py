@@ -1231,7 +1231,8 @@ class TestSuiteListDatasetRecords:
             user_response_status_filter=None,
             offset=0,
             limit=LIST_DATASET_RECORDS_LIMIT_DEFAULT,
-            sort_by=[SortBy(field=RecordSortField.inserted_at)],
+            sort_by=None,
+            user_id=owner.id,
         )
 
     @pytest.mark.skip(reason="Factory integration with search engine")
@@ -1344,6 +1345,7 @@ class TestSuiteListDatasetRecords:
             offset=0,
             limit=LIST_DATASET_RECORDS_LIMIT_DEFAULT,
             sort_by=expected_sorts_by,
+            user_id=owner.id,
         )
 
     async def test_list_current_user_dataset_records_with_sort_by_with_wrong_sort_order_value(

@@ -134,7 +134,7 @@ class ElasticSearchEngine(BaseElasticAndOpenSearchEngine):
         query: dict,
         size: Optional[int] = None,
         from_: Optional[int] = None,
-        sort: str = None,
+        sort: Optional[str] = None,
         aggregations: Optional[dict] = None,
     ) -> dict:
         return await self.client.search(
@@ -144,7 +144,7 @@ class ElasticSearchEngine(BaseElasticAndOpenSearchEngine):
             size=size,
             source=False,
             aggregations=aggregations,
-            sort=sort or "_score:desc,id:asc",
+            sort=sort,
             track_total_hits=True,
         )
 

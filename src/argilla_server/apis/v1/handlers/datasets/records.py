@@ -261,6 +261,9 @@ async def _get_search_responses(
             "sort_by": sort_by,
         }
 
+        if user is not None:
+            search_params["user_id"] = user.id
+
         if filters:
             search_params["filter"] = _to_search_engine_filter(filters, user=user)
         if sort:
@@ -420,7 +423,7 @@ async def list_current_user_dataset_records(
         user=current_user,
         response_statuses=response_statuses,
         include=include,
-        sort_by_query_param=sort_by_query_param or LIST_DATASET_RECORDS_DEFAULT_SORT_BY,
+        sort_by_query_param=sort_by_query_param,
     )
 
     return Records(items=records, total=total)
