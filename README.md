@@ -4,7 +4,7 @@
   Argilla-Server
   <br>
 </h1>
-<h3 align="center">The repository for the FastAPI backend Argilla server.</h2>
+<h3 align="center">The repository for the Python native FastAPI server for Argilla backend.</h2>
 
 
 <p align="center">
@@ -36,7 +36,7 @@ Argilla is a **collaboration platform for AI engineers and domain experts** that
 
 If you just want to get started, we recommend taking a look at our [main repository](https://github.com/argilla-io/argilla) or our [documentation](https://docs.argilla.io/).
 
-If you are a developer or want to understand what is going on under the hood, please keep reading the documentation below.
+Are you a contributor or do you want to understand what is going on under the hood, please keep reading the documentation below.
 
 ## Clone repository
 
