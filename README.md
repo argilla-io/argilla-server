@@ -1,6 +1,42 @@
-# argilla-server
+<h1 align="center">
+  <a href=""><img src="https://github.com/dvsrepo/imgs/raw/main/rg.svg" alt="Argilla" width="150"></a>
+  <br>
+  Argilla-Server
+  <br>
+</h1>
+<h3 align="center">The repository for the FastAPI backend Argilla server.</h2>
 
-The repository for backend argilla server.
+
+<p align="center">
+<a  href="https://pypi.org/project/argilla-server/">
+<img alt="CI" src="https://img.shields.io/pypi/v/argilla.svg?style=flat-round&logo=pypi&logoColor=white">
+</a>
+<img alt="Codecov" src="https://codecov.io/gh/argilla-io/argilla-server/branch/main/graph/badge.svg?token=VDVR29VOMG"/>
+<a href="https://pepy.tech/project/argilla-server">
+<img alt="CI" src="https://static.pepy.tech/personalized-badge/argilla-server?period=month&units=international_system&left_color=grey&right_color=blue&left_text=pypi%20downloads/month">
+</a>
+<a href="https://huggingface.co/new-space?template=argilla/argilla-template-space">
+<img src="https://huggingface.co/datasets/huggingface/badges/raw/main/deploy-to-spaces-sm.svg"/>
+</a>
+</p>
+
+<p align="center">
+<a href="https://twitter.com/argilla_io">
+<img src="https://img.shields.io/badge/twitter-black?logo=x"/>
+</a>
+<a href="https://www.linkedin.com/company/argilla-io">
+<img src="https://img.shields.io/badge/linkedin-blue?logo=linkedin"/>
+</a>
+<a href="https://join.slack.com/t/rubrixworkspace/shared_invite/zt-whigkyjn-a3IUJLD7gDbTZ0rKlvcJ5g">
+<img src="https://img.shields.io/badge/slack-purple?logo=slack"/>
+</a>
+</p>
+
+Argilla is a **collaboration platform for AI engineers and domain experts** that require **high-quality outputs, full data ownership, and overall efficiency**.
+
+If you just want to get started, we recommend taking a look at our [main repository](https://github.com/argilla-io/argilla) or our [documentation](https://docs.argilla.io/).
+
+If you are a developer or want to understand what is going on under the hood, please keep reading the documentation below.
 
 ## Clone repository
 
