@@ -34,7 +34,7 @@
 
 Argilla is a **collaboration platform for AI engineers and domain experts** that require **high-quality outputs, full data ownership, and overall efficiency**.
 
-This is the server so if you want to get started, we recommend taking a look at our [main repository](https://github.com/argilla-io/argilla) or our [documentation](https://docs.argilla.io/).
+This repository only contains developer info about the backend server. If you want to get started, we recommend taking a look at our [main repository](https://github.com/argilla-io/argilla) or our [documentation](https://docs.argilla.io/).
 
 Are you a contributor or do you want to understand what is going on under the hood, please keep reading the documentation below.
 
