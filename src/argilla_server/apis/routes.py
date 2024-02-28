@@ -20,6 +20,7 @@ set the required security dependencies if api security is enabled
 
 from fastapi import FastAPI
 
+from argilla_server._version import __version__ as argilla_version
 from argilla_server.apis.v0.handlers import (
     authentication,
     datasets,
@@ -69,7 +70,6 @@ from argilla_server.apis.v1.handlers import (
 )
 from argilla_server.errors import APIErrorHandler
 from argilla_server.errors.base_errors import __ALL__
-from argilla_server._version import __version__ as argilla_version
 
 
 def create_api_v0():
