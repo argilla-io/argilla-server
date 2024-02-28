@@ -22,11 +22,10 @@ from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from argilla_server.cli.rich import echo_in_panel
 from argilla_server.database import AsyncSessionLocal
 from argilla_server.models import Dataset, Record, Response, Suggestion
 from argilla_server.search_engine import SearchEngine, get_search_engine
-
-from .rich import echo_in_panel
 
 
 class Reindexer:
@@ -97,11 +96,11 @@ class Reindexer:
 
     @classmethod
     async def count_datasets(cls, db: AsyncSession) -> int:
-        return (await db.execute(select(func.count(Dataset.id)))).scalar()
+        return (await db.execute(select(func.count(Dataset.id)))).scalar_one()
 
     @classmethod
     async def count_dataset_records(cls, db: AsyncSession, dataset: Dataset) -> int:
-        return (await db.execute(select(func.count(Record.id)).filter_by(dataset_id=dataset.id))).scalar()
+        return (await db.execute(select(func.count(Record.id)).filter_by(dataset_id=dataset.id))).scalar_one()
 
 
 async def _reindex_dataset(db: AsyncSession, search_engine: SearchEngine, progress: Progress, dataset_id: UUID) -> None:
