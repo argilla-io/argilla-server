@@ -26,8 +26,8 @@ from argilla_server.models import (
     QuestionType,
     Record,
     Response,
-    ResponseStatus,
     Suggestion,
+    User,
     Vector,
     VectorSettings,
 )
@@ -104,8 +104,12 @@ def es_ids_query(ids: List[str]) -> dict:
     return {"ids": {"values": ids}}
 
 
-def es_field_for_response_value(user: str, question: str) -> str:
-    return f"responses.{user}.values.{question}"
+def es_field_for_response_value(user: User, question: str) -> str:
+    return f"responses.{es_path_for_user(user)}.values.{question}"
+
+
+def es_field_for_response_status(user: User) -> str:
+    return f"responses.{es_path_for_user(user)}.status"
 
 
 def es_field_for_suggestion_property(question: str, property: str) -> str:
@@ -113,7 +117,7 @@ def es_field_for_suggestion_property(question: str, property: str) -> str:
 
 
 def es_field_for_vector_settings(vector_settings: VectorSettings) -> str:
-    return f"vectors.{vector_settings.id}"
+    return f"vectors.{es_path_for_vector_settings(vector_settings)}"
 
 
 def es_field_for_record_property(property: str) -> str:
@@ -161,17 +165,13 @@ def es_mapping_for_question(question: Question) -> dict:
     if question_type == QuestionType.rating:
         # See https://www.elastic.co/guide/en/elasticsearch/reference/current/number.html
         return {"type": "integer"}
-    elif question_type == QuestionType.text:
-        # TODO: Review mapping for label selection. Could make sense to use `keyword` mapping instead.
-        #  See https://www.elastic.co/guide/en/elasticsearch/reference/current/keyword.html
-        #  See https://www.elastic.co/guide/en/elasticsearch/reference/current/text.html
-        return {"type": "text", "index": False}
     elif question_type in [QuestionType.label_selection, QuestionType.multi_label_selection]:
         return {"type": "keyword"}
-    elif question_type == QuestionType.ranking:
-        return {"type": "nested", "properties": {"rank": {"type": "integer"}, "value": {"type": "keyword"}}}
     else:
-        raise Exception(f"ElasticSearch mappings for Question of type {question_type} cannot be generated")
+        # The rest of the question types will be ignored for now. Once we have a filters feat we can design
+        # the proper mappings.
+        # See https://www.elastic.co/guide/en/elasticsearch/reference/current/enabled.html#enabled
+        return {"type": "object", "enabled": False}
 
 
 def es_mapping_for_question_suggestion(question: Question) -> dict:
@@ -186,6 +186,18 @@ def es_mapping_for_question_suggestion(question: Question) -> dict:
             },
         }
     }
+
+
+def es_script_for_delete_user_response(user: User) -> str:
+    return f'ctx._source["responses"].remove("{es_path_for_user(user)}")'
+
+
+def es_path_for_user(user: User) -> str:
+    return str(user.id)
+
+
+def es_path_for_vector_settings(vector_settings: VectorSettings) -> str:
+    return str(vector_settings.id)
 
 
 # This function will be moved once the `metadata_filters` argument is removed from search and similarity_search methods
@@ -209,7 +221,7 @@ def _unify_metadata_filters_with_filter(metadata_filters: List[MetadataFilter], 
 
 # This function will be moved once the response status filter is removed from search and similarity_search methods
 def _unify_user_response_status_filter_with_filter(
-    user_response_status_filter: UserResponseStatusFilter, filter: Optional[Filter]
+    user_response_status_filter: UserResponseStatusFilter, filter: Optional[Filter] = None
 ) -> Filter:
     scope = ResponseFilterScope(user=user_response_status_filter.user, property="status")
     response_filter = TermsFilter(scope=scope, values=[status.value for status in user_response_status_filter.statuses])
@@ -237,6 +249,10 @@ def _unify_sort_by_with_order(sort_by: List[SortBy], order: List[Order]) -> List
     return new_order
 
 
+def is_response_status_scope(scope: FilterScope) -> bool:
+    return isinstance(scope, ResponseFilterScope) and scope.property == "status" and scope.question is None
+
+
 @dataclasses.dataclass
 class BaseElasticAndOpenSearchEngine(SearchEngine):
     """
@@ -257,9 +273,11 @@ class BaseElasticAndOpenSearchEngine(SearchEngine):
     number_of_replicas: int
 
     # See https://www.elastic.co/guide/en/elasticsearch/reference/current/search-settings.html#search-settings-max-buckets
-    max_terms_size: int = 2 ^ 14
+    max_terms_size: int = 2**14
     # See https://www.elastic.co/guide/en/elasticsearch/reference/5.1/index-modules.html#dynamic-index-settings
     max_result_window: int = 500000
+    # See https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-settings-limit.html#mapping-settings-limit
+    default_total_fields_limit: int = 2000
 
     async def create_index(self, dataset: Dataset):
         settings = self._configure_index_settings()
@@ -315,7 +333,7 @@ class BaseElasticAndOpenSearchEngine(SearchEngine):
         index_name = await self._get_dataset_index(record.dataset)
 
         await self._update_document_request(
-            index_name, id=record.id, body={"script": f'ctx._source["responses"].remove("{response.user.username}")'}
+            index_name, id=record.id, body={"script": es_script_for_delete_user_response(response.user)}
         )
 
     async def update_record_suggestion(self, suggestion: Suggestion):
@@ -397,6 +415,9 @@ class BaseElasticAndOpenSearchEngine(SearchEngine):
             # Wrapping filter in a list to use easily on each engine implementation
             query_filters = [self.build_elasticsearch_filter(filter)]
 
+        if query:
+            query_filters.append(self._build_text_query(dataset, text=query))
+
         index = await self._get_dataset_index(dataset)
         response = await self._request_similarity_search(
             index=index,
@@ -410,18 +431,6 @@ class BaseElasticAndOpenSearchEngine(SearchEngine):
         return await self._process_search_response(response, threshold)
 
     def build_elasticsearch_filter(self, filter: Filter) -> Dict[str, Any]:
-        def is_response_status_scope(scope: FilterScope) -> bool:
-            if not isinstance(scope, ResponseFilterScope):
-                return False
-
-            if not scope.property == "status":
-                return False
-
-            if scope.question is not None:
-                return False
-
-            return True
-
         if isinstance(filter, AndFilter):
             filters = [self.build_elasticsearch_filter(f) for f in filter.filters]
             return es_bool_query(should=filters, minimum_should_match=len(filters))
@@ -458,7 +467,7 @@ class BaseElasticAndOpenSearchEngine(SearchEngine):
         elif isinstance(scope, SuggestionFilterScope):
             return es_field_for_suggestion_property(question=scope.question, property=scope.property)
         elif isinstance(scope, ResponseFilterScope):
-            return es_field_for_response_value(scope.user.username, question=scope.question)
+            return es_field_for_response_value(scope.user, question=scope.question)
         elif isinstance(scope, RecordFilterScope):
             return es_field_for_record_property(scope.property)
         raise ValueError(f"Cannot process request for search scope {scope}")
@@ -468,7 +477,7 @@ class BaseElasticAndOpenSearchEngine(SearchEngine):
         if status_filter.user is None:
             response_field = ALL_RESPONSES_STATUSES_FIELD
         else:
-            response_field = f"responses.{status_filter.user.username}.status"
+            response_field = es_field_for_response_status(status_filter.user)
 
         filters = []
         if status_filter.has_pending_status:
@@ -506,7 +515,7 @@ class BaseElasticAndOpenSearchEngine(SearchEngine):
     @staticmethod
     def _map_record_responses_to_es(responses: List[Response]) -> Dict[str, Any]:
         return {
-            response.user.username: {
+            es_path_for_user(response.user): {
                 "values": {k: v["value"] for k, v in response.values.items()} if response.values else None,
                 "status": response.status,
             }
@@ -514,7 +523,7 @@ class BaseElasticAndOpenSearchEngine(SearchEngine):
         }
 
     @staticmethod
-    def _map_record_suggestions_to_es(suggestions: List[Suggestion]) -> Dict[str, str]:
+    def _map_record_suggestions_to_es(suggestions: List[Suggestion]) -> dict:
         return {
             suggestion.question.name: {
                 "type": suggestion.type,
@@ -527,7 +536,7 @@ class BaseElasticAndOpenSearchEngine(SearchEngine):
 
     @staticmethod
     def _map_record_vectors_to_es(vectors: List[Vector]) -> Dict[str, List[float]]:
-        return {str(vector.vector_settings.id): vector.value for vector in vectors}
+        return {es_path_for_vector_settings(vector.vector_settings): vector.value for vector in vectors}
 
     @staticmethod
     def _map_record_metadata_to_es(
@@ -561,6 +570,7 @@ class BaseElasticAndOpenSearchEngine(SearchEngine):
         # END TODO
         offset: int = 0,
         limit: int = 100,
+        user_id: Optional[str] = None,
     ) -> SearchResponses:
         # See https://www.elastic.co/guide/en/elasticsearch/reference/current/search-search.html
 
@@ -581,6 +591,18 @@ class BaseElasticAndOpenSearchEngine(SearchEngine):
             bool_query["filter"] = self.build_elasticsearch_filter(filter)
 
         es_query = {"bool": bool_query}
+
+        if user_id:
+            # See https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-function-score-query.html#function-random
+            # If an `user_id` is provided we use it as seed for the `random_score` function to sort the records for the
+            # user in a "random" and different way for each user, but still deterministic for the same user.
+            es_query = {
+                "function_score": {
+                    "query": es_query,
+                    "functions": [{"random_score": {"seed": str(user_id), "field": "_seq_no"}}],
+                }
+            }
+
         index = await self._get_dataset_index(dataset)
 
         es_sort = self.build_elasticsearch_sort(sort) if sort else None
@@ -762,10 +784,15 @@ class BaseElasticAndOpenSearchEngine(SearchEngine):
         response = await self._index_search_request(index_name, query=query, aggregations=stats_agg, size=0)
         return response["aggregations"][aggregation_name]
 
-    @abstractmethod
     def _configure_index_settings(self) -> dict:
         """Defines settings configuration for the index. Depending on which backend is used, this may differ"""
-        pass
+        return {
+            # See https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-settings-limit.html#mapping-settings-limit
+            "index.mapping.total_fields.limit": self.default_total_fields_limit,
+            "max_result_window": self.max_result_window,
+            "number_of_shards": self.number_of_shards,
+            "number_of_replicas": self.number_of_replicas,
+        }
 
     @abstractmethod
     def _mapping_for_vector_settings(self, vector_settings: VectorSettings) -> dict:

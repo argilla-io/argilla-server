@@ -91,9 +91,7 @@ async def dataset_for_pagination(opensearch: OpenSearch):
 
 @pytest_asyncio.fixture(scope="function")
 @pytest.mark.asyncio
-async def test_banking_sentiment_dataset(
-    search_engine: BaseElasticAndOpenSearchEngine, opensearch: OpenSearch
-) -> Dataset:
+async def test_banking_sentiment_dataset_non_indexed():
     text_question = await TextQuestionFactory()
     rating_question = await RatingQuestionFactory()
 
@@ -205,10 +203,22 @@ async def test_banking_sentiment_dataset(
     await refresh_records(records)
     await dataset.awaitable_attrs.records
 
-    await search_engine.create_index(dataset)
-    await search_engine.index_records(dataset, records=records)
-
     return dataset
+
+
+@pytest_asyncio.fixture(scope="function")
+@pytest.mark.asyncio
+async def test_banking_sentiment_dataset(
+    search_engine: BaseElasticAndOpenSearchEngine,
+    opensearch: OpenSearch,
+    test_banking_sentiment_dataset_non_indexed: Dataset,
+) -> Dataset:
+    records = test_banking_sentiment_dataset_non_indexed.records
+
+    await search_engine.create_index(test_banking_sentiment_dataset_non_indexed)
+    await search_engine.index_records(test_banking_sentiment_dataset_non_indexed, records=records)
+
+    return test_banking_sentiment_dataset_non_indexed
 
 
 @pytest_asyncio.fixture(scope="function")
@@ -258,14 +268,10 @@ async def refresh_records(records: List[Record]):
 def _expected_value_for_question(question: Question) -> Dict[str, Any]:
     if question.type in [QuestionType.label_selection, QuestionType.multi_label_selection]:
         return {"type": "keyword"}
-    elif question.type == QuestionType.text:
-        return {"type": "text", "index": False}
     elif question.type == QuestionType.rating:
         return {"type": "integer"}
-    elif question.type == QuestionType.ranking:
-        return {"type": "nested"}
     else:
-        return {}
+        return {"type": "object", "enabled": False}
 
 
 @pytest.mark.asyncio
@@ -294,7 +300,7 @@ class TestBaseElasticAndOpenSearchEngine:
         index_name = es_index_name_for_dataset(dataset)
         assert opensearch.indices.exists(index=index_name)
 
-        index = opensearch.indices.get(index=index_name)[index_name]
+        index = opensearch.indices.get(index=index_name, flat_settings=True)[index_name]
         assert index["mappings"] == {
             "dynamic": "strict",
             "dynamic_templates": [
@@ -315,8 +321,10 @@ class TestBaseElasticAndOpenSearchEngine:
             },
         }
 
-        assert index["settings"]["index"]["number_of_shards"] == str(search_engine.number_of_shards)
-        assert index["settings"]["index"]["number_of_replicas"] == str(search_engine.number_of_replicas)
+        assert index["settings"]["index.max_result_window"] == str(search_engine.max_result_window)
+        assert index["settings"]["index.number_of_shards"] == str(search_engine.number_of_shards)
+        assert index["settings"]["index.number_of_replicas"] == str(search_engine.number_of_replicas)
+        assert index["settings"]["index.mapping.total_fields.limit"] == str(search_engine.default_total_fields_limit)
 
     async def test_create_index_for_dataset_with_fields(
         self,
@@ -768,13 +776,12 @@ class TestBaseElasticAndOpenSearchEngine:
         offset: int,
         limit: int,
     ):
+        all_results = await search_engine.search(dataset_for_pagination, query="documents", offset=0, limit=100)
         results = await search_engine.search(dataset_for_pagination, query="documents", offset=offset, limit=limit)
 
         assert len(results.items) == min(len(dataset_for_pagination.records) - offset, limit)
         assert results.total == 100
-
-        records = sorted(dataset_for_pagination.records, key=lambda r: r.id)
-        assert [record.id for record in records[offset : offset + limit]] == [item.record_id for item in results.items]
+        assert all_results.items[offset : offset + limit] == results.items
 
     @pytest.mark.parametrize(
         ("sort_by"),
@@ -1029,7 +1036,7 @@ class TestBaseElasticAndOpenSearchEngine:
         results = opensearch.get(index=index_name, id=record.id)
 
         assert results["_source"]["responses"] == {
-            response.user.username: {
+            str(response.user.id): {
                 "values": {question.name: "test"},
                 "status": response.status.value,
             }
@@ -1039,14 +1046,79 @@ class TestBaseElasticAndOpenSearchEngine:
         assert index["mappings"]["properties"]["responses"] == {
             "dynamic": "true",
             "properties": {
-                response.user.username: {
+                str(response.user.id): {
                     "properties": {
                         "status": {"type": "keyword", "copy_to": [ALL_RESPONSES_STATUSES_FIELD]},
-                        "values": {"properties": {question.name: {"index": False, "type": "text"}}},
+                        "values": {"properties": {question.name: _expected_value_for_question(question)}},
                     }
                 }
             },
         }
+
+    @pytest.mark.parametrize("annotators_size", [20, 200, 400])
+    async def test_annotators_limits(
+        self,
+        search_engine: BaseElasticAndOpenSearchEngine,
+        opensearch: OpenSearch,
+        test_banking_sentiment_dataset_non_indexed: Dataset,
+        annotators_size: int,
+    ):
+        dataset = test_banking_sentiment_dataset_non_indexed
+        records = dataset.records
+
+        annotators = await UserFactory.create_batch(size=annotators_size)
+
+        await search_engine.create_index(dataset)
+        await search_engine.index_records(dataset, records)
+
+        record = records[0]
+        question = dataset.questions[0]
+        index_name = es_index_name_for_dataset(dataset)
+
+        for user in annotators:
+            await ResponseFactory.create(record=record, user=user, values={question.name: {"value": "test"}})
+
+        await record.awaitable_attrs.dataset
+        await record.awaitable_attrs.responses
+        await search_engine.index_records(dataset, [record])
+
+        properties = opensearch.indices.get_mapping(index=index_name)[index_name]["mappings"]["properties"]
+
+        for user in annotators:
+            assert str(user.id) in properties["responses"]["properties"]
+
+    @pytest.mark.parametrize("annotators_size", [1000, 2000, 4000])
+    async def test_annotator_limits_increasing_default_fields_limit(
+        self,
+        search_engine: BaseElasticAndOpenSearchEngine,
+        opensearch: OpenSearch,
+        test_banking_sentiment_dataset_non_indexed: Dataset,
+        annotators_size: int,
+    ):
+        dataset = test_banking_sentiment_dataset_non_indexed
+        records = dataset.records
+
+        annotators = await UserFactory.create_batch(size=annotators_size)
+
+        search_engine.default_total_fields_limit = annotators_size * 5
+        await search_engine.create_index(dataset)
+        await search_engine.index_records(dataset, records)
+
+        record = records[0]
+        question = dataset.questions[0]
+        index_name = es_index_name_for_dataset(dataset)
+
+        for user in annotators:
+            await ResponseFactory.create(record=record, user=user, values={question.name: {"value": "test"}})
+
+        await record.awaitable_attrs.dataset
+        await record.awaitable_attrs.responses
+        await search_engine.index_records(dataset, [record])
+
+        properties = opensearch.indices.get_mapping(index=index_name)[index_name]["mappings"]["properties"]
+
+        for user in annotators:
+            assert str(user.id) in properties["responses"]["properties"]
 
     async def test_delete_record_response(
         self,
@@ -1067,7 +1139,7 @@ class TestBaseElasticAndOpenSearchEngine:
 
         results = opensearch.get(index=index_name, id=record.id)
         assert results["_source"]["responses"] == {
-            response.user.username: {
+            str(response.user.id): {
                 "values": {question.name: "test"},
                 "status": response.status.value,
             }
@@ -1271,6 +1343,33 @@ class TestBaseElasticAndOpenSearchEngine:
         assert responses.total == 1
         assert responses.items[0].record_id != selected_record.id
 
+    @pytest.mark.parametrize("query, expected_results", [("payment", 5), ("nothing to find", 0)])
+    async def test_similarity_search_with_text_search(
+        self,
+        search_engine: BaseElasticAndOpenSearchEngine,
+        opensearch: OpenSearch,
+        test_banking_sentiment_dataset_with_vectors: Dataset,
+        query: str,
+        expected_results: int,
+    ):
+        records = test_banking_sentiment_dataset_with_vectors.records
+        selected_record: Record = records[0]
+        vector_settings: VectorSettings = test_banking_sentiment_dataset_with_vectors.vectors_settings[0]
+
+        responses = await search_engine.similarity_search(
+            dataset=test_banking_sentiment_dataset_with_vectors,
+            vector_settings=vector_settings,
+            record=selected_record,
+            query=TextQuery(q=query),
+        )
+
+        assert responses.total == expected_results
+
+        for response in responses.items:
+            for record in records:
+                if record.id == response.record_id:
+                    assert query in "\n".join(record.fields.values())
+
     async def _configure_record_responses(
         self,
         opensearch: OpenSearch,
@@ -1312,7 +1411,7 @@ class TestBaseElasticAndOpenSearchEngine:
         another_user = await UserFactory.create()
 
         for record in records:
-            users_responses = {f"{another_user.username}.status": status.value}
+            users_responses = {f"{another_user.id}.status": status.value}
             if user:
-                users_responses.update({f"{user.username}.status": status.value})
+                users_responses.update({f"{user.id}.status": status.value})
             opensearch.update(index_name, id=record.id, body={"doc": {"responses": users_responses}})

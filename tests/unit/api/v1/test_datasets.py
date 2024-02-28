@@ -3554,6 +3554,7 @@ class TestSuiteDatasets:
             offset=0,
             limit=LIST_DATASET_RECORDS_LIMIT_DEFAULT,
             sort_by=None,
+            user_id=owner.id,
         )
         assert response.status_code == 200
         assert response.json() == {
@@ -3686,6 +3687,7 @@ class TestSuiteDatasets:
             offset=0,
             limit=LIST_DATASET_RECORDS_LIMIT_DEFAULT,
             sort_by=None,
+            user_id=owner.id,
         )
 
     @pytest.mark.parametrize(
@@ -3815,6 +3817,7 @@ class TestSuiteDatasets:
             offset=0,
             limit=LIST_DATASET_RECORDS_LIMIT_DEFAULT,
             sort_by=expected_sorts_by,
+            user_id=owner.id,
         )
 
     async def test_search_current_user_dataset_records_with_sort_by_with_wrong_sort_order_value(
@@ -3907,7 +3910,6 @@ class TestSuiteDatasets:
         )
 
         query_json = {"query": {"text": {"q": "Hello", "field": "input"}}}
-        params = [("include", include) for include in includes]
         expected = {
             "items": [
                 {
@@ -4015,6 +4017,7 @@ class TestSuiteDatasets:
             user_response_status_filter=None,
             offset=0,
             limit=LIST_DATASET_RECORDS_LIMIT_DEFAULT,
+            user_id=owner.id,
         )
 
     async def test_search_current_user_dataset_records_with_include_vectors(
@@ -4224,6 +4227,7 @@ class TestSuiteDatasets:
             offset=0,
             limit=LIST_DATASET_RECORDS_LIMIT_DEFAULT,
             sort_by=None,
+            user_id=owner.id,
         )
         assert response.status_code == 200
 
@@ -4456,6 +4460,7 @@ class TestSuiteDatasets:
             offset=0,
             limit=5,
             sort_by=None,
+            user_id=owner.id,
         )
         assert response.status_code == 200
         response_json = response.json()

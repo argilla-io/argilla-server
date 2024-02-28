@@ -11,19 +11,27 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-
+import logging
 from typing import Any, Dict
 
-from fastapi import HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.exception_handlers import http_exception_handler
+from fastapi.exceptions import RequestValidationError
 
 from argilla_server import telemetry
-from argilla_server.errors.adapter import exception_to_argilla_error
 from argilla_server.errors.base_errors import (
+    BadRequestError,
+    ClosedDatasetError,
     EntityAlreadyExistsError,
     EntityNotFoundError,
+    ForbiddenOperationError,
     GenericServerError,
+    InvalidTextSearchError,
+    MissingInputParamError,
     ServerError,
+    UnauthorizedError,
+    ValidationError,
+    WrongTaskError,
 )
 from argilla_server.pydantic_v1 import BaseModel
 
@@ -43,8 +51,8 @@ class ServerHTTPException(HTTPException):
 
 
 class APIErrorHandler:
-    @staticmethod
-    async def track_error(error: ServerError, request: Request):
+    @classmethod
+    async def track_error(cls, error: ServerError, request: Request):
         data = {
             "code": error.code,
             "user-agent": request.headers.get("user-agent"),
@@ -55,10 +63,48 @@ class APIErrorHandler:
 
         telemetry.get_telemetry_client().track_data(action="ServerErrorFound", data=data)
 
-    @staticmethod
-    async def common_exception_handler(request: Request, error: Exception):
+    @classmethod
+    async def common_exception_handler(cls, request: Request, error: Exception):
         """Wraps errors as custom generic error"""
-        argilla_error = exception_to_argilla_error(error)
-        await APIErrorHandler.track_error(argilla_error, request=request)
+        argilla_error = cls._exception_to_argilla_error(error)
+        await cls.track_error(argilla_error, request=request)
 
         return await http_exception_handler(request, ServerHTTPException(argilla_error))
+
+    @classmethod
+    def configure_app(cls, app: FastAPI):
+        """Configures fastapi exception handlers"""
+        for exception_type in [
+            AssertionError,
+            BadRequestError,
+            ClosedDatasetError,
+            EntityNotFoundError,
+            EntityAlreadyExistsError,
+            Exception,
+            UnauthorizedError,
+            ForbiddenOperationError,
+            InvalidTextSearchError,
+            MissingInputParamError,
+            RequestValidationError,
+            ValidationError,
+            WrongTaskError,
+        ]:
+            app.add_exception_handler(exception_type, APIErrorHandler.common_exception_handler)
+
+    @classmethod
+    def _exception_to_argilla_error(cls, error: Exception) -> ServerError:
+        if isinstance(error, ServerError):
+            return error
+
+        _LOGGER.error(error)
+        if isinstance(error, RequestValidationError):
+            return ValidationError(error)
+
+        if isinstance(error, AssertionError):
+            return BadRequestError(str(error))
+
+        # TODO: here we can extend/specify more error adapters
+        return GenericServerError(error=error)
+
+
+_LOGGER = logging.getLogger("argilla")

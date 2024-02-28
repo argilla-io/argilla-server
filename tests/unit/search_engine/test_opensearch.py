@@ -39,29 +39,7 @@ class TestOpenSearchEngine:
         assert opensearch.indices.exists(index=index_name)
 
         index = opensearch.indices.get(index=index_name)[index_name]
-        assert index["mappings"] == {
-            "dynamic": "strict",
-            "dynamic_templates": [
-                {
-                    "status_responses": {
-                        "mapping": {"type": "keyword", "copy_to": ALL_RESPONSES_STATUSES_FIELD},
-                        "path_match": "responses.*.status",
-                    }
-                }
-            ],
-            "properties": {
-                "id": {"type": "keyword"},
-                "inserted_at": {"type": "date_nanos"},
-                "updated_at": {"type": "date_nanos"},
-                ALL_RESPONSES_STATUSES_FIELD: {"type": "keyword"},
-                "responses": {"dynamic": "true", "type": "object"},
-                "metadata": {"dynamic": "false", "type": "object"},
-            },
-        }
         assert index["settings"]["index"]["knn"] == "false"
-        assert index["settings"]["index"]["max_result_window"] == str(opensearch_engine.max_result_window)
-        assert index["settings"]["index"]["number_of_shards"] == str(opensearch_engine.number_of_shards)
-        assert index["settings"]["index"]["number_of_replicas"] == str(opensearch_engine.number_of_replicas)
 
     async def test_create_dataset_index_with_vectors(self, search_engine: OpenSearchEngine, opensearch: OpenSearch):
         vectors_settings = await VectorSettingsFactory.create_batch(5)

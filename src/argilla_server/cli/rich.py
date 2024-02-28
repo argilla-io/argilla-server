@@ -14,14 +14,10 @@
 
 from typing import TYPE_CHECKING, Any
 
-from rich.console import Console
+from rich.console import Console, RenderableType
 from rich.panel import Panel
 from rich.table import Table
 
-if TYPE_CHECKING:
-    from rich.console import RenderableType
-
-# TODO: update colors after consulting it with UI expert
 _ARGILLA_BORDER_STYLE = "red"
 
 
@@ -29,11 +25,12 @@ def get_argilla_themed_table(title: str, **kwargs: Any) -> Table:
     return Table(title=title, border_style=_ARGILLA_BORDER_STYLE, **kwargs)
 
 
-def get_argilla_themed_panel(renderable: "RenderableType", title: str, success: bool = True, **kwargs: Any) -> Panel:
+def get_argilla_themed_panel(renderable: RenderableType, title: str, success: bool = True, **kwargs: Any) -> Panel:
     if success:
         title = f"[green]{title}"
+
     return Panel(renderable=renderable, border_style=_ARGILLA_BORDER_STYLE, title=title, **kwargs)
 
 
-def echo_in_panel(renderable: "RenderableType", title: str, success: bool = True, **kwargs: Any) -> None:
+def echo_in_panel(renderable: RenderableType, title: str, success: bool = True, **kwargs: Any) -> None:
     Console().print(get_argilla_themed_panel(renderable, title, success, **kwargs))
