@@ -13,4 +13,4 @@
 #  limitations under the License.
 
 # coding: utf-8
-__version__ = "1.25.0.rc0"
+__version__ = "1.25.0.rc1"
