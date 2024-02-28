@@ -16,7 +16,7 @@ These are the section headers that we use:
 
 ## [Unreleased]()
 
-## [1.25.0-dev](https://github.com/argilla-io/argilla-server/compare/v1.24.0...v1.25.0)
+## [1.25.0](https://github.com/argilla-io/argilla-server/compare/v1.24.0...v1.25.0)
 
 >[!IMPORTANT]
 > This version include changes related to the search index. So, a reindex is needed.
@@ -26,11 +26,19 @@ These are the section headers that we use:
 
 - Added `ARGILLA_ES_MAPPING_TOTAL_FIELDS_LIMIT` to work with large dataset annotation flows. ([#31](https://github.com/argilla-io/argilla-server/pull/31))
 - Added support for update options for label and multi-label selection questions. ([#34](https://github.com/argilla-io/argilla-server/pull/34))
+- Added `REINDEX_DATASETS` quickstart environment variable to reindex datasets and records into the search engine. ([#39](https://github.com/argilla-io/argilla-server/pull/39))
+- Added pseudo-random shuffling of records based on the user's `id`. ([#23](https://github.com/argilla-io/argilla-server/pull/23))
 
 ### Changed
 
 - Changed indexing responses for search to use user `id` instead of `username`. **[Reindex needed](https://docs.argilla.io/en/latest/getting_started/installation/configurations/database_migrations.html#feedback-datasets)** ([#26](https://github.com/argilla-io/argilla-server/pull/26))
 - Changed search index mappings definition to optimize the number of fields. **[Reindex needed](https://docs.argilla.io/en/latest/getting_started/installation/configurations/database_migrations.html#feedback-datasets)** ([#31](https://github.com/argilla-io/argilla-server/pull/31))
+
+### Removed
+
+- Removed `ARGILLA_LOCAL_AUTH_TOKEN_EXPIRATION_IN_MINUTES` environment variable. ([#38](https://github.com/argilla-io/argilla-server/pull/38))
+- Removed `ARGILLA_LOCAL_AUTH_ALGORITHM` environment variable. ([#38](https://github.com/argilla-io/argilla-server/pull/38))
+- Removed `ARGILLA_LOCAL_AUTH_SECRET_KEY` environment variable. ([#38](https://github.com/argilla-io/argilla-server/pull/38))
 
 ### Fixed
 
