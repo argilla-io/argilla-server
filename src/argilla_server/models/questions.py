@@ -151,6 +151,47 @@ class RankingQuestionSettings(ValidOptionCheckerMixin[str]):
             raise ValueError("This Ranking question expects a list of unique values, but duplicates were found")
 
 
+class SpanQuestionResponseValueItem(BaseModel):
+    field: str
+    label: str
+    start: int = Field(..., ge=0)
+    end: int = Field(..., ge=0)
+
+    # TODO: Add validation here so end is bigger or equal to start
+
+
+class SpanQuestionResponseValue(BaseModel):
+    # TODO: Add limit of 10.0000
+    value: List[SpanQuestionResponseValueItem]
+
+
+class SpanQuestionSettings(BaseQuestionSettings):
+    type: Literal[QuestionType.span]
+    options: List[ValueTextQuestionSettingsOption]
+
+    def check_response(self, response: ResponseValue, status: Optional[ResponseStatus] = None):
+        if not isinstance(response.value, list):
+            raise ValueError(f"This Span question expects a list of values, found {type(response.value)}")
+
+        self._validate_response_value(response)
+        self._validate_response_labels(response)
+
+    def _validate_response_value(self, response_value: ResponseValue):
+        SpanQuestionResponseValue.parse_obj(response_value)
+
+    def _validate_response_labels(self, response_value: ResponseValue):
+        labels = [option.value for option in self.options]
+
+        for value in response_value.value:
+            label = value["label"]
+
+            if not label in labels:
+                raise ValueError(
+                    f"Undefined label '{label}' for span question.\n"
+                    f"Valid labels are: {labels!r}"
+                )
+
+
 QuestionSettings = Annotated[
     Union[
         TextQuestionSettings,
@@ -158,6 +199,7 @@ QuestionSettings = Annotated[
         LabelSelectionQuestionSettings,
         MultiLabelSelectionQuestionSettings,
         RankingQuestionSettings,
+        SpanQuestionSettings,
     ],
     Field(..., discriminator="type"),
 ]

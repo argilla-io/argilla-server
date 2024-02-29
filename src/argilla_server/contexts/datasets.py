@@ -99,9 +99,12 @@ VISIBLE_FOR_ANNOTATORS_ALLOWED_ROLES = [UserRole.admin, UserRole.annotator]
 NOT_VISIBLE_FOR_ANNOTATORS_ALLOWED_ROLES = [UserRole.admin]
 
 
-async def _touch_dataset_last_activity_at(db: "AsyncSession", dataset: Dataset) -> Dataset:
-    return await db.execute(
-        sqlalchemy.update(Dataset).where(Dataset.id == dataset.id).values(last_activity_at=datetime.utcnow())
+async def _touch_dataset_last_activity_at(db: "AsyncSession", dataset: Dataset) -> None:
+    await db.execute(
+        sqlalchemy
+        .update(Dataset)
+        .where(Dataset.id == dataset.id)
+        .values(last_activity_at=datetime.utcnow())
     )
 
 
@@ -112,8 +115,9 @@ async def get_dataset_by_id(
     with_questions: bool = False,
     with_metadata_properties: bool = False,
     with_vectors_settings: bool = False,
-) -> Dataset:
+) -> Union[Dataset, None]:
     query = select(Dataset).filter_by(id=dataset_id)
+
     options = []
     if with_fields:
         options.append(selectinload(Dataset.fields))
@@ -125,7 +129,9 @@ async def get_dataset_by_id(
         options.append(selectinload(Dataset.vectors_settings))
     if options:
         query = query.options(*options)
+
     result = await db.execute(query)
+
     return result.scalar_one_or_none()
 
 
@@ -159,13 +165,11 @@ async def create_dataset(db: "AsyncSession", dataset_create: DatasetCreate):
 
 
 async def _count_required_fields_by_dataset_id(db: "AsyncSession", dataset_id: UUID) -> int:
-    result = await db.execute(select(func.count(Field.id)).filter_by(dataset_id=dataset_id, required=True))
-    return result.scalar()
+    return (await db.execute(select(func.count(Field.id)).filter_by(dataset_id=dataset_id, required=True))).scalar_one()
 
 
 async def _count_required_questions_by_dataset_id(db: "AsyncSession", dataset_id: UUID) -> int:
-    result = await db.execute(select(func.count(Question.id)).filter_by(dataset_id=dataset_id, required=True))
-    return result.scalar()
+    return (await db.execute(select(func.count(Question.id)).filter_by(dataset_id=dataset_id, required=True))).scalar_one()
 
 
 def _allowed_roles_for_metadata_property_create(metadata_property_create: MetadataPropertyCreate) -> List[UserRole]:
@@ -1022,6 +1026,7 @@ async def create_response(
             user_id=user.id,
             autocommit=False,
         )
+
         await db.flush([response])
         await _touch_dataset_last_activity_at(db, record.dataset)
         await search_engine.update_record_response(response)
