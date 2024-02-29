@@ -188,12 +188,12 @@ class SpanQuestionSettings(BaseQuestionSettings):
             raise ValueError(f"This Span question expects a list of values, found {type(response.value)}")
 
         span_question_response_value = self._parse_response_value(response)
-        self._validate_response_labels(span_question_response_value)
+        self._check_response_labels(span_question_response_value)
 
     def _parse_response_value(self, response_value: ResponseValue) -> SpanQuestionResponseValue:
         return SpanQuestionResponseValue.parse_obj(response_value)
 
-    def _validate_response_labels(self, span_question_response_value: SpanQuestionResponseValue):
+    def _check_response_labels(self, span_question_response_value: SpanQuestionResponseValue):
         labels = [option.value for option in self.options]
 
         for value_item in span_question_response_value.value:
