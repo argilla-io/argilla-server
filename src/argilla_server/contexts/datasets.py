@@ -101,10 +101,7 @@ NOT_VISIBLE_FOR_ANNOTATORS_ALLOWED_ROLES = [UserRole.admin]
 
 async def _touch_dataset_last_activity_at(db: "AsyncSession", dataset: Dataset) -> None:
     await db.execute(
-        sqlalchemy
-        .update(Dataset)
-        .where(Dataset.id == dataset.id)
-        .values(last_activity_at=datetime.utcnow())
+        sqlalchemy.update(Dataset).where(Dataset.id == dataset.id).values(last_activity_at=datetime.utcnow())
     )
 
 
@@ -169,7 +166,9 @@ async def _count_required_fields_by_dataset_id(db: "AsyncSession", dataset_id: U
 
 
 async def _count_required_questions_by_dataset_id(db: "AsyncSession", dataset_id: UUID) -> int:
-    return (await db.execute(select(func.count(Question.id)).filter_by(dataset_id=dataset_id, required=True))).scalar_one()
+    return (
+        await db.execute(select(func.count(Question.id)).filter_by(dataset_id=dataset_id, required=True))
+    ).scalar_one()
 
 
 def _allowed_roles_for_metadata_property_create(metadata_property_create: MetadataPropertyCreate) -> List[UserRole]:

@@ -1,16 +1,28 @@
+#  Copyright 2021-present, the Recognai S.L. team.
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+
+from datetime import datetime
 from uuid import UUID
-from httpx import AsyncClient
 
 import pytest
-from datetime import datetime
-
+from argilla_server.enums import QuestionType, ResponseStatusFilter
+from argilla_server.models import Response, User
+from httpx import AsyncClient
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from argilla_server.enums import QuestionType, ResponseStatusFilter
-from argilla_server.models import User, Response
-
-from tests.factories import DatasetFactory, TextQuestionFactory, SpanQuestionFactory, RecordFactory, TextFieldFactory
+from tests.factories import DatasetFactory, RecordFactory, SpanQuestionFactory, TextFieldFactory, TextQuestionFactory
 
 
 @pytest.mark.asyncio
@@ -18,7 +30,9 @@ class TestCreateRecordResponse:
     def url(self, record_id: UUID) -> str:
         return f"/api/v1/records/{record_id}/responses"
 
-    async def test_create_record_response_for_span_question(self, async_client: AsyncClient, db: AsyncSession, owner: User, owner_auth_header: dict):
+    async def test_create_record_response_for_span_question(
+        self, async_client: AsyncClient, db: AsyncSession, owner: User, owner_auth_header: dict
+    ):
         dataset = await DatasetFactory.create()
 
         await TextFieldFactory.create(name="field-a", dataset=dataset)
@@ -44,7 +58,7 @@ class TestCreateRecordResponse:
                     },
                 },
                 "status": ResponseStatusFilter.submitted,
-            }
+            },
         )
 
         assert response.status_code == 201
@@ -71,8 +85,9 @@ class TestCreateRecordResponse:
             "updated_at": datetime.fromisoformat(response_body["updated_at"]).isoformat(),
         }
 
-
-    async def test_create_record_response_for_span_question_with_invalid_value(self, async_client: AsyncClient, db: AsyncSession, owner_auth_header: dict):
+    async def test_create_record_response_for_span_question_with_invalid_value(
+        self, async_client: AsyncClient, db: AsyncSession, owner_auth_header: dict
+    ):
         dataset = await DatasetFactory.create()
 
         await TextFieldFactory.create(name="field-a", dataset=dataset)
@@ -93,13 +108,15 @@ class TestCreateRecordResponse:
                     },
                 },
                 "status": ResponseStatusFilter.submitted,
-            }
+            },
         )
 
         assert response.status_code == 422
         assert (await db.execute(select(func.count(Response.id)))).scalar() == 0
 
-    async def test_create_record_response_for_span_question_with_invalid_start(self, async_client: AsyncClient, db: AsyncSession, owner_auth_header: dict):
+    async def test_create_record_response_for_span_question_with_invalid_start(
+        self, async_client: AsyncClient, db: AsyncSession, owner_auth_header: dict
+    ):
         dataset = await DatasetFactory.create()
 
         await TextFieldFactory.create(name="field-a", dataset=dataset)
@@ -119,13 +136,15 @@ class TestCreateRecordResponse:
                     },
                 },
                 "status": ResponseStatusFilter.submitted,
-            }
+            },
         )
 
         assert response.status_code == 422
         assert (await db.execute(select(func.count(Response.id)))).scalar() == 0
 
-    async def test_create_record_response_for_span_question_with_invalid_end(self, async_client: AsyncClient, db: AsyncSession, owner_auth_header: dict):
+    async def test_create_record_response_for_span_question_with_invalid_end(
+        self, async_client: AsyncClient, db: AsyncSession, owner_auth_header: dict
+    ):
         dataset = await DatasetFactory.create()
 
         await TextFieldFactory.create(name="field-a", dataset=dataset)
@@ -145,13 +164,15 @@ class TestCreateRecordResponse:
                     },
                 },
                 "status": ResponseStatusFilter.submitted,
-            }
+            },
         )
 
         assert response.status_code == 422
         assert (await db.execute(select(func.count(Response.id)))).scalar() == 0
 
-    async def test_create_record_response_for_span_question_with_non_existent_field(self, async_client: AsyncClient, db: AsyncSession, owner_auth_header: dict):
+    async def test_create_record_response_for_span_question_with_non_existent_field(
+        self, async_client: AsyncClient, db: AsyncSession, owner_auth_header: dict
+    ):
         dataset = await DatasetFactory.create()
 
         await TextFieldFactory.create(name="field-a", dataset=dataset)
@@ -173,7 +194,7 @@ class TestCreateRecordResponse:
                     },
                 },
                 "status": ResponseStatusFilter.submitted,
-            }
+            },
         )
 
         assert response.status_code == 422
@@ -183,7 +204,9 @@ class TestCreateRecordResponse:
 
         assert (await db.execute(select(func.count(Response.id)))).scalar() == 0
 
-    async def test_create_record_response_for_span_question_with_non_existent_label(self, async_client: AsyncClient, db: AsyncSession, owner_auth_header: dict):
+    async def test_create_record_response_for_span_question_with_non_existent_label(
+        self, async_client: AsyncClient, db: AsyncSession, owner_auth_header: dict
+    ):
         dataset = await DatasetFactory.create()
 
         await TextFieldFactory.create(name="field-a", dataset=dataset)
@@ -204,7 +227,7 @@ class TestCreateRecordResponse:
                     },
                 },
                 "status": ResponseStatusFilter.submitted,
-            }
+            },
         )
 
         assert response.status_code == 422

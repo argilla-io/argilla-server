@@ -186,10 +186,7 @@ class SpanQuestionSettings(BaseQuestionSettings):
             label = value["label"]
 
             if not label in labels:
-                raise ValueError(
-                    f"Undefined label '{label}' for span question.\n"
-                    f"Valid labels are: {labels!r}"
-                )
+                raise ValueError(f"Undefined label '{label}' for span question.\n" f"Valid labels are: {labels!r}")
 
 
 QuestionSettings = Annotated[
