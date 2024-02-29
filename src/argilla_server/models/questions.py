@@ -12,15 +12,19 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from typing import Any, Generic, List, Literal, Optional, Protocol, TypeVar, Union
+from typing import Any, Dict, Generic, List, Literal, Optional, Protocol, TypeVar, Union
 
 from argilla_server.enums import QuestionType, ResponseStatus
-from argilla_server.pydantic_v1 import BaseModel, Field
+from argilla_server.pydantic_v1 import BaseModel, Field, root_validator
 
 try:
     from typing import Annotated
 except ImportError:
     from typing_extensions import Annotated
+
+
+SPAN_QUESTION_RESPONSE_VALUE_MIN_ITEMS = 1
+SPAN_QUESTION_RESPONSE_VALUE_MAX_ITEMS = 10_000
 
 
 class ResponseValue(Protocol):
@@ -157,12 +161,22 @@ class SpanQuestionResponseValueItem(BaseModel):
     start: int = Field(..., ge=0)
     end: int = Field(..., ge=0)
 
-    # TODO: Add validation here so end is bigger or equal to start
+    @root_validator(skip_on_failure=True)
+    def check_start_and_end(cls, values: Dict[str, Any]) -> Dict[str, Any]:
+        start, end = values.get("start"), values.get("end")
+
+        if start is not None and end is not None and end < start:
+            raise ValueError("'end' must have a value greater than or equal to 'start'")
+
+        return values
 
 
 class SpanQuestionResponseValue(BaseModel):
-    # TODO: Add limit of 10.0000
-    value: List[SpanQuestionResponseValueItem]
+    value: List[SpanQuestionResponseValueItem] = Field(
+        ...,
+        min_items=SPAN_QUESTION_RESPONSE_VALUE_MIN_ITEMS,
+        max_items=SPAN_QUESTION_RESPONSE_VALUE_MAX_ITEMS,
+    )
 
 
 class SpanQuestionSettings(BaseQuestionSettings):
@@ -173,20 +187,20 @@ class SpanQuestionSettings(BaseQuestionSettings):
         if not isinstance(response.value, list):
             raise ValueError(f"This Span question expects a list of values, found {type(response.value)}")
 
-        self._validate_response_value(response)
-        self._validate_response_labels(response)
+        span_question_response_value = self._parse_response_value(response)
+        self._validate_response_labels(span_question_response_value)
 
-    def _validate_response_value(self, response_value: ResponseValue):
-        SpanQuestionResponseValue.parse_obj(response_value)
+    def _parse_response_value(self, response_value: ResponseValue) -> SpanQuestionResponseValue:
+        return SpanQuestionResponseValue.parse_obj(response_value)
 
-    def _validate_response_labels(self, response_value: ResponseValue):
+    def _validate_response_labels(self, span_question_response_value: SpanQuestionResponseValue):
         labels = [option.value for option in self.options]
 
-        for value in response_value.value:
-            label = value["label"]
-
-            if not label in labels:
-                raise ValueError(f"Undefined label '{label}' for span question.\n" f"Valid labels are: {labels!r}")
+        for value_item in span_question_response_value.value:
+            if not value_item.label in labels:
+                raise ValueError(
+                    f"Undefined label '{value_item.label}' for span question.\nValid labels are: {labels!r}"
+                )
 
 
 QuestionSettings = Annotated[

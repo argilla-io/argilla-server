@@ -85,6 +85,32 @@ class TestCreateRecordResponse:
             "updated_at": datetime.fromisoformat(response_body["updated_at"]).isoformat(),
         }
 
+    async def test_create_record_response_for_span_question_with_empty_value(
+        self, async_client: AsyncClient, db: AsyncSession, owner_auth_header: dict
+    ):
+        dataset = await DatasetFactory.create()
+
+        await TextFieldFactory.create(name="field-a", dataset=dataset)
+        await SpanQuestionFactory.create(name="span-question", dataset=dataset)
+
+        record = await RecordFactory.create(dataset=dataset)
+
+        response = await async_client.post(
+            self.url(record.id),
+            headers=owner_auth_header,
+            json={
+                "values": {
+                    "span-question": {
+                        "value": [],
+                    },
+                },
+                "status": ResponseStatusFilter.submitted,
+            },
+        )
+
+        assert response.status_code == 422
+        assert (await db.execute(select(func.count(Response.id)))).scalar() == 0
+
     async def test_create_record_response_for_span_question_with_invalid_value(
         self, async_client: AsyncClient, db: AsyncSession, owner_auth_header: dict
     ):
@@ -170,6 +196,34 @@ class TestCreateRecordResponse:
         assert response.status_code == 422
         assert (await db.execute(select(func.count(Response.id)))).scalar() == 0
 
+    async def test_create_record_response_for_span_question_with_end_smaller_than_start(
+        self, async_client: AsyncClient, db: AsyncSession, owner_auth_header: dict
+    ):
+        dataset = await DatasetFactory.create()
+
+        await TextFieldFactory.create(name="field-a", dataset=dataset)
+        await SpanQuestionFactory.create(name="span-question", dataset=dataset)
+
+        record = await RecordFactory.create(dataset=dataset)
+
+        response = await async_client.post(
+            self.url(record.id),
+            headers=owner_auth_header,
+            json={
+                "values": {
+                    "span-question": {
+                        "value": [
+                            {"field": "field-a", "label": "label-a", "start": 42, "end": 41},
+                        ],
+                    },
+                },
+                "status": ResponseStatusFilter.submitted,
+            },
+        )
+
+        assert response.status_code == 422
+        assert (await db.execute(select(func.count(Response.id)))).scalar() == 0
+
     async def test_create_record_response_for_span_question_with_non_existent_field(
         self, async_client: AsyncClient, db: AsyncSession, owner_auth_header: dict
     ):
@@ -210,7 +264,6 @@ class TestCreateRecordResponse:
         dataset = await DatasetFactory.create()
 
         await TextFieldFactory.create(name="field-a", dataset=dataset)
-
         await SpanQuestionFactory.create(name="span-question", dataset=dataset)
 
         record = await RecordFactory.create(dataset=dataset)
