@@ -156,7 +156,6 @@ class RankingQuestionSettings(ValidOptionCheckerMixin[str]):
 
 
 class SpanQuestionResponseValueItem(BaseModel):
-    field: str
     label: str
     start: int = Field(..., ge=0)
     end: int = Field(..., ge=0)

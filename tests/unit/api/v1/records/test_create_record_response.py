@@ -51,9 +51,9 @@ class TestCreateRecordResponse:
                     "text-question": {"value": "text"},
                     "span-question": {
                         "value": [
-                            {"field": "field-a", "label": "label-a", "start": 0, "end": 0},
-                            {"field": "field-a", "label": "label-b", "start": 24, "end": 32},
-                            {"field": "field-b", "label": "label-c", "start": 32, "end": 45},
+                            {"label": "label-a", "start": 0, "end": 0},
+                            {"label": "label-b", "start": 24, "end": 32},
+                            {"label": "label-c", "start": 32, "end": 45},
                         ],
                     },
                 },
@@ -72,9 +72,9 @@ class TestCreateRecordResponse:
                 "text-question": {"value": "text"},
                 "span-question": {
                     "value": [
-                        {"field": "field-a", "label": "label-a", "start": 0, "end": 0},
-                        {"field": "field-a", "label": "label-b", "start": 24, "end": 32},
-                        {"field": "field-b", "label": "label-c", "start": 32, "end": 45},
+                        {"label": "label-a", "start": 0, "end": 0},
+                        {"label": "label-b", "start": 24, "end": 32},
+                        {"label": "label-c", "start": 32, "end": 45},
                     ],
                 },
             },
@@ -128,7 +128,7 @@ class TestCreateRecordResponse:
                 "values": {
                     "span-question": {
                         "value": [
-                            {"field": "field-a", "label": "label-a", "start": 0, "end": 12},
+                            {"label": "label-a", "start": 0, "end": 12},
                             {"invalid": "value"},
                         ],
                     },
@@ -157,7 +157,7 @@ class TestCreateRecordResponse:
                 "values": {
                     "span-question": {
                         "value": [
-                            {"field": "field-a", "label": "label-a", "start": -1, "end": 0},
+                            {"label": "label-a", "start": -1, "end": 0},
                         ],
                     },
                 },
@@ -185,7 +185,7 @@ class TestCreateRecordResponse:
                 "values": {
                     "span-question": {
                         "value": [
-                            {"field": "field-a", "label": "label-a", "start": 0, "end": -1},
+                            {"label": "label-a", "start": 0, "end": -1},
                         ],
                     },
                 },
@@ -213,7 +213,7 @@ class TestCreateRecordResponse:
                 "values": {
                     "span-question": {
                         "value": [
-                            {"field": "field-a", "label": "label-a", "start": 42, "end": 41},
+                            {"label": "label-a", "start": 42, "end": 41},
                         ],
                     },
                 },
@@ -222,40 +222,6 @@ class TestCreateRecordResponse:
         )
 
         assert response.status_code == 422
-        assert (await db.execute(select(func.count(Response.id)))).scalar() == 0
-
-    async def test_create_record_response_for_span_question_with_non_existent_field(
-        self, async_client: AsyncClient, db: AsyncSession, owner_auth_header: dict
-    ):
-        dataset = await DatasetFactory.create()
-
-        await TextFieldFactory.create(name="field-a", dataset=dataset)
-        await TextFieldFactory.create(name="field-b", dataset=dataset)
-
-        await SpanQuestionFactory.create(name="span-question", dataset=dataset)
-
-        record = await RecordFactory.create(dataset=dataset)
-
-        response = await async_client.post(
-            self.url(record.id),
-            headers=owner_auth_header,
-            json={
-                "values": {
-                    "span-question": {
-                        "value": [
-                            {"field": "field-non-existent", "label": "label-c", "start": 32, "end": 45},
-                        ],
-                    },
-                },
-                "status": ResponseStatusFilter.submitted,
-            },
-        )
-
-        assert response.status_code == 422
-        assert response.json() == {
-            "detail": "Undefined field 'field-non-existent' for span question.\nValid fields are: ['field-a', 'field-b']"
-        }
-
         assert (await db.execute(select(func.count(Response.id)))).scalar() == 0
 
     async def test_create_record_response_for_span_question_with_non_existent_label(
@@ -275,7 +241,7 @@ class TestCreateRecordResponse:
                 "values": {
                     "span-question": {
                         "value": [
-                            {"field": "field-a", "label": "label-non-existent", "start": 32, "end": 45},
+                            {"label": "label-non-existent", "start": 32, "end": 45},
                         ],
                     },
                 },
