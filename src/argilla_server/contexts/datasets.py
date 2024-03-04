@@ -36,7 +36,7 @@ from sqlalchemy import Select, and_, func, select
 from sqlalchemy.orm import contains_eager, joinedload, selectinload
 
 import argilla_server.errors.future as errors
-from argilla_server.contexts import accounts
+from argilla_server.contexts import accounts, questions
 from argilla_server.enums import DatasetStatus, RecordInclude, UserRole
 from argilla_server.models import (
     Dataset,
@@ -248,25 +248,6 @@ async def delete_field(db: "AsyncSession", field: Field) -> Field:
     return await field.delete(db)
 
 
-async def get_question_by_id(db: "AsyncSession", question_id: UUID) -> Union[Question, None]:
-    result = await db.execute(select(Question).filter_by(id=question_id).options(selectinload(Question.dataset)))
-    return result.scalar_one_or_none()
-
-
-async def get_question_by_name_and_dataset_id(db: "AsyncSession", name: str, dataset_id: UUID) -> Union[Question, None]:
-    result = await db.execute(select(Question).filter_by(name=name, dataset_id=dataset_id))
-
-    return result.scalar_one_or_none()
-
-
-async def get_question_by_name_and_dataset_id_or_raise(db: "AsyncSession", name: str, dataset_id: UUID) -> Question:
-    question = await get_question_by_name_and_dataset_id(db, name, dataset_id)
-    if question is None:
-        raise errors.NotFoundError(f"Question with name `{name}` not found for dataset with id `{dataset_id}`")
-
-    return question
-
-
 async def get_metadata_property_by_name_and_dataset_id(
     db: "AsyncSession", name: str, dataset_id: UUID
 ) -> Union[MetadataProperty, None]:
@@ -287,24 +268,6 @@ async def get_metadata_property_by_name_and_dataset_id_or_raise(
 
 async def delete_metadata_property(db: "AsyncSession", metadata_property: MetadataProperty) -> MetadataProperty:
     return await metadata_property.delete(db)
-
-
-async def create_question(db: "AsyncSession", dataset: Dataset, question_create: QuestionCreate) -> Question:
-    if dataset.is_ready:
-        raise ValueError("Question cannot be created for a published dataset")
-
-    # TODO: Add question level validation
-    #  For example, for span questions, we should validate that provided field names are valid
-
-    return await Question.create(
-        db,
-        name=question_create.name,
-        title=question_create.title,
-        description=question_create.description,
-        required=question_create.required,
-        settings=question_create.settings.dict(),
-        dataset_id=dataset.id,
-    )
 
 
 async def create_metadata_property(
@@ -344,17 +307,8 @@ async def update_metadata_property(
     )
 
 
-async def delete_question(db: "AsyncSession", question: Question) -> Question:
-    if question.dataset.is_ready:
-        raise ValueError("Questions cannot be deleted for a published dataset")
-
-    return await question.delete(db)
-
-
 async def count_vectors_settings_by_dataset_id(db: "AsyncSession", dataset_id: UUID) -> int:
-    result = await db.execute(select(func.count(VectorSettings.id)).filter_by(dataset_id=dataset_id))
-
-    return result.scalar()
+    return (await db.execute(select(func.count(VectorSettings.id)).filter_by(dataset_id=dataset_id))).scalar_one()
 
 
 async def get_vector_settings_by_id(db: "AsyncSession", vector_settings_id: UUID) -> Union[VectorSettings, None]:
@@ -485,8 +439,7 @@ async def _configure_query_relationships(
 
 
 async def count_records_by_dataset_id(db: "AsyncSession", dataset_id: UUID) -> int:
-    result = await db.execute(select(func.count(Record.id)).filter_by(dataset_id=dataset_id))
-    return result.scalar()
+    return (await db.execute(select(func.count(Record.id)).filter_by(dataset_id=dataset_id))).scalar_one()
 
 
 _EXTRA_METADATA_FLAG = "extra"
@@ -536,22 +489,22 @@ async def _validate_metadata(
 async def _validate_suggestion(
     db: "AsyncSession",
     suggestion: "SuggestionCreate",
-    questions: Optional[Dict[UUID, Question]] = None,
+    questions_cache: Optional[Dict[UUID, Question]] = None,
 ) -> Dict[UUID, Question]:
-    if not questions:
-        questions = {}
+    if not questions_cache:
+        questions_cache = {}
 
-    question = questions.get(suggestion.question_id, None)
+    question = questions_cache.get(suggestion.question_id, None)
 
     if not question:
-        question = await get_question_by_id(db, suggestion.question_id)
+        question = await questions.get_question_by_id(db, suggestion.question_id)
         if not question:
             raise ValueError(f"question_id={str(suggestion.question_id)} does not exist")
-        questions[suggestion.question_id] = question
+        questions_cache[suggestion.question_id] = question
 
     question.parsed_settings.check_response(suggestion)
 
-    return questions
+    return questions_cache
 
 
 async def validate_user(db: "AsyncSession", user_id: UUID, users_ids: Optional[Set[UUID]]) -> Set[UUID]:
@@ -727,7 +680,7 @@ async def _build_record_suggestions(
     suggestions = []
     for suggestion in record_schema.suggestions:
         try:
-            cache = await _validate_suggestion(db, suggestion, questions=cache)
+            cache = await _validate_suggestion(db, suggestion, questions_cache=cache)
             suggestion = Suggestion(
                 type=suggestion.type,
                 score=suggestion.score,
@@ -1003,12 +956,13 @@ async def count_responses_by_dataset_id_and_user_id(
     if response_status:
         expressions.append(Response.status == response_status)
 
-    result = await db.execute(
-        select(func.count(Response.id))
-        .join(Record, and_(Record.id == Response.record_id, Record.dataset_id == dataset_id))
-        .filter(*expressions)
-    )
-    return result.scalar()
+    return (
+        await db.execute(
+            select(func.count(Response.id))
+            .join(Record, and_(Record.id == Response.record_id, Record.dataset_id == dataset_id))
+            .filter(*expressions)
+        )
+    ).scalar_one()
 
 
 async def create_response(

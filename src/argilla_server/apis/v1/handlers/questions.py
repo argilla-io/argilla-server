@@ -17,7 +17,8 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Security, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from argilla_server.contexts import datasets, questions
+import argilla_server.errors.future as errors
+from argilla_server.contexts import questions
 from argilla_server.database import get_async_db
 from argilla_server.models import Question, User
 from argilla_server.policies import QuestionPolicyV1, authorize
@@ -29,7 +30,7 @@ router = APIRouter(tags=["questions"])
 
 
 async def _get_question(db: "AsyncSession", question_id: UUID) -> Question:
-    question = await datasets.get_question_by_id(db, question_id)
+    question = await questions.get_question_by_id(db, question_id)
     if not question:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -48,7 +49,7 @@ async def update_question(
 ):
     try:
         return await questions.update_question(db, question_id, question_update, current_user)
-    except questions.NotFoundError as err:
+    except errors.NotFoundError as err:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Question with id `{question_id}` not found")
     except questions.InvalidQuestionSettings as err:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(err))
@@ -65,7 +66,7 @@ async def delete_question(
     # TODO: We should split API v1 into different FastAPI apps so we can customize error management.
     # After mapping ValueError to 422 errors for API v1 then we can remove this try except.
     try:
-        await datasets.delete_question(db, question)
+        await questions.delete_question(db, question)
     except ValueError as err:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(err))
 

@@ -12,28 +12,30 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from typing import List
+from typing import List, Union
 from uuid import UUID
 
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
-from argilla_server.contexts import datasets
+import argilla_server.errors.future as errors
 from argilla_server.enums import QuestionType
 from argilla_server.models import (
+    Dataset,
     LabelSelectionQuestionSettings,
+    Question,
     QuestionSettings,
     User,
 )
 from argilla_server.policies import QuestionPolicyV1, authorize
 from argilla_server.schemas.v1.questions import (
     LabelSelectionSettingsUpdate,
+    QuestionCreate,
     QuestionSettingsUpdate,
     QuestionUpdate,
+    SpanQuestionSettingsCreate,
 )
-
-
-class NotFoundError(Exception):
-    pass
 
 
 class InvalidQuestionSettings(Exception):
@@ -81,10 +83,60 @@ def _validate_question_settings(
         _validate_label_options(question_settings, question_update_settings)
 
 
+async def get_question_by_id(db: AsyncSession, question_id: UUID) -> Union[Question, None]:
+    return (
+        await db.execute(select(Question).filter_by(id=question_id).options(selectinload(Question.dataset)))
+    ).scalar_one_or_none()
+
+
+async def get_question_by_name_and_dataset_id(db: AsyncSession, name: str, dataset_id: UUID) -> Union[Question, None]:
+    return (await db.execute(select(Question).filter_by(name=name, dataset_id=dataset_id))).scalar_one_or_none()
+
+
+async def get_question_by_name_and_dataset_id_or_raise(db: AsyncSession, name: str, dataset_id: UUID) -> Question:
+    question = await get_question_by_name_and_dataset_id(db, name, dataset_id)
+    if question is None:
+        raise errors.NotFoundError(f"Question with name `{name}` not found for dataset with id `{dataset_id}`")
+
+    return question
+
+
+def _validate_question_before_create(dataset: Dataset, question_create: QuestionCreate) -> None:
+    if question_create.settings.type == QuestionType.span:
+        _validate_span_question_settings_before_create(dataset, question_create.settings)
+
+
+def _validate_span_question_settings_before_create(
+    dataset: Dataset, span_question_settings_create: SpanQuestionSettingsCreate
+) -> None:
+    field = span_question_settings_create.field
+    field_names = [field.name for field in dataset.fields]
+
+    if field not in field_names:
+        raise ValueError(f"'{field}' is not a valid field name.\nValid field names are {field_names!r}")
+
+
+async def create_question(db: AsyncSession, dataset: Dataset, question_create: QuestionCreate) -> Question:
+    if dataset.is_ready:
+        raise ValueError("Question cannot be created for a published dataset")
+
+    _validate_question_before_create(dataset, question_create)
+
+    return await Question.create(
+        db,
+        name=question_create.name,
+        title=question_create.title,
+        description=question_create.description,
+        required=question_create.required,
+        settings=question_create.settings.dict(),
+        dataset_id=dataset.id,
+    )
+
+
 async def update_question(db: AsyncSession, question_id: UUID, question_update: QuestionUpdate, current_user: User):
-    question = await datasets.get_question_by_id(db, question_id)
+    question = await get_question_by_id(db, question_id)
     if not question:
-        raise NotFoundError()
+        raise errors.NotFoundError()
 
     await authorize(current_user, QuestionPolicyV1.update(question))
 
@@ -93,3 +145,10 @@ async def update_question(db: AsyncSession, question_id: UUID, question_update: 
 
     params = question_update.dict(exclude_unset=True)
     return await question.update(db, **params)
+
+
+async def delete_question(db: AsyncSession, question: Question) -> Question:
+    if question.dataset.is_ready:
+        raise ValueError("Questions cannot be deleted for a published dataset")
+
+    return await question.delete(db)

@@ -16,9 +16,13 @@ from datetime import datetime
 from typing import Any, Dict, List, Literal, Optional, Union
 from uuid import UUID
 
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from argilla_server.models import QuestionType
+from argilla_server.models.database import Dataset
 from argilla_server.pydantic_v1 import BaseModel, Field, PositiveInt, conlist, constr, root_validator, validator
 from argilla_server.schemas.base import UpdateSchema
+from argilla_server.schemas.v1.fields import FieldName
 
 try:
     from typing import Annotated
@@ -96,11 +100,11 @@ class RankingQuestionSettings(BaseModel):
 
 class SpanQuestionSettings(BaseModel):
     type: Literal[QuestionType.span]
+    field: str
     options: conlist(item_type=OptionSettings)
     # These attributes are read-only for now
     allow_overlapping: bool = Field(default=False, description="Allow spans overlapping")
     allow_character_annotation: bool = Field(default=True, description="Allow character-level annotation")
-    fields: Literal["all"] = "all"
 
 
 QuestionSettings = Annotated[
@@ -258,6 +262,7 @@ class LabelSelectionQuestionSettingsCreate(UniqueValuesCheckerMixin):
                     "The value for 'visible_options' must be less or equal to the number of items in 'options'"
                     f" ({num_options})"
                 )
+
         return values
 
 
@@ -276,6 +281,7 @@ class RankingQuestionSettingsCreate(UniqueValuesCheckerMixin):
 
 class SpanQuestionSettingsCreate(UniqueValuesCheckerMixin):
     type: Literal[QuestionType.span]
+    field: FieldName
     options: conlist(
         item_type=OptionSettingsCreate,
         min_items=SPAN_OPTIONS_MIN_ITEMS,
