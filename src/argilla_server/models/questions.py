@@ -23,7 +23,6 @@ except ImportError:
     from typing_extensions import Annotated
 
 
-SPAN_QUESTION_RESPONSE_VALUE_MIN_ITEMS = 1
 SPAN_QUESTION_RESPONSE_VALUE_MAX_ITEMS = 10_000
 
 
@@ -171,11 +170,7 @@ class SpanQuestionResponseValueItem(BaseModel):
 
 
 class SpanQuestionResponseValue(BaseModel):
-    value: List[SpanQuestionResponseValueItem] = Field(
-        ...,
-        min_items=SPAN_QUESTION_RESPONSE_VALUE_MIN_ITEMS,
-        max_items=SPAN_QUESTION_RESPONSE_VALUE_MAX_ITEMS,
-    )
+    value: List[SpanQuestionResponseValueItem] = Field(..., max_items=SPAN_QUESTION_RESPONSE_VALUE_MAX_ITEMS)
 
 
 class SpanQuestionSettings(BaseQuestionSettings):

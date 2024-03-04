@@ -86,7 +86,7 @@ class TestCreateRecordResponse:
         }
 
     async def test_create_record_response_for_span_question_with_empty_value(
-        self, async_client: AsyncClient, db: AsyncSession, owner_auth_header: dict
+        self, async_client: AsyncClient, db: AsyncSession, owner: User, owner_auth_header: dict
     ):
         dataset = await DatasetFactory.create()
 
@@ -108,8 +108,24 @@ class TestCreateRecordResponse:
             },
         )
 
-        assert response.status_code == 422
-        assert (await db.execute(select(func.count(Response.id)))).scalar() == 0
+        assert response.status_code == 201
+        assert (await db.execute(select(func.count(Response.id)))).scalar() == 1
+
+        response_json = response.json()
+        assert await db.get(Response, UUID(response_json["id"]))
+        assert response_json == {
+            "id": str(UUID(response_json["id"])),
+            "values": {
+                "span-question": {
+                    "value": [],
+                },
+            },
+            "status": ResponseStatusFilter.submitted,
+            "record_id": str(record.id),
+            "user_id": str(owner.id),
+            "inserted_at": datetime.fromisoformat(response_json["inserted_at"]).isoformat(),
+            "updated_at": datetime.fromisoformat(response_json["updated_at"]).isoformat(),
+        }
 
     async def test_create_record_response_for_span_question_with_invalid_value(
         self, async_client: AsyncClient, db: AsyncSession, owner_auth_header: dict
