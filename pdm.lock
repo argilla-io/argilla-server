@@ -5,7 +5,7 @@
 groups = ["default", "test", "postgresql"]
 strategy = ["cross_platform", "inherit_metadata"]
 lock_version = "4.4.1"
-content_hash = "sha256:86e4ccf80aa0fbaa6425df3eeded90eef907f41effed9099173806db6478ac01"
+content_hash = "sha256:058101b4198510812b6dfdd70aa6aa47718f343f084fb7bce8de4f6b0170fb8d"
 
 [[package]]
 name = "aiofiles"
@@ -1053,8 +1053,8 @@ name = "importlib-metadata"
 version = "7.0.1"
 requires_python = ">=3.8"
 summary = "Read metadata from Python packages"
-groups = ["default"]
-marker = "python_version < \"3.9\""
+groups = ["default", "test"]
+marker = "python_version < \"3.10\""
 dependencies = [
     "zipp>=0.5",
 ]
@@ -1795,6 +1795,21 @@ dependencies = [
 files = [
     {file = "pytest-mock-3.12.0.tar.gz", hash = "sha256:31a40f038c22cad32287bb43932054451ff5583ff094bca6f675df2f8bc1a6e9"},
     {file = "pytest_mock-3.12.0-py3-none-any.whl", hash = "sha256:0972719a7263072da3a21c7f4773069bcc7486027d7e8e1f81d98a47e701bc4f"},
+]
+
+[[package]]
+name = "pytest-randomly"
+version = "3.15.0"
+requires_python = ">=3.8"
+summary = "Pytest plugin to randomly order tests and control random.seed."
+groups = ["test"]
+dependencies = [
+    "importlib-metadata>=3.6.0; python_version < \"3.10\"",
+    "pytest",
+]
+files = [
+    {file = "pytest_randomly-3.15.0-py3-none-any.whl", hash = "sha256:0516f4344b29f4e9cdae8bce31c4aeebf59d0b9ef05927c33354ff3859eeeca6"},
+    {file = "pytest_randomly-3.15.0.tar.gz", hash = "sha256:b908529648667ba5e54723088edd6f82252f540cc340d748d1fa985539687047"},
 ]
 
 [[package]]
@@ -2737,8 +2752,8 @@ name = "zipp"
 version = "3.17.0"
 requires_python = ">=3.8"
 summary = "Backport of pathlib-compatible object wrapper for zip files"
-groups = ["default"]
-marker = "python_version < \"3.9\""
+groups = ["default", "test"]
+marker = "python_version < \"3.10\""
 files = [
     {file = "zipp-3.17.0-py3-none-any.whl", hash = "sha256:0e923e726174922dce09c53c59ad483ff7bbb8e572e00c7f7c46b88556409f31"},
     {file = "zipp-3.17.0.tar.gz", hash = "sha256:84e64a1c28cf7e91ed2078bb8cc8c259cb19b76942096c8d7b84947690cabaf0"},
