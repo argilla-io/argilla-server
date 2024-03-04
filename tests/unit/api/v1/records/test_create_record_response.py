@@ -22,7 +22,7 @@ from httpx import AsyncClient
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from tests.factories import DatasetFactory, RecordFactory, SpanQuestionFactory, TextFieldFactory, TextQuestionFactory
+from tests.factories import DatasetFactory, RecordFactory, SpanQuestionFactory, TextQuestionFactory
 
 
 @pytest.mark.asyncio
@@ -35,10 +35,6 @@ class TestCreateRecordResponse:
     ):
         dataset = await DatasetFactory.create()
 
-        await TextFieldFactory.create(name="field-a", dataset=dataset)
-        await TextFieldFactory.create(name="field-b", dataset=dataset)
-
-        await TextQuestionFactory.create(name="text-question", dataset=dataset)
         await SpanQuestionFactory.create(name="span-question", dataset=dataset)
 
         record = await RecordFactory.create(dataset=dataset)
@@ -48,7 +44,6 @@ class TestCreateRecordResponse:
             headers=owner_auth_header,
             json={
                 "values": {
-                    "text-question": {"value": "text"},
                     "span-question": {
                         "value": [
                             {"label": "label-a", "start": 0, "end": 1},
@@ -69,7 +64,6 @@ class TestCreateRecordResponse:
         assert response_json == {
             "id": str(UUID(response_json["id"])),
             "values": {
-                "text-question": {"value": "text"},
                 "span-question": {
                     "value": [
                         {"label": "label-a", "start": 0, "end": 1},
@@ -90,7 +84,6 @@ class TestCreateRecordResponse:
     ):
         dataset = await DatasetFactory.create()
 
-        await TextFieldFactory.create(name="field-a", dataset=dataset)
         await SpanQuestionFactory.create(name="span-question", dataset=dataset)
 
         record = await RecordFactory.create(dataset=dataset)
@@ -132,7 +125,6 @@ class TestCreateRecordResponse:
     ):
         dataset = await DatasetFactory.create()
 
-        await TextFieldFactory.create(name="field-a", dataset=dataset)
         await SpanQuestionFactory.create(name="span-question", dataset=dataset)
 
         record = await RecordFactory.create(dataset=dataset)
@@ -161,7 +153,6 @@ class TestCreateRecordResponse:
     ):
         dataset = await DatasetFactory.create()
 
-        await TextFieldFactory.create(name="field-a", dataset=dataset)
         await SpanQuestionFactory.create(name="span-question", dataset=dataset)
 
         record = await RecordFactory.create(dataset=dataset)
@@ -189,7 +180,6 @@ class TestCreateRecordResponse:
     ):
         dataset = await DatasetFactory.create()
 
-        await TextFieldFactory.create(name="field-a", dataset=dataset)
         await SpanQuestionFactory.create(name="span-question", dataset=dataset)
 
         record = await RecordFactory.create(dataset=dataset)
@@ -212,12 +202,11 @@ class TestCreateRecordResponse:
         assert response.status_code == 422
         assert (await db.execute(select(func.count(Response.id)))).scalar() == 0
 
-    async def test_create_record_response_for_span_question_with_end_equal_than_start(
+    async def test_create_record_response_for_span_question_with_equal_start_and_end(
         self, async_client: AsyncClient, db: AsyncSession, owner_auth_header: dict
     ):
         dataset = await DatasetFactory.create()
 
-        await TextFieldFactory.create(name="field-a", dataset=dataset)
         await SpanQuestionFactory.create(name="span-question", dataset=dataset)
 
         record = await RecordFactory.create(dataset=dataset)
@@ -245,7 +234,6 @@ class TestCreateRecordResponse:
     ):
         dataset = await DatasetFactory.create()
 
-        await TextFieldFactory.create(name="field-a", dataset=dataset)
         await SpanQuestionFactory.create(name="span-question", dataset=dataset)
 
         record = await RecordFactory.create(dataset=dataset)
@@ -273,7 +261,6 @@ class TestCreateRecordResponse:
     ):
         dataset = await DatasetFactory.create()
 
-        await TextFieldFactory.create(name="field-a", dataset=dataset)
         await SpanQuestionFactory.create(name="span-question", dataset=dataset)
 
         record = await RecordFactory.create(dataset=dataset)

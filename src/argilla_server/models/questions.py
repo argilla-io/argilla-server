@@ -164,7 +164,7 @@ class SpanQuestionResponseValueItem(BaseModel):
         start, end = values.get("start"), values.get("end")
 
         if start is not None and end is not None and end <= start:
-            raise ValueError("'end' must have a value greater than 'start'")
+            raise ValueError("Span question response value 'end' must have a value greater than 'start'")
 
         return values
 

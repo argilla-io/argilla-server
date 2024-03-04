@@ -488,21 +488,21 @@ async def _validate_metadata(
 
 async def _validate_suggestion(
     db: "AsyncSession",
-    suggestion: "SuggestionCreate",
+    suggestion_create: "SuggestionCreate",
     questions_cache: Optional[Dict[UUID, Question]] = None,
 ) -> Dict[UUID, Question]:
     if not questions_cache:
         questions_cache = {}
 
-    question = questions_cache.get(suggestion.question_id, None)
+    question = questions_cache.get(suggestion_create.question_id, None)
 
     if not question:
-        question = await questions.get_question_by_id(db, suggestion.question_id)
+        question = await questions.get_question_by_id(db, suggestion_create.question_id)
         if not question:
-            raise ValueError(f"question_id={str(suggestion.question_id)} does not exist")
-        questions_cache[suggestion.question_id] = question
+            raise ValueError(f"question_id={str(suggestion_create.question_id)} does not exist")
+        questions_cache[suggestion_create.question_id] = question
 
-    question.parsed_settings.check_response(suggestion)
+    question.parsed_settings.check_response(suggestion_create)
 
     return questions_cache
 
@@ -1061,6 +1061,7 @@ def _validate_response_values(
     if not values:
         if status not in [ResponseStatus.discarded, ResponseStatus.draft]:
             raise ValueError("missing response values")
+
         return
 
     values_copy = copy.copy(values or {})
