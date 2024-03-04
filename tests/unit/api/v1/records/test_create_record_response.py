@@ -51,7 +51,7 @@ class TestCreateRecordResponse:
                     "text-question": {"value": "text"},
                     "span-question": {
                         "value": [
-                            {"label": "label-a", "start": 0, "end": 0},
+                            {"label": "label-a", "start": 0, "end": 1},
                             {"label": "label-b", "start": 24, "end": 32},
                             {"label": "label-c", "start": 32, "end": 45},
                         ],
@@ -72,7 +72,7 @@ class TestCreateRecordResponse:
                 "text-question": {"value": "text"},
                 "span-question": {
                     "value": [
-                        {"label": "label-a", "start": 0, "end": 0},
+                        {"label": "label-a", "start": 0, "end": 1},
                         {"label": "label-b", "start": 24, "end": 32},
                         {"label": "label-c", "start": 32, "end": 45},
                     ],
@@ -157,7 +157,7 @@ class TestCreateRecordResponse:
                 "values": {
                     "span-question": {
                         "value": [
-                            {"label": "label-a", "start": -1, "end": 0},
+                            {"label": "label-a", "start": -1, "end": 1},
                         ],
                     },
                 },
@@ -185,7 +185,35 @@ class TestCreateRecordResponse:
                 "values": {
                     "span-question": {
                         "value": [
-                            {"label": "label-a", "start": 0, "end": -1},
+                            {"label": "label-a", "start": 0, "end": 0},
+                        ],
+                    },
+                },
+                "status": ResponseStatusFilter.submitted,
+            },
+        )
+
+        assert response.status_code == 422
+        assert (await db.execute(select(func.count(Response.id)))).scalar() == 0
+
+    async def test_create_record_response_for_span_question_with_end_equal_than_start(
+        self, async_client: AsyncClient, db: AsyncSession, owner_auth_header: dict
+    ):
+        dataset = await DatasetFactory.create()
+
+        await TextFieldFactory.create(name="field-a", dataset=dataset)
+        await SpanQuestionFactory.create(name="span-question", dataset=dataset)
+
+        record = await RecordFactory.create(dataset=dataset)
+
+        response = await async_client.post(
+            self.url(record.id),
+            headers=owner_auth_header,
+            json={
+                "values": {
+                    "span-question": {
+                        "value": [
+                            {"label": "label-a", "start": 42, "end": 42},
                         ],
                     },
                 },

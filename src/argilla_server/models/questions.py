@@ -158,14 +158,14 @@ class RankingQuestionSettings(ValidOptionCheckerMixin[str]):
 class SpanQuestionResponseValueItem(BaseModel):
     label: str
     start: int = Field(..., ge=0)
-    end: int = Field(..., ge=0)
+    end: int = Field(..., ge=1)
 
     @root_validator(skip_on_failure=True)
     def check_start_and_end(cls, values: Dict[str, Any]) -> Dict[str, Any]:
         start, end = values.get("start"), values.get("end")
 
-        if start is not None and end is not None and end < start:
-            raise ValueError("'end' must have a value greater than or equal to 'start'")
+        if start is not None and end is not None and end <= start:
+            raise ValueError("'end' must have a value greater than 'start'")
 
         return values
 
