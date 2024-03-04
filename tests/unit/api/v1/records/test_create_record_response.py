@@ -64,10 +64,10 @@ class TestCreateRecordResponse:
         assert response.status_code == 201
         assert (await db.execute(select(func.count(Response.id)))).scalar() == 1
 
-        response_body = response.json()
-        assert await db.get(Response, UUID(response_body["id"]))
-        assert response_body == {
-            "id": str(UUID(response_body["id"])),
+        response_json = response.json()
+        assert await db.get(Response, UUID(response_json["id"]))
+        assert response_json == {
+            "id": str(UUID(response_json["id"])),
             "values": {
                 "text-question": {"value": "text"},
                 "span-question": {
@@ -81,8 +81,8 @@ class TestCreateRecordResponse:
             "status": ResponseStatusFilter.submitted,
             "record_id": str(record.id),
             "user_id": str(owner.id),
-            "inserted_at": datetime.fromisoformat(response_body["inserted_at"]).isoformat(),
-            "updated_at": datetime.fromisoformat(response_body["updated_at"]).isoformat(),
+            "inserted_at": datetime.fromisoformat(response_json["inserted_at"]).isoformat(),
+            "updated_at": datetime.fromisoformat(response_json["updated_at"]).isoformat(),
         }
 
     async def test_create_record_response_for_span_question_with_empty_value(

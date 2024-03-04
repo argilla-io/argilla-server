@@ -370,6 +370,7 @@ class RankingQuestionFactory(QuestionFactory):
 class SpanQuestionFactory(QuestionFactory):
     settings = {
         "type": QuestionType.span.value,
+        "field": "field-a",
         "options": [
             {"value": "label-a", "text": "Label A", "description": "Label A description"},
             {"value": "label-b", "text": "Label B", "description": "Label B description"},
