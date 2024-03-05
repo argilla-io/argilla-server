@@ -79,7 +79,7 @@ def _validate_question_settings(
 ) -> None:
     _validate_settings_type(question_settings, question_update_settings)
 
-    if question_settings.type in [QuestionType.label_selection, QuestionType.multi_label_selection]:
+    if question_settings.type in [QuestionType.label_selection, QuestionType.multi_label_selection, QuestionType.span]:
         _validate_label_options(question_settings, question_update_settings)
 
 
@@ -104,6 +104,11 @@ async def get_question_by_name_and_dataset_id_or_raise(db: AsyncSession, name: s
 def _validate_question_before_create(dataset: Dataset, question_create: QuestionCreate) -> None:
     if question_create.settings.type == QuestionType.span:
         _validate_span_question_settings_before_create(dataset, question_create.settings)
+
+
+def _validate_question_before_update(question: Question, question_update: QuestionUpdate) -> None:
+    if question_update.settings:
+        _validate_question_settings(question.parsed_settings, question_update.settings)
 
 
 def _validate_span_question_settings_before_create(
@@ -140,8 +145,7 @@ async def update_question(db: AsyncSession, question_id: UUID, question_update: 
 
     await authorize(current_user, QuestionPolicyV1.update(question))
 
-    if question_update.settings:
-        _validate_question_settings(question.parsed_settings, question_update.settings)
+    _validate_question_before_update(question, question_update)
 
     params = question_update.dict(exclude_unset=True)
     return await question.update(db, **params)

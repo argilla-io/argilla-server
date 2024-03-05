@@ -35,6 +35,7 @@ async def _get_suggestion(db: "AsyncSession", suggestion_id: UUID) -> Suggestion
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Suggestion with id `{suggestion_id}` not found",
         )
+
     return suggestion
 
 

@@ -145,6 +145,11 @@ class RankingQuestionSettingsUpdate(UpdateSchema):
     type: Literal[QuestionType.ranking]
 
 
+class SpanQuestionSettingsUpdate(UpdateSchema):
+    type: Literal[QuestionType.span]
+    options: Optional[conlist(item_type=OptionSettings)]
+
+
 QuestionSettingsUpdate = Annotated[
     Union[
         TextQuestionSettingsUpdate,
@@ -152,6 +157,7 @@ QuestionSettingsUpdate = Annotated[
         LabelSelectionSettingsUpdate,
         MultiLabelSelectionQuestionSettingsUpdate,
         RankingQuestionSettingsUpdate,
+        SpanQuestionSettingsUpdate,
     ],
     Field(..., discriminator="type"),
 ]
