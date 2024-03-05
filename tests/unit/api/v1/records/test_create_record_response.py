@@ -22,7 +22,7 @@ from httpx import AsyncClient
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from tests.factories import DatasetFactory, RecordFactory, SpanQuestionFactory, TextQuestionFactory
+from tests.factories import DatasetFactory, RecordFactory, SpanQuestionFactory
 
 
 @pytest.mark.asyncio
@@ -37,7 +37,7 @@ class TestCreateRecordResponse:
 
         await SpanQuestionFactory.create(name="span-question", dataset=dataset)
 
-        record = await RecordFactory.create(dataset=dataset)
+        record = await RecordFactory.create(fields={"field-a": "Hello"}, dataset=dataset)
 
         response = await async_client.post(
             self.url(record.id),
@@ -47,8 +47,8 @@ class TestCreateRecordResponse:
                     "span-question": {
                         "value": [
                             {"label": "label-a", "start": 0, "end": 1},
-                            {"label": "label-b", "start": 24, "end": 32},
-                            {"label": "label-c", "start": 32, "end": 45},
+                            {"label": "label-b", "start": 2, "end": 3},
+                            {"label": "label-c", "start": 4, "end": 5},
                         ],
                     },
                 },
@@ -67,8 +67,8 @@ class TestCreateRecordResponse:
                 "span-question": {
                     "value": [
                         {"label": "label-a", "start": 0, "end": 1},
-                        {"label": "label-b", "start": 24, "end": 32},
-                        {"label": "label-c", "start": 32, "end": 45},
+                        {"label": "label-b", "start": 2, "end": 3},
+                        {"label": "label-c", "start": 4, "end": 5},
                     ],
                 },
             },
@@ -86,7 +86,7 @@ class TestCreateRecordResponse:
 
         await SpanQuestionFactory.create(name="span-question", dataset=dataset)
 
-        record = await RecordFactory.create(dataset=dataset)
+        record = await RecordFactory.create(fields={"field-a": "Hello"}, dataset=dataset)
 
         response = await async_client.post(
             self.url(record.id),
@@ -120,14 +120,14 @@ class TestCreateRecordResponse:
             "updated_at": datetime.fromisoformat(response_json["updated_at"]).isoformat(),
         }
 
-    async def test_create_record_response_for_span_question_with_invalid_value(
+    async def test_create_record_response_for_span_question_with_record_not_providing_required_response_field(
         self, async_client: AsyncClient, db: AsyncSession, owner_auth_header: dict
     ):
         dataset = await DatasetFactory.create()
 
         await SpanQuestionFactory.create(name="span-question", dataset=dataset)
 
-        record = await RecordFactory.create(dataset=dataset)
+        record = await RecordFactory.create(fields={"other-field": "Hello"}, dataset=dataset)
 
         response = await async_client.post(
             self.url(record.id),
@@ -136,7 +136,38 @@ class TestCreateRecordResponse:
                 "values": {
                     "span-question": {
                         "value": [
-                            {"label": "label-a", "start": 0, "end": 12},
+                            {"label": "label-a", "start": 0, "end": 1},
+                        ],
+                    },
+                },
+                "status": ResponseStatusFilter.submitted,
+            },
+        )
+
+        assert response.status_code == 422
+        assert response.json() == {
+            "detail": "response for span question `span-question` requires record to have field `field-a`"
+        }
+
+        assert (await db.execute(select(func.count(Response.id)))).scalar() == 0
+
+    async def test_create_record_response_for_span_question_with_invalid_value(
+        self, async_client: AsyncClient, db: AsyncSession, owner_auth_header: dict
+    ):
+        dataset = await DatasetFactory.create()
+
+        await SpanQuestionFactory.create(name="span-question", dataset=dataset)
+
+        record = await RecordFactory.create(fields={"field-a": "Hello"}, dataset=dataset)
+
+        response = await async_client.post(
+            self.url(record.id),
+            headers=owner_auth_header,
+            json={
+                "values": {
+                    "span-question": {
+                        "value": [
+                            {"label": "label-a", "start": 0, "end": 1},
                             {"invalid": "value"},
                         ],
                     },
@@ -148,6 +179,64 @@ class TestCreateRecordResponse:
         assert response.status_code == 422
         assert (await db.execute(select(func.count(Response.id)))).scalar() == 0
 
+    async def test_create_record_response_for_span_question_with_start_greater_than_expected(
+        self, async_client: AsyncClient, db: AsyncSession, owner_auth_header: dict
+    ):
+        dataset = await DatasetFactory.create()
+
+        await SpanQuestionFactory.create(name="span-question", dataset=dataset)
+
+        record = await RecordFactory.create(fields={"field-a": "Hello"}, dataset=dataset)
+
+        response = await async_client.post(
+            self.url(record.id),
+            headers=owner_auth_header,
+            json={
+                "values": {
+                    "span-question": {
+                        "value": [{"label": "label-a", "start": 5, "end": 6}],
+                    },
+                },
+                "status": ResponseStatusFilter.submitted,
+            },
+        )
+
+        assert response.status_code == 422
+        assert response.json() == {
+            "detail": "span question response value `start` must have a value lower than record field `field-a` length that is `5`"
+        }
+
+        assert (await db.execute(select(func.count(Response.id)))).scalar() == 0
+
+    async def test_create_record_response_for_span_question_with_end_greater_than_expected(
+        self, async_client: AsyncClient, db: AsyncSession, owner_auth_header: dict
+    ):
+        dataset = await DatasetFactory.create()
+
+        await SpanQuestionFactory.create(name="span-question", dataset=dataset)
+
+        record = await RecordFactory.create(fields={"field-a": "Hello"}, dataset=dataset)
+
+        response = await async_client.post(
+            self.url(record.id),
+            headers=owner_auth_header,
+            json={
+                "values": {
+                    "span-question": {
+                        "value": [{"label": "label-a", "start": 4, "end": 6}],
+                    },
+                },
+                "status": ResponseStatusFilter.submitted,
+            },
+        )
+
+        assert response.status_code == 422
+        assert response.json() == {
+            "detail": "span question response value `end` must have a value lower or equal than record field `field-a` length that is `5`"
+        }
+
+        assert (await db.execute(select(func.count(Response.id)))).scalar() == 0
+
     async def test_create_record_response_for_span_question_with_invalid_start(
         self, async_client: AsyncClient, db: AsyncSession, owner_auth_header: dict
     ):
@@ -155,7 +244,7 @@ class TestCreateRecordResponse:
 
         await SpanQuestionFactory.create(name="span-question", dataset=dataset)
 
-        record = await RecordFactory.create(dataset=dataset)
+        record = await RecordFactory.create(fields={"field-a": "Hello"}, dataset=dataset)
 
         response = await async_client.post(
             self.url(record.id),
@@ -182,7 +271,7 @@ class TestCreateRecordResponse:
 
         await SpanQuestionFactory.create(name="span-question", dataset=dataset)
 
-        record = await RecordFactory.create(dataset=dataset)
+        record = await RecordFactory.create(fields={"field-a": "Hello"}, dataset=dataset)
 
         response = await async_client.post(
             self.url(record.id),
@@ -209,7 +298,7 @@ class TestCreateRecordResponse:
 
         await SpanQuestionFactory.create(name="span-question", dataset=dataset)
 
-        record = await RecordFactory.create(dataset=dataset)
+        record = await RecordFactory.create(fields={"field-a": "Hello"}, dataset=dataset)
 
         response = await async_client.post(
             self.url(record.id),
@@ -218,7 +307,7 @@ class TestCreateRecordResponse:
                 "values": {
                     "span-question": {
                         "value": [
-                            {"label": "label-a", "start": 42, "end": 42},
+                            {"label": "label-a", "start": 1, "end": 1},
                         ],
                     },
                 },
@@ -236,7 +325,7 @@ class TestCreateRecordResponse:
 
         await SpanQuestionFactory.create(name="span-question", dataset=dataset)
 
-        record = await RecordFactory.create(dataset=dataset)
+        record = await RecordFactory.create(fields={"field-a": "Hello"}, dataset=dataset)
 
         response = await async_client.post(
             self.url(record.id),
@@ -245,7 +334,7 @@ class TestCreateRecordResponse:
                 "values": {
                     "span-question": {
                         "value": [
-                            {"label": "label-a", "start": 42, "end": 41},
+                            {"label": "label-a", "start": 3, "end": 2},
                         ],
                     },
                 },
@@ -263,7 +352,7 @@ class TestCreateRecordResponse:
 
         await SpanQuestionFactory.create(name="span-question", dataset=dataset)
 
-        record = await RecordFactory.create(dataset=dataset)
+        record = await RecordFactory.create(fields={"field-a": "Hello"}, dataset=dataset)
 
         response = await async_client.post(
             self.url(record.id),
@@ -272,7 +361,7 @@ class TestCreateRecordResponse:
                 "values": {
                     "span-question": {
                         "value": [
-                            {"label": "label-non-existent", "start": 32, "end": 45},
+                            {"label": "label-non-existent", "start": 1, "end": 2},
                         ],
                     },
                 },
@@ -282,7 +371,7 @@ class TestCreateRecordResponse:
 
         assert response.status_code == 422
         assert response.json() == {
-            "detail": "Undefined label 'label-non-existent' for span question.\nValid labels are: ['label-a', 'label-b', 'label-c']"
+            "detail": "undefined label 'label-non-existent' for span question.\nValid labels are: ['label-a', 'label-b', 'label-c']"
         }
 
         assert (await db.execute(select(func.count(Response.id)))).scalar() == 0

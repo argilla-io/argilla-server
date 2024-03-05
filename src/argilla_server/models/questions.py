@@ -164,7 +164,7 @@ class SpanQuestionResponseValueItem(BaseModel):
         start, end = values.get("start"), values.get("end")
 
         if start is not None and end is not None and end <= start:
-            raise ValueError("Span question response value 'end' must have a value greater than 'start'")
+            raise ValueError("span question response value 'end' must have a value greater than 'start'")
 
         return values
 
@@ -175,11 +175,12 @@ class SpanQuestionResponseValue(BaseModel):
 
 class SpanQuestionSettings(BaseQuestionSettings):
     type: Literal[QuestionType.span]
+    field: str
     options: List[ValueTextQuestionSettingsOption]
 
     def check_response(self, response: ResponseValue, status: Optional[ResponseStatus] = None):
         if not isinstance(response.value, list):
-            raise ValueError(f"This Span question expects a list of values, found {type(response.value)}")
+            raise ValueError(f"this span question expects a list of values, found {type(response.value)}")
 
         span_question_response_value = self._parse_response_value(response)
         self._check_response_labels(span_question_response_value)
@@ -193,7 +194,7 @@ class SpanQuestionSettings(BaseQuestionSettings):
         for value_item in span_question_response_value.value:
             if not value_item.label in labels:
                 raise ValueError(
-                    f"Undefined label '{value_item.label}' for span question.\nValid labels are: {labels!r}"
+                    f"undefined label '{value_item.label}' for span question.\nValid labels are: {labels!r}"
                 )
 
 

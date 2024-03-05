@@ -352,7 +352,7 @@ class TestUpsertSuggestion:
 
         assert response.status_code == 422
         assert response.json() == {
-            "detail": "Undefined label 'label-non-existent' for span question.\nValid labels are: ['label-a', 'label-b', 'label-c']"
+            "detail": "undefined label 'label-non-existent' for span question.\nValid labels are: ['label-a', 'label-b', 'label-c']"
         }
 
         assert (await db.execute(select(func.count(Suggestion.id)))).scalar() == 0

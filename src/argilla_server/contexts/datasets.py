@@ -655,7 +655,9 @@ async def _build_record_responses(
     for idx, response_create in enumerate(responses_create):
         try:
             cache = await validate_user_exists(db, response_create.user_id, cache)
-            _validate_response_values(record, values=response_create.values, status=response_create.status)
+            _validate_response_values(
+                record, response_values=response_create.values, response_status=response_create.status
+            )
 
             responses.append(
                 Response(
@@ -976,7 +978,7 @@ async def count_responses_by_dataset_id_and_user_id(
 async def create_response(
     db: "AsyncSession", search_engine: SearchEngine, record: Record, user: User, response_create: ResponseCreate
 ) -> Response:
-    _validate_response_values(record, values=response_create.values, status=response_create.status)
+    _validate_response_values(record, response_values=response_create.values, response_status=response_create.status)
 
     async with db.begin_nested():
         response = await Response.create(
@@ -1000,7 +1002,9 @@ async def create_response(
 async def update_response(
     db: "AsyncSession", search_engine: SearchEngine, response: Response, response_update: ResponseUpdate
 ):
-    _validate_response_values(response.record, values=response_update.values, status=response_update.status)
+    _validate_response_values(
+        response.record, response_values=response_update.values, response_status=response_update.status
+    )
 
     async with db.begin_nested():
         response = await response.update(
@@ -1023,7 +1027,7 @@ async def update_response(
 async def upsert_response(
     db: "AsyncSession", search_engine: SearchEngine, record: Record, user: User, response_upsert: ResponseUpsert
 ) -> Response:
-    _validate_response_values(record, values=response_upsert.values, status=response_upsert.status)
+    _validate_response_values(record, response_values=response_upsert.values, response_status=response_upsert.status)
 
     schema = {
         "values": jsonable_encoder(response_upsert.values),
@@ -1063,29 +1067,53 @@ async def delete_response(db: "AsyncSession", search_engine: SearchEngine, respo
 
 def _validate_response_values(
     record: Record,
-    values: Union[Dict[str, ResponseValueCreate], Dict[str, ResponseValueUpdate], None],
-    status: ResponseStatus,
+    response_values: Union[Dict[str, ResponseValueCreate], Dict[str, ResponseValueUpdate], None],
+    response_status: ResponseStatus,
 ):
-    if not values:
-        if status not in [ResponseStatus.discarded, ResponseStatus.draft]:
+    if not response_values:
+        if response_status not in [ResponseStatus.discarded, ResponseStatus.draft]:
             raise ValueError("missing response values")
 
         return
 
-    values_copy = copy.copy(values)
+    response_values_copy = copy.copy(response_values)
     for question in record.dataset.questions:
         if (
             question.required
-            and status == ResponseStatus.submitted
-            and not (question.name in values and values_copy.get(question.name))
+            and response_status == ResponseStatus.submitted
+            and not (question.name in response_values and response_values_copy.get(question.name))
         ):
             raise ValueError(f"missing question with name={question.name}")
 
-        if question_response := values_copy.pop(question.name, None):
-            question.parsed_settings.check_response(question_response, status)
+        if question_response := response_values_copy.pop(question.name, None):
+            question_parsed_settings = question.parsed_settings
 
-    if values_copy:
-        raise ValueError(f"found responses for non configured questions: {list(values_copy.keys())!r}")
+            question_parsed_settings.check_response(question_response, response_status)
+
+            if question.is_span:
+                field_name = question_parsed_settings.field
+
+                if field_name not in record.fields:
+                    raise ValueError(
+                        f"response for span question `{question.name}` requires record to have field `{field_name}`"
+                    )
+
+                from argilla_server.models.questions import SpanQuestionResponseValue
+
+                record_field_len = len(record.fields[field_name])
+                for response_value_item in SpanQuestionResponseValue.parse_obj(question_response).value:
+                    if response_value_item.start > (record_field_len - 1):
+                        raise ValueError(
+                            f"span question response value `start` must have a value lower than record field `{field_name}` length that is `{record_field_len}`"
+                        )
+
+                    if response_value_item.end > record_field_len:
+                        raise ValueError(
+                            f"span question response value `end` must have a value lower or equal than record field `{field_name}` length that is `{record_field_len}`"
+                        )
+
+    if response_values_copy:
+        raise ValueError(f"found responses for non configured questions: {list(response_values_copy.keys())!r}")
 
 
 def _validate_record_fields(dataset: Dataset, fields: Dict[str, Any]):

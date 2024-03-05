@@ -246,6 +246,10 @@ class Question(DatabaseModel):
         return parse_obj_as(QuestionSettings, self.settings)
 
     @property
+    def is_span(self) -> bool:
+        return self.type == QuestionType.span
+
+    @property
     def type(self) -> QuestionType:
         return QuestionType(self.settings["type"])
 
