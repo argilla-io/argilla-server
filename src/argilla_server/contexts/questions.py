@@ -79,7 +79,7 @@ def _validate_question_settings(
 ) -> None:
     _validate_settings_type(question_settings, question_update_settings)
 
-    if question_settings.type in [QuestionType.label_selection, QuestionType.multi_label_selection]:
+    if question_settings.type in [QuestionType.label_selection, QuestionType.multi_label_selection, QuestionType.span]:
         _validate_label_options(question_settings, question_update_settings)
 
 

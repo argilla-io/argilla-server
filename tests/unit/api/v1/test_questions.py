@@ -28,6 +28,7 @@ from tests.factories import (
     MultiLabelSelectionQuestionFactory,
     RankingQuestionFactory,
     RatingQuestionFactory,
+    SpanQuestionFactory,
     TextQuestionFactory,
     UserFactory,
 )
@@ -177,6 +178,31 @@ if TYPE_CHECKING:
                 ],
             },
         ),
+        (
+            SpanQuestionFactory,
+            {
+                "settings": {
+                    "type": "span",
+                    "field": "field-a",
+                    "options": [
+                        {"value": "label-b", "text": "Label B", "description": "Label B description"},
+                        {"value": "label-a", "text": "Label A", "description": "Label A description"},
+                        {"value": "label-c", "text": "Label C", "description": "Label C description"},
+                    ],
+                }
+            },
+            {
+                "type": "span",
+                "field": "field-a",
+                "options": [
+                    {"value": "label-b", "text": "Label B", "description": "Label B description"},
+                    {"value": "label-a", "text": "Label A", "description": "Label A description"},
+                    {"value": "label-c", "text": "Label C", "description": "Label C description"},
+                ],
+                "allow_overlapping": False,
+                "allow_character_annotation": True,
+            },
+        ),
     ],
 )
 @pytest.mark.parametrize("role", [UserRole.owner])
@@ -213,6 +239,7 @@ async def test_update_question(
     }
 
     question = await db.get(Question, question.id)
+
     assert question.title == title
     assert question.description == description
     assert question.settings == expected_settings
@@ -318,6 +345,33 @@ async def test_update_question_with_invalid_description(
                         {"value": "undefined-option-01", "text": "Undefined option"},
                         {"value": "undefined-option-02", "text": "Undefined option"},
                         {"value": "undefined-option-03", "text": "Undefined option"},
+                    ],
+                }
+            },
+        ),
+        (
+            SpanQuestionFactory,
+            {
+                "settings": {
+                    "type": "span",
+                    "field": "field-a",
+                    "options": [
+                        {"value": "label-b", "text": "Label B", "description": "Label B description"},
+                        {"value": "label-c", "text": "Label C", "description": "Label C description"},
+                    ],
+                }
+            },
+        ),
+        (
+            SpanQuestionFactory,
+            {
+                "settings": {
+                    "type": "span",
+                    "field": "field-a",
+                    "options": [
+                        {"value": "label-a", "text": "Label A", "description": "Label A description"},
+                        {"value": "label-b", "text": "Label B", "description": "Label B description"},
+                        {"value": "label-d", "text": "Label D", "description": "Label D description"},
                     ],
                 }
             },
