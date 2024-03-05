@@ -106,6 +106,11 @@ def _validate_question_before_create(dataset: Dataset, question_create: Question
         _validate_span_question_settings_before_create(dataset, question_create.settings)
 
 
+def _validate_question_before_update(question: Question, question_update: QuestionUpdate) -> None:
+    if question_update.settings:
+        _validate_question_settings(question.parsed_settings, question_update.settings)
+
+
 def _validate_span_question_settings_before_create(
     dataset: Dataset, span_question_settings_create: SpanQuestionSettingsCreate
 ) -> None:
@@ -140,8 +145,7 @@ async def update_question(db: AsyncSession, question_id: UUID, question_update: 
 
     await authorize(current_user, QuestionPolicyV1.update(question))
 
-    if question_update.settings:
-        _validate_question_settings(question.parsed_settings, question_update.settings)
+    _validate_question_before_update(question, question_update)
 
     params = question_update.dict(exclude_unset=True)
     return await question.update(db, **params)
