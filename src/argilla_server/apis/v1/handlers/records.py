@@ -19,7 +19,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Security, status
 from fastapi import Response as HTTPResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from argilla_server.contexts import datasets
+from argilla_server.contexts import datasets, questions
 from argilla_server.database import get_async_db
 from argilla_server.models import Record, User
 from argilla_server.policies import RecordPolicyV1, authorize
@@ -146,7 +146,7 @@ async def upsert_suggestion(
 
     await authorize(current_user, RecordPolicyV1.create_suggestion(record))
 
-    question = await datasets.get_question_by_id(db, suggestion_create.question_id)
+    question = await questions.get_question_by_id(db, suggestion_create.question_id)
     if not question:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,

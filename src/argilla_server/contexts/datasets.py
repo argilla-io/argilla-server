@@ -36,7 +36,7 @@ from sqlalchemy import Select, and_, func, select
 from sqlalchemy.orm import contains_eager, joinedload, selectinload
 
 import argilla_server.errors.future as errors
-from argilla_server.contexts import accounts
+from argilla_server.contexts import accounts, questions
 from argilla_server.enums import DatasetStatus, RecordInclude, UserRole
 from argilla_server.models import (
     Dataset,
@@ -71,6 +71,7 @@ from argilla_server.schemas.v1.responses import (
     ResponseUpsert,
     ResponseValueCreate,
     ResponseValueUpdate,
+    UserResponseCreate,
 )
 from argilla_server.schemas.v1.vector_settings import (
     VectorSettings as VectorSettingsSchema,
@@ -99,8 +100,8 @@ VISIBLE_FOR_ANNOTATORS_ALLOWED_ROLES = [UserRole.admin, UserRole.annotator]
 NOT_VISIBLE_FOR_ANNOTATORS_ALLOWED_ROLES = [UserRole.admin]
 
 
-async def _touch_dataset_last_activity_at(db: "AsyncSession", dataset: Dataset) -> Dataset:
-    return await db.execute(
+async def _touch_dataset_last_activity_at(db: "AsyncSession", dataset: Dataset) -> None:
+    await db.execute(
         sqlalchemy.update(Dataset).where(Dataset.id == dataset.id).values(last_activity_at=datetime.utcnow())
     )
 
@@ -112,8 +113,9 @@ async def get_dataset_by_id(
     with_questions: bool = False,
     with_metadata_properties: bool = False,
     with_vectors_settings: bool = False,
-) -> Dataset:
+) -> Union[Dataset, None]:
     query = select(Dataset).filter_by(id=dataset_id)
+
     options = []
     if with_fields:
         options.append(selectinload(Dataset.fields))
@@ -125,7 +127,9 @@ async def get_dataset_by_id(
         options.append(selectinload(Dataset.vectors_settings))
     if options:
         query = query.options(*options)
+
     result = await db.execute(query)
+
     return result.scalar_one_or_none()
 
 
@@ -159,13 +163,13 @@ async def create_dataset(db: "AsyncSession", dataset_create: DatasetCreate):
 
 
 async def _count_required_fields_by_dataset_id(db: "AsyncSession", dataset_id: UUID) -> int:
-    result = await db.execute(select(func.count(Field.id)).filter_by(dataset_id=dataset_id, required=True))
-    return result.scalar()
+    return (await db.execute(select(func.count(Field.id)).filter_by(dataset_id=dataset_id, required=True))).scalar_one()
 
 
 async def _count_required_questions_by_dataset_id(db: "AsyncSession", dataset_id: UUID) -> int:
-    result = await db.execute(select(func.count(Question.id)).filter_by(dataset_id=dataset_id, required=True))
-    return result.scalar()
+    return (
+        await db.execute(select(func.count(Question.id)).filter_by(dataset_id=dataset_id, required=True))
+    ).scalar_one()
 
 
 def _allowed_roles_for_metadata_property_create(metadata_property_create: MetadataPropertyCreate) -> List[UserRole]:
@@ -245,25 +249,6 @@ async def delete_field(db: "AsyncSession", field: Field) -> Field:
     return await field.delete(db)
 
 
-async def get_question_by_id(db: "AsyncSession", question_id: UUID) -> Union[Question, None]:
-    result = await db.execute(select(Question).filter_by(id=question_id).options(selectinload(Question.dataset)))
-    return result.scalar_one_or_none()
-
-
-async def get_question_by_name_and_dataset_id(db: "AsyncSession", name: str, dataset_id: UUID) -> Union[Question, None]:
-    result = await db.execute(select(Question).filter_by(name=name, dataset_id=dataset_id))
-
-    return result.scalar_one_or_none()
-
-
-async def get_question_by_name_and_dataset_id_or_raise(db: "AsyncSession", name: str, dataset_id: UUID) -> Question:
-    question = await get_question_by_name_and_dataset_id(db, name, dataset_id)
-    if question is None:
-        raise errors.NotFoundError(f"Question with name `{name}` not found for dataset with id `{dataset_id}`")
-
-    return question
-
-
 async def get_metadata_property_by_name_and_dataset_id(
     db: "AsyncSession", name: str, dataset_id: UUID
 ) -> Union[MetadataProperty, None]:
@@ -284,24 +269,6 @@ async def get_metadata_property_by_name_and_dataset_id_or_raise(
 
 async def delete_metadata_property(db: "AsyncSession", metadata_property: MetadataProperty) -> MetadataProperty:
     return await metadata_property.delete(db)
-
-
-async def create_question(db: "AsyncSession", dataset: Dataset, question_create: QuestionCreate) -> Question:
-    if dataset.is_ready:
-        raise ValueError("Question cannot be created for a published dataset")
-
-    # TODO: Add question level validation
-    #  For example, for span questions, we should validate that provided field names are valid
-
-    return await Question.create(
-        db,
-        name=question_create.name,
-        title=question_create.title,
-        description=question_create.description,
-        required=question_create.required,
-        settings=question_create.settings.dict(),
-        dataset_id=dataset.id,
-    )
 
 
 async def create_metadata_property(
@@ -341,17 +308,8 @@ async def update_metadata_property(
     )
 
 
-async def delete_question(db: "AsyncSession", question: Question) -> Question:
-    if question.dataset.is_ready:
-        raise ValueError("Questions cannot be deleted for a published dataset")
-
-    return await question.delete(db)
-
-
 async def count_vectors_settings_by_dataset_id(db: "AsyncSession", dataset_id: UUID) -> int:
-    result = await db.execute(select(func.count(VectorSettings.id)).filter_by(dataset_id=dataset_id))
-
-    return result.scalar()
+    return (await db.execute(select(func.count(VectorSettings.id)).filter_by(dataset_id=dataset_id))).scalar_one()
 
 
 async def get_vector_settings_by_id(db: "AsyncSession", vector_settings_id: UUID) -> Union[VectorSettings, None]:
@@ -482,8 +440,7 @@ async def _configure_query_relationships(
 
 
 async def count_records_by_dataset_id(db: "AsyncSession", dataset_id: UUID) -> int:
-    result = await db.execute(select(func.count(Record.id)).filter_by(dataset_id=dataset_id))
-    return result.scalar()
+    return (await db.execute(select(func.count(Record.id)).filter_by(dataset_id=dataset_id))).scalar_one()
 
 
 _EXTRA_METADATA_FLAG = "extra"
@@ -532,26 +489,27 @@ async def _validate_metadata(
 
 async def _validate_suggestion(
     db: "AsyncSession",
-    suggestion: "SuggestionCreate",
-    questions: Optional[Dict[UUID, Question]] = None,
+    record: Record,
+    suggestion_create: "SuggestionCreate",
+    questions_cache: Optional[Dict[UUID, Question]] = None,
 ) -> Dict[UUID, Question]:
-    if not questions:
-        questions = {}
+    if not questions_cache:
+        questions_cache = {}
 
-    question = questions.get(suggestion.question_id, None)
+    question = questions_cache.get(suggestion_create.question_id, None)
 
     if not question:
-        question = await get_question_by_id(db, suggestion.question_id)
+        question = await questions.get_question_by_id(db, suggestion_create.question_id)
         if not question:
-            raise ValueError(f"question_id={str(suggestion.question_id)} does not exist")
-        questions[suggestion.question_id] = question
+            raise ValueError(f"question_id={str(suggestion_create.question_id)} does not exist")
+        questions_cache[suggestion_create.question_id] = question
 
-    question.parsed_settings.check_response(suggestion)
+    question.parsed_settings.check_response(suggestion_create, record)
 
-    return questions
+    return questions_cache
 
 
-async def validate_user(db: "AsyncSession", user_id: UUID, users_ids: Optional[Set[UUID]]) -> Set[UUID]:
+async def validate_user_exists(db: "AsyncSession", user_id: UUID, users_ids: Optional[Set[UUID]]) -> Set[UUID]:
     if not users_ids:
         users_ids = set()
 
@@ -587,36 +545,18 @@ async def _validate_vector(
     return vectors_settings
 
 
-async def _create_record(
+async def _build_record(
     db: "AsyncSession", dataset: Dataset, record_create: RecordCreate, caches: Dict[str, Any]
 ) -> Record:
     _validate_record_fields(dataset, fields=record_create.fields)
-    caches["metadata_properties_cache"] = await _validate_record_metadata(
-        db, dataset, record_create.metadata, caches["metadata_properties_cache"]
-    )
-    record_responses, caches["users_ids_cache"] = await _build_record_responses(
-        db, dataset, record_create, caches["users_ids_cache"]
-    )
-    record_suggestions, caches["questions_cache"] = await _build_record_suggestions(
-        db, record_create, caches["questions_cache"]
-    )
-    record_vectors, caches["vectors_settings_cache"] = await _build_record_vectors(
-        db,
-        dataset,
-        record_create,
-        build_vector_func=lambda value, vector_settings_id: Vector(value=value, vector_settings_id=vector_settings_id),
-        cache=caches["vectors_settings_cache"],
-    )
-    record = Record(
+    await _validate_record_metadata(db, dataset, record_create.metadata, caches["metadata_properties_cache"])
+
+    return Record(
         fields=record_create.fields,
         metadata_=record_create.metadata,
         external_id=record_create.external_id,
-        dataset_id=dataset.id,
-        responses=record_responses,
-        suggestions=record_suggestions,
-        vectors=record_vectors,
+        dataset=dataset,
     )
-    return record
 
 
 async def create_records(
@@ -636,7 +576,26 @@ async def create_records(
 
     for record_i, record_create in enumerate(records_create.items):
         try:
-            record = await _create_record(db, dataset, record_create, caches)
+            record = await _build_record(db, dataset, record_create, caches)
+
+            record.responses = await _build_record_responses(
+                db, record, record_create.responses, caches["users_ids_cache"]
+            )
+
+            record.suggestions = await _build_record_suggestions(
+                db, record, record_create.suggestions, caches["questions_cache"]
+            )
+
+            record.vectors = await _build_record_vectors(
+                db,
+                dataset,
+                record_create.vectors,
+                build_vector_func=lambda value, vector_settings_id: Vector(
+                    value=value, vector_settings_id=vector_settings_id
+                ),
+                cache=caches["vectors_settings_cache"],
+            )
+
         except ValueError as e:
             raise ValueError(f"Record at position {record_i} is not valid because {e}") from e
         records.append(record)
@@ -684,60 +643,65 @@ async def _validate_record_metadata(
 
 async def _build_record_responses(
     db: "AsyncSession",
-    dataset: Dataset,
-    record_create: RecordCreate,
-    cache: Set[UUID] = set(),
-) -> Tuple[List[Response], Set[UUID]]:
+    record: Record,
+    responses_create: Optional[List[UserResponseCreate]],
+    cache: Optional[Set[UUID]] = None,
+) -> List[Response]:
     """Create responses for a record."""
-    if not record_create.responses:
-        return [], cache
+    if not responses_create:
+        return []
 
     responses = []
 
-    for idx, response in enumerate(record_create.responses):
+    for idx, response_create in enumerate(responses_create):
         try:
-            cache = await validate_user(db, response.user_id, cache)
-            _validate_response_values(dataset, values=response.values, status=response.status)
+            cache = await validate_user_exists(db, response_create.user_id, cache)
+            _validate_response_values(
+                record, response_values=response_create.values, response_status=response_create.status
+            )
+
             responses.append(
                 Response(
-                    values=jsonable_encoder(response.values),
-                    status=response.status,
-                    user_id=response.user_id,
+                    values=jsonable_encoder(response_create.values),
+                    status=response_create.status,
+                    user_id=response_create.user_id,
+                    record=record,
                 )
             )
         except ValueError as e:
             raise ValueError(f"response at position {idx} is not valid: {e}") from e
 
-    return responses, cache
+    return responses
 
 
 async def _build_record_suggestions(
     db: "AsyncSession",
-    record_schema: Union["RecordCreate", "RecordUpdate", "RecordUpdateWithId"],
-    cache: Dict[UUID, Question] = {},
-) -> Tuple[List[Suggestion], Dict[UUID, Question]]:
+    record: Record,
+    suggestions_create: Optional[List["SuggestionCreate"]],
+    cache: Optional[Dict[UUID, Question]] = None,
+) -> List[Suggestion]:
     """Create suggestions for a record."""
-
-    if not record_schema.suggestions:
-        return [], cache
+    if not suggestions_create:
+        return []
 
     suggestions = []
-    for suggestion in record_schema.suggestions:
+    for suggestion_create in suggestions_create:
         try:
-            cache = await _validate_suggestion(db, suggestion, questions=cache)
-            suggestion = Suggestion(
-                type=suggestion.type,
-                score=suggestion.score,
-                value=suggestion.value,
-                agent=suggestion.agent,
-                question_id=suggestion.question_id,
+            cache = await _validate_suggestion(db, record, suggestion_create, questions_cache=cache)
+            suggestions.append(
+                Suggestion(
+                    type=suggestion_create.type,
+                    score=suggestion_create.score,
+                    value=suggestion_create.value,
+                    agent=suggestion_create.agent,
+                    question_id=suggestion_create.question_id,
+                    record=record,
+                )
             )
-            if isinstance(record_schema, RecordUpdateWithId):
-                suggestion.record_id = record_schema.id
-            suggestions.append(suggestion)
+
         except ValueError as e:
-            raise ValueError(f"suggestion for question_id={suggestion.question_id} is not valid: {e}") from e
-    return suggestions, cache
+            raise ValueError(f"suggestion for question_id={suggestion_create.question_id} is not valid: {e}") from e
+    return suggestions
 
 
 VectorClass = TypeVar("VectorClass")
@@ -746,22 +710,23 @@ VectorClass = TypeVar("VectorClass")
 async def _build_record_vectors(
     db: "AsyncSession",
     dataset: Dataset,
-    record_schema: Union["RecordCreate", "RecordUpdate", "RecordUpdateWithId"],
+    vectors_dict: Dict[str, List[float]],
     build_vector_func: Callable[[List[float], UUID], VectorClass],
-    cache: Dict[str, VectorSettingsSchema] = {},
-) -> Tuple[List[VectorClass], Dict[str, VectorSettingsSchema]]:
+    cache: Optional[Dict[str, VectorSettingsSchema]] = None,
+) -> List[VectorClass]:
     """Create vectors for a record."""
-    if not record_schema.vectors:
-        return [], cache
+    if not vectors_dict:
+        return []
 
     vectors = []
-    for vector_name, vector_value in record_schema.vectors.items():
+    for vector_name, vector_value in vectors_dict.items():
         try:
             cache = await _validate_vector(db, dataset.id, vector_name, vector_value, vectors_settings=cache)
             vectors.append(build_vector_func(vector_value, cache[vector_name].id))
         except ValueError as e:
             raise ValueError(f"vector with name={vector_name} is not valid: {e}") from e
-    return vectors, cache
+
+    return vectors
 
 
 async def _exists_records_with_ids(db: "AsyncSession", dataset_id: UUID, records_ids: List[UUID]) -> List[UUID]:
@@ -769,8 +734,8 @@ async def _exists_records_with_ids(db: "AsyncSession", dataset_id: UUID, records
     return result.scalars().all()
 
 
-async def _update_record(
-    db: "AsyncSession", dataset: Dataset, record_update: "RecordUpdateWithId", caches: Optional[Dict[str, Any]] = None
+async def _build_record_update(
+    db: "AsyncSession", record: Record, record_update: "RecordUpdateWithId", caches: Optional[Dict[str, Any]] = None
 ) -> Tuple[Dict[str, Any], Union[List[Suggestion], None], List[VectorSchema], bool, Dict[str, Any]]:
     if caches is None:
         caches = {
@@ -789,7 +754,7 @@ async def _update_record(
         needs_search_engine_update = True
         if metadata is not None:
             caches["metadata_properties"] = await _validate_record_metadata(
-                db, dataset, metadata, caches["metadata_properties"]
+                db, record.dataset, metadata, caches["metadata_properties"]
             )
 
     if record_update.suggestions is not None:
@@ -797,14 +762,14 @@ async def _update_record(
         questions_ids = [suggestion.question_id for suggestion in record_update.suggestions]
         if len(questions_ids) != len(set(questions_ids)):
             raise ValueError("found duplicate suggestions question IDs")
-        suggestions, caches["questions"] = await _build_record_suggestions(db, record_update, caches["questions"])
+        suggestions = await _build_record_suggestions(db, record, record_update.suggestions, caches["questions"])
 
     if record_update.vectors is not None:
         params.pop("vectors")
-        vectors, caches["vector_settings"] = await _build_record_vectors(
+        vectors = await _build_record_vectors(
             db,
-            dataset,
-            record_update,
+            record.dataset,
+            record_update.vectors,
             build_vector_func=lambda value, vector_settings_id: VectorSchema(
                 value=value, record_id=record_update.id, vector_settings_id=vector_settings_id
             ),
@@ -870,12 +835,14 @@ async def update_records(
         "vector_settings": {},
     }
 
+    existing_records = await get_records_by_ids(db, records_ids=records_ids, dataset_id=dataset.id)
+
     suggestions = []
     upsert_vectors = []
-    for record_i, record_update in enumerate(records_update.items):
+    for record_i, (record_update, record) in enumerate(zip(records_update.items, existing_records)):
         try:
-            params, record_suggestions, record_vectors, needs_search_engine_update, caches = await _update_record(
-                db, dataset, record_update, caches
+            params, record_suggestions, record_vectors, needs_search_engine_update, caches = await _build_record_update(
+                db, record, record_update, caches
             )
 
             if record_suggestions is not None:
@@ -940,8 +907,8 @@ async def delete_records(
 async def update_record(
     db: "AsyncSession", search_engine: "SearchEngine", record: Record, record_update: "RecordUpdate"
 ) -> Record:
-    params, suggestions, vectors, needs_search_engine_update, _ = await _update_record(
-        db, record.dataset, RecordUpdateWithId(id=record.id, **record_update.dict(by_alias=True, exclude_unset=True))
+    params, suggestions, vectors, needs_search_engine_update, _ = await _build_record_update(
+        db, record, RecordUpdateWithId(id=record.id, **record_update.dict(by_alias=True, exclude_unset=True))
     )
 
     # Remove existing suggestions
@@ -1000,18 +967,19 @@ async def count_responses_by_dataset_id_and_user_id(
     if response_status:
         expressions.append(Response.status == response_status)
 
-    result = await db.execute(
-        select(func.count(Response.id))
-        .join(Record, and_(Record.id == Response.record_id, Record.dataset_id == dataset_id))
-        .filter(*expressions)
-    )
-    return result.scalar()
+    return (
+        await db.execute(
+            select(func.count(Response.id))
+            .join(Record, and_(Record.id == Response.record_id, Record.dataset_id == dataset_id))
+            .filter(*expressions)
+        )
+    ).scalar_one()
 
 
 async def create_response(
     db: "AsyncSession", search_engine: SearchEngine, record: Record, user: User, response_create: ResponseCreate
 ) -> Response:
-    _validate_response_values(record.dataset, values=response_create.values, status=response_create.status)
+    _validate_response_values(record, response_values=response_create.values, response_status=response_create.status)
 
     async with db.begin_nested():
         response = await Response.create(
@@ -1022,6 +990,7 @@ async def create_response(
             user_id=user.id,
             autocommit=False,
         )
+
         await db.flush([response])
         await _touch_dataset_last_activity_at(db, record.dataset)
         await search_engine.update_record_response(response)
@@ -1034,7 +1003,9 @@ async def create_response(
 async def update_response(
     db: "AsyncSession", search_engine: SearchEngine, response: Response, response_update: ResponseUpdate
 ):
-    _validate_response_values(response.record.dataset, values=response_update.values, status=response_update.status)
+    _validate_response_values(
+        response.record, response_values=response_update.values, response_status=response_update.status
+    )
 
     async with db.begin_nested():
         response = await response.update(
@@ -1057,7 +1028,7 @@ async def update_response(
 async def upsert_response(
     db: "AsyncSession", search_engine: SearchEngine, record: Record, user: User, response_upsert: ResponseUpsert
 ) -> Response:
-    _validate_response_values(record.dataset, values=response_upsert.values, status=response_upsert.status)
+    _validate_response_values(record, response_values=response_upsert.values, response_status=response_upsert.status)
 
     schema = {
         "values": jsonable_encoder(response_upsert.values),
@@ -1096,30 +1067,30 @@ async def delete_response(db: "AsyncSession", search_engine: SearchEngine, respo
 
 
 def _validate_response_values(
-    dataset: Dataset,
-    values: Union[Dict[str, ResponseValueCreate], Dict[str, ResponseValueUpdate], None],
-    status: ResponseStatus,
+    record: Record,
+    response_values: Union[Dict[str, ResponseValueCreate], Dict[str, ResponseValueUpdate], None],
+    response_status: ResponseStatus,
 ):
-    if not values:
-        if status not in [ResponseStatus.discarded, ResponseStatus.draft]:
+    if not response_values:
+        if response_status not in [ResponseStatus.discarded, ResponseStatus.draft]:
             raise ValueError("missing response values")
+
         return
 
-    values_copy = copy.copy(values or {})
-    for question in dataset.questions:
+    response_values_copy = copy.copy(response_values)
+    for question in record.dataset.questions:
         if (
             question.required
-            and status == ResponseStatus.submitted
-            and not (question.name in values and values_copy.get(question.name))
+            and response_status == ResponseStatus.submitted
+            and not (question.name in response_values and response_values_copy.get(question.name))
         ):
             raise ValueError(f"missing question with name={question.name}")
 
-        question_response = values_copy.pop(question.name, None)
-        if question_response:
-            question.parsed_settings.check_response(question_response, status)
+        if question_response := response_values_copy.pop(question.name, None):
+            question.parsed_settings.check_response(question_response, record, response_status)
 
-    if values_copy:
-        raise ValueError(f"found responses for non configured questions: {list(values_copy.keys())!r}")
+    if response_values_copy:
+        raise ValueError(f"found responses for non configured questions: {list(response_values_copy.keys())!r}")
 
 
 def _validate_record_fields(dataset: Dataset, fields: Dict[str, Any]):
@@ -1163,7 +1134,7 @@ async def upsert_suggestion(
     question: Question,
     suggestion_create: "SuggestionCreate",
 ) -> Suggestion:
-    question.parsed_settings.check_response(suggestion_create)
+    question.parsed_settings.check_response(suggestion_create, record)
 
     async with db.begin_nested():
         suggestion = await Suggestion.upsert(

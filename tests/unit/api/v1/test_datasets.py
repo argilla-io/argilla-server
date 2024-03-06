@@ -3985,6 +3985,8 @@ class TestSuiteDatasets:
                     "agent": None,
                     "type": None,
                     "question_id": str(questions[0].id),
+                    "inserted_at": suggestion_a.inserted_at.isoformat(),
+                    "updated_at": suggestion_a.updated_at.isoformat(),
                 }
             ]
             expected["items"][1]["record"]["suggestions"] = [
@@ -3995,6 +3997,8 @@ class TestSuiteDatasets:
                     "agent": "unit-test-agent",
                     "type": "model",
                     "question_id": str(questions[0].id),
+                    "inserted_at": suggestion_b.inserted_at.isoformat(),
+                    "updated_at": suggestion_b.updated_at.isoformat(),
                 }
             ]
 

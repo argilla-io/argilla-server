@@ -19,7 +19,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
 
 from argilla_server.apis.v1.handlers.datasets.datasets import _get_dataset_or_raise
-from argilla_server.contexts import datasets
+from argilla_server.contexts import questions
 from argilla_server.database import get_async_db
 from argilla_server.models import User
 from argilla_server.policies import DatasetPolicyV1, authorize
@@ -48,11 +48,11 @@ async def create_dataset_question(
     question_create: QuestionCreate,
     current_user: User = Security(auth.get_current_user),
 ):
-    dataset = await _get_dataset_or_raise(db, dataset_id)
+    dataset = await _get_dataset_or_raise(db, dataset_id, with_fields=True)
 
     await authorize(current_user, DatasetPolicyV1.create_question(dataset))
 
-    if await datasets.get_question_by_name_and_dataset_id(db, question_create.name, dataset_id):
+    if await questions.get_question_by_name_and_dataset_id(db, question_create.name, dataset_id):
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail=f"Question with name `{question_create.name}` already exists for dataset with id `{dataset_id}`",
@@ -61,6 +61,6 @@ async def create_dataset_question(
     # TODO: We should split API v1 into different FastAPI apps so we can customize error management.
     # After mapping ValueError to 422 errors for API v1 then we can remove this try except.
     try:
-        return await datasets.create_question(db, dataset, question_create)
+        return await questions.create_question(db, dataset, question_create)
     except ValueError as err:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(err))

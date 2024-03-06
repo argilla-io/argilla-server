@@ -35,7 +35,14 @@ from httpx import AsyncClient
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from tests.factories import AdminFactory, AnnotatorFactory, DatasetFactory, QuestionFactory, WorkspaceFactory
+from tests.factories import (
+    AdminFactory,
+    AnnotatorFactory,
+    DatasetFactory,
+    QuestionFactory,
+    TextFieldFactory,
+    WorkspaceFactory,
+)
 
 
 @pytest.mark.asyncio
@@ -138,6 +145,7 @@ class TestDatasetQuestions:
             (
                 {
                     "type": "span",
+                    "field": "field-a",
                     "options": [
                         {"value": "label-a", "text": "Label A"},
                         {"value": "label-b", "text": "Label B"},
@@ -147,6 +155,7 @@ class TestDatasetQuestions:
                 },
                 {
                     "type": "span",
+                    "field": "field-a",
                     "options": [
                         {"value": "label-a", "text": "Label A", "description": None},
                         {"value": "label-b", "text": "Label B", "description": None},
@@ -155,7 +164,6 @@ class TestDatasetQuestions:
                     ],
                     "allow_character_annotation": True,
                     "allow_overlapping": False,
-                    "fields": "all",
                 },
             ),
         ],
@@ -169,6 +177,8 @@ class TestDatasetQuestions:
         expected_settings: dict,
     ):
         dataset = await DatasetFactory.create()
+        await TextFieldFactory.create(name="field-a", dataset=dataset)
+
         question_json = {
             "name": "name",
             "title": "title",
