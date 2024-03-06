@@ -12,6 +12,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+from datetime import datetime
 from uuid import UUID, uuid4
 
 import pytest
@@ -173,6 +174,8 @@ class TestUpsertSuggestion:
             ],
             "agent": None,
             "score": None,
+            "inserted_at": datetime.fromisoformat(response_json["inserted_at"]).isoformat(),
+            "updated_at": datetime.fromisoformat(response_json["updated_at"]).isoformat(),
         }
 
     async def test_upsert_suggestion_for_span_question_with_empty_value(
@@ -206,6 +209,8 @@ class TestUpsertSuggestion:
             "value": [],
             "agent": None,
             "score": None,
+            "inserted_at": datetime.fromisoformat(response_json["inserted_at"]).isoformat(),
+            "updated_at": datetime.fromisoformat(response_json["updated_at"]).isoformat(),
         }
 
     async def test_upsert_suggestion_for_span_question_with_record_not_providing_required_field(
