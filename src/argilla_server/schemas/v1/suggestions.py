@@ -12,6 +12,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+from datetime import datetime
 from typing import Any, List, Literal, Optional, Union
 from uuid import UUID
 
@@ -57,6 +58,8 @@ class BaseSuggestion(BaseModel):
 
 class Suggestion(BaseSuggestion):
     id: UUID
+    inserted_at: datetime
+    updated_at: datetime
 
     class Config:
         orm_mode = True
