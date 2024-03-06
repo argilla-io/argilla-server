@@ -489,6 +489,7 @@ async def _validate_metadata(
 
 async def _validate_suggestion(
     db: "AsyncSession",
+    record: Record,
     suggestion_create: "SuggestionCreate",
     questions_cache: Optional[Dict[UUID, Question]] = None,
 ) -> Dict[UUID, Question]:
@@ -503,7 +504,7 @@ async def _validate_suggestion(
             raise ValueError(f"question_id={str(suggestion_create.question_id)} does not exist")
         questions_cache[suggestion_create.question_id] = question
 
-    question.parsed_settings.check_response(suggestion_create)
+    question.parsed_settings.check_response(suggestion_create, record)
 
     return questions_cache
 
@@ -686,7 +687,7 @@ async def _build_record_suggestions(
     suggestions = []
     for suggestion_create in suggestions_create:
         try:
-            cache = await _validate_suggestion(db, suggestion_create, questions_cache=cache)
+            cache = await _validate_suggestion(db, record, suggestion_create, questions_cache=cache)
             suggestions.append(
                 Suggestion(
                     type=suggestion_create.type,
@@ -1086,31 +1087,7 @@ def _validate_response_values(
             raise ValueError(f"missing question with name={question.name}")
 
         if question_response := response_values_copy.pop(question.name, None):
-            question_parsed_settings = question.parsed_settings
-
-            question_parsed_settings.check_response(question_response, response_status)
-
-            if question.is_span:
-                field_name = question_parsed_settings.field
-
-                if field_name not in record.fields:
-                    raise ValueError(
-                        f"response for span question `{question.name}` requires record to have field `{field_name}`"
-                    )
-
-                from argilla_server.models.questions import SpanQuestionResponseValue
-
-                record_field_len = len(record.fields[field_name])
-                for response_value_item in SpanQuestionResponseValue.parse_obj(question_response).value:
-                    if response_value_item.start > (record_field_len - 1):
-                        raise ValueError(
-                            f"span question response value `start` must have a value lower than record field `{field_name}` length that is `{record_field_len}`"
-                        )
-
-                    if response_value_item.end > record_field_len:
-                        raise ValueError(
-                            f"span question response value `end` must have a value lower or equal than record field `{field_name}` length that is `{record_field_len}`"
-                        )
+            question.parsed_settings.check_response(question_response, record, response_status)
 
     if response_values_copy:
         raise ValueError(f"found responses for non configured questions: {list(response_values_copy.keys())!r}")
@@ -1157,7 +1134,7 @@ async def upsert_suggestion(
     question: Question,
     suggestion_create: "SuggestionCreate",
 ) -> Suggestion:
-    question.parsed_settings.check_response(suggestion_create)
+    question.parsed_settings.check_response(suggestion_create, record)
 
     async with db.begin_nested():
         suggestion = await Suggestion.upsert(

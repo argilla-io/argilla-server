@@ -120,7 +120,7 @@ class TestCreateRecordResponse:
             "updated_at": datetime.fromisoformat(response_json["updated_at"]).isoformat(),
         }
 
-    async def test_create_record_response_for_span_question_with_record_not_providing_required_response_field(
+    async def test_create_record_response_for_span_question_with_record_not_providing_required_field(
         self, async_client: AsyncClient, db: AsyncSession, owner_auth_header: dict
     ):
         dataset = await DatasetFactory.create()
@@ -145,9 +145,7 @@ class TestCreateRecordResponse:
         )
 
         assert response.status_code == 422
-        assert response.json() == {
-            "detail": "response for span question `span-question` requires record to have field `field-a`"
-        }
+        assert response.json() == {"detail": "span question requires record to have field `field-a`"}
 
         assert (await db.execute(select(func.count(Response.id)))).scalar() == 0
 

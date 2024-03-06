@@ -31,7 +31,9 @@ class ResponseValue(Protocol):
 
 
 class BaseQuestionSettings(BaseModel):
-    def check_response(self, response: ResponseValue, status: Optional[ResponseStatus] = None):
+    # TODO: We can't import Record because it can cause a cyclical import error.
+    # We should move this functionality outside models package to avoid this.
+    def check_response(self, response: ResponseValue, record: "Record", status: Optional[ResponseStatus] = None):
         pass
 
 
@@ -39,7 +41,7 @@ class TextQuestionSettings(BaseQuestionSettings):
     type: Literal[QuestionType.text]
     use_markdown: bool = False
 
-    def check_response(self, response: ResponseValue, status: Optional[ResponseStatus] = None):
+    def check_response(self, response: ResponseValue, record: "Record", status: Optional[ResponseStatus] = None):
         if not isinstance(response.value, str):
             raise ValueError(f"Expected text value, found {type(response.value)}")
 
@@ -56,7 +58,7 @@ class ValidOptionCheckerMixin(BaseQuestionSettings, Generic[T]):
     def option_values(self) -> List[T]:
         return [option.value for option in self.options]
 
-    def check_response(self, response: ResponseValue, status: Optional[ResponseStatus] = None):
+    def check_response(self, response: ResponseValue, record: "Record", status: Optional[ResponseStatus] = None):
         if response.value not in self.option_values:
             raise ValueError(f"{response.value!r} is not a valid option.\nValid options are: {self.option_values!r}")
 
@@ -85,7 +87,7 @@ def _are_all_elements_in_list(elements: List[T], list_: List[T]) -> List[T]:
 class MultiLabelSelectionQuestionSettings(LabelSelectionQuestionSettings):
     type: Literal[QuestionType.multi_label_selection]
 
-    def check_response(self, response: ResponseValue, status: Optional[ResponseStatus] = None):
+    def check_response(self, response: ResponseValue, record: "Record", status: Optional[ResponseStatus] = None):
         if not isinstance(response.value, list):
             raise ValueError(
                 f"This MultiLabelSelection question expects a list of values, found {type(response.value)}"
@@ -116,7 +118,7 @@ class RankingQuestionSettings(ValidOptionCheckerMixin[str]):
     def rank_values(self) -> List[int]:
         return list(range(1, len(self.option_values) + 1))
 
-    def check_response(self, response: ResponseValue, status: Optional[ResponseStatus] = None):
+    def check_response(self, response: ResponseValue, record: "Record", status: Optional[ResponseStatus] = None):
         if not isinstance(response.value, list):
             raise ValueError(f"This Ranking question expects a list of values, found {type(response.value)}")
 
@@ -178,15 +180,31 @@ class SpanQuestionSettings(BaseQuestionSettings):
     field: str
     options: List[ValueTextQuestionSettingsOption]
 
-    def check_response(self, response: ResponseValue, status: Optional[ResponseStatus] = None):
+    def check_response(self, response: ResponseValue, record: "Record", status: Optional[ResponseStatus] = None):
         if not isinstance(response.value, list):
-            raise ValueError(f"this span question expects a list of values, found {type(response.value)}")
+            raise ValueError(f"span question expects a list of values, found {type(response.value)}")
+
+        if self.field not in record.fields:
+            raise ValueError(f"span question requires record to have field `{self.field}`")
 
         span_question_response_value = self._parse_response_value(response)
+        self._check_response_start_end_ranges(span_question_response_value, len(record.fields[self.field]))
         self._check_response_labels(span_question_response_value)
 
     def _parse_response_value(self, response_value: ResponseValue) -> SpanQuestionResponseValue:
         return SpanQuestionResponseValue.parse_obj(response_value)
+
+    def _check_response_start_end_ranges(self, span_question_response_value: SpanQuestionResponseValue, field_len: int):
+        for value_item in span_question_response_value.value:
+            if value_item.start > (field_len - 1):
+                raise ValueError(
+                    f"span question response value `start` must have a value lower than record field `{self.field}` length that is `{field_len}`"
+                )
+
+            if value_item.end > field_len:
+                raise ValueError(
+                    f"span question response value `end` must have a value lower or equal than record field `{self.field}` length that is `{field_len}`"
+                )
 
     def _check_response_labels(self, span_question_response_value: SpanQuestionResponseValue):
         labels = [option.value for option in self.options]
