@@ -13,19 +13,17 @@
 #  limitations under the License.
 
 from datetime import datetime
-from typing import Any, List, Literal, Optional, Union
+from typing import Annotated, Any, List, Literal, Optional, Union
 from uuid import UUID
 
 from argilla_server.models import SuggestionType
 from argilla_server.pydantic_v1 import BaseModel, Field
+from argilla_server.schemas.v1.commons.suggestions import SuggestionScoreField
 from argilla_server.schemas.v1.questions import QuestionName
 
 AGENT_REGEX = r"^(?=.*[a-zA-Z0-9])[a-zA-Z0-9-_:\.\/\s]+$"
 AGENT_MIN_LENGTH = 1
 AGENT_MAX_LENGTH = 200
-
-SCORE_GREATER_THAN_OR_EQUAL = 0
-SCORE_LESS_THAN_OR_EQUAL = 1
 
 
 class SuggestionFilterScope(BaseModel):
@@ -77,9 +75,4 @@ class SuggestionCreate(BaseSuggestion):
         max_length=AGENT_MAX_LENGTH,
         description="Agent used to generate the suggestion",
     )
-    score: Optional[float] = Field(
-        None,
-        ge=SCORE_GREATER_THAN_OR_EQUAL,
-        le=SCORE_LESS_THAN_OR_EQUAL,
-        description="The score assigned to the suggestion",
-    )
+    score: SuggestionScoreField
