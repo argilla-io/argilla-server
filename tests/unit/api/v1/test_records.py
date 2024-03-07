@@ -13,7 +13,7 @@
 #  limitations under the License.
 
 from datetime import datetime
-from typing import Awaitable, TYPE_CHECKING, Any, Callable, Type
+from typing import TYPE_CHECKING, Any, Awaitable, Callable, Type
 from unittest.mock import call
 from uuid import UUID, uuid4
 
