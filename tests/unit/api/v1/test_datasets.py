@@ -91,6 +91,7 @@ from tests.factories import (
     LabelSelectionQuestionFactory,
     MetadataPropertyFactory,
     MultiLabelSelectionQuestionFactory,
+    OwnerFactory,
     QuestionFactory,
     RatingQuestionFactory,
     RecordFactory,
@@ -5459,3 +5460,34 @@ class TestSuiteDatasets:
         ]
 
         return dataset, questions, records, responses, suggestions
+
+    async def test_get_record_with_response_for_deleted_user(
+        self,
+        async_client: "AsyncClient",
+        db: "AsyncSession",
+        mock_search_engine: "SearchEngine",
+        owner: User,
+        owner_auth_header: dict,
+    ):
+        record = await RecordFactory.create()
+        user = await OwnerFactory.create()
+        response = await ResponseFactory.create(record=record, user=user)
+
+        mock_search_engine.search.return_value = SearchResponses(
+            items=[SearchResponseItem(record_id=record.id)], total=1
+        )
+
+        await db.delete(user)
+
+        response = await async_client.get(
+            f"/api/v1/datasets/{record.dataset.id}/records",
+            params={"include": ["responses"]},
+            headers=owner_auth_header,
+        )
+        response_json = response.json()
+
+        assert response.status_code == 200
+        assert len(response_json["items"]) == 1
+        assert response_json["items"][0]["id"] == str(record.id)
+        assert response_json["items"][0]["responses"][0]["id"] == str(response.id)
+        assert response_json["items"][0]["responses"][0]["user_id"] is None
