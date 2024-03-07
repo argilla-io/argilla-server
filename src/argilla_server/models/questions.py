@@ -16,6 +16,7 @@ from typing import Any, Dict, Generic, List, Literal, Optional, Protocol, TypeVa
 
 from argilla_server.enums import QuestionType, ResponseStatus
 from argilla_server.pydantic_v1 import BaseModel, Field, root_validator
+from argilla_server.schemas.v1.commons.suggestions import SuggestionScoreField
 
 try:
     from typing import Annotated
@@ -160,6 +161,10 @@ class SpanQuestionResponseValueItem(BaseModel):
     label: str
     start: int = Field(..., ge=0)
     end: int = Field(..., ge=1)
+    # NOTE: score field it's only used for suggestions and not for responses, right now we don't have a
+    # way to differentiate between the two so we are defining it here to validate suggestions where the field
+    # it's available.
+    score: SuggestionScoreField
 
     @root_validator(skip_on_failure=True)
     def check_start_and_end(cls, values: Dict[str, Any]) -> Dict[str, Any]:
