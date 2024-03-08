@@ -49,7 +49,7 @@ class Response(BaseModel):
     values: Optional[Dict[str, ResponseValue]]
     status: ResponseStatus
     record_id: UUID
-    user_id: UUID
+    user_id: Optional[UUID] = None  # Responses for delete users will have this field as None but still be present
     inserted_at: datetime
     updated_at: datetime
 

@@ -13,7 +13,7 @@
 #  limitations under the License.
 
 from datetime import datetime
-from typing import TYPE_CHECKING, Any, Callable, Type
+from typing import TYPE_CHECKING, Any, Awaitable, Callable, Type
 from unittest.mock import call
 from uuid import UUID, uuid4
 
@@ -21,7 +21,7 @@ import pytest
 from argilla_server.constants import API_KEY_HEADER_NAME
 from argilla_server.enums import ResponseStatus
 from argilla_server.models import Dataset, Record, Response, Suggestion, User, UserRole
-from argilla_server.search_engine import SearchEngine
+from argilla_server.search_engine import SearchEngine, SearchResponseItem, SearchResponses
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
@@ -922,7 +922,7 @@ class TestSuiteRecords:
         self,
         async_client: "AsyncClient",
         owner_auth_header: dict,
-        create_questions_func: Callable[["Dataset"], None],
+        create_questions_func: Callable[["Dataset"], Awaitable[None]],
         responses: dict,
         expected_error_msg: str,
     ):
