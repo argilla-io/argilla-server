@@ -5479,15 +5479,17 @@ class TestSuiteDatasets:
 
         await db.delete(user)
 
-        response = await async_client.get(
+        http_response = await async_client.get(
             f"/api/v1/datasets/{record.dataset.id}/records",
             params={"include": ["responses"]},
             headers=owner_auth_header,
         )
-        response_json = response.json()
 
-        assert response.status_code == 200
-        assert len(response_json["items"]) == 1
-        assert response_json["items"][0]["id"] == str(record.id)
-        assert response_json["items"][0]["responses"][0]["id"] == str(response.id)
-        assert response_json["items"][0]["responses"][0]["user_id"] is None
+        response_json = http_response.json()
+        assert http_response.status_code == 200
+
+        response_items = response_json["items"]
+        assert len(response_items) == 1
+        assert response_items[0]["id"] == str(record.id)
+        assert response_items[0]["responses"][0]["id"] == str(response.id)
+        assert response_items[0]["responses"][0]["user_id"] is None
