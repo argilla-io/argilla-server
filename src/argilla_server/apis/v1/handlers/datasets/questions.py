@@ -48,7 +48,7 @@ async def create_dataset_question(
     question_create: QuestionCreate,
     current_user: User = Security(auth.get_current_user),
 ):
-    dataset = await _get_dataset_or_raise(db, dataset_id, with_fields=True)
+    dataset = await _get_dataset_or_raise(db, dataset_id, with_fields=True, with_questions=True)
 
     await authorize(current_user, DatasetPolicyV1.create_question(dataset))
 
