@@ -110,7 +110,7 @@ class TestCreateDatasetQuestion:
 
         assert (await db.execute(select(func.count(Question.id)))).scalar() == 0
 
-    async def test_create_dataset_question_with_already_span_question_using_the_same_field(
+    async def test_create_dataset_question_with_other_span_question_using_the_same_field(
         self, async_client: AsyncClient, db: AsyncSession, owner_auth_header: dict
     ):
         dataset = await DatasetFactory.create()
