@@ -137,6 +137,4 @@ class TestCreateDatasetQuestion:
         )
 
         assert response.status_code == 422
-        assert response.json() == {
-            "detail": f"'field-a' is already used by span question with id '{question.id}'"
-        }
+        assert response.json() == {"detail": f"'field-a' is already used by span question with id '{question.id}'"}
