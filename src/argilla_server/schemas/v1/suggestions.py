@@ -73,6 +73,10 @@ class Suggestion(BaseSuggestion):
         orm_mode = True
 
 
+class Suggestions(BaseModel):
+    items: List[Suggestion]
+
+
 SuggestionScoreField = Annotated[
     Optional[float],
     Field(
@@ -108,7 +112,3 @@ class SuggestionCreate(BaseSuggestion):
         description="Agent used to generate the suggestion",
     )
     score: SuggestionScoreField
-
-
-class Suggestions(BaseModel):
-    items: List[Suggestion]
