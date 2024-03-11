@@ -201,6 +201,28 @@ if TYPE_CHECKING:
                 ],
                 "allow_overlapping": False,
                 "allow_character_annotation": True,
+                "visible_options": None,
+            },
+        ),
+        (
+            SpanQuestionFactory,
+            {
+                "settings": {
+                    "type": "span",
+                    "visible_options": 3,
+                }
+            },
+            {
+                "type": "span",
+                "field": "field-a",
+                "options": [
+                    {"value": "label-a", "text": "Label A", "description": "Label A description"},
+                    {"value": "label-b", "text": "Label B", "description": "Label B description"},
+                    {"value": "label-c", "text": "Label C", "description": "Label C description"},
+                ],
+                "allow_overlapping": False,
+                "allow_character_annotation": True,
+                "visible_options": 3,
             },
         ),
     ],
