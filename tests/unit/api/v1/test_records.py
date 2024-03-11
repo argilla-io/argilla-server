@@ -733,9 +733,10 @@ class TestSuiteRecords:
             f"/api/v1/records/{record.id}/responses", headers=owner_auth_header, json=response_json
         )
 
-        response_body = response.json()
         assert response.status_code == 201
         assert (await db.execute(select(func.count(Response.id)))).scalar() == 1
+
+        response_body = response.json()
         assert response.json() == {
             "id": str(UUID(response_body["id"])),
             "values": {question.name: {"value": response_value}},
@@ -778,7 +779,7 @@ class TestSuiteRecords:
                         "output_ok": {"value": False},
                     },
                 },
-                "Expected text value, found <class 'bool'>",
+                "Expected text value, found <class 'int'>",
             ),
             (
                 create_rating_questions,
@@ -796,7 +797,7 @@ class TestSuiteRecords:
                         "label_selection_question_1": {"value": False},
                     },
                 },
-                "False is not a valid option.\nValid options are: ['option1', 'option2', 'option3']",
+                "0 is not a valid option.\nValid options are: ['option1', 'option2', 'option3']",
             ),
             (
                 create_multi_label_selection_questions,
@@ -939,7 +940,7 @@ class TestSuiteRecords:
             f"/api/v1/records/{record.id}/responses", headers=owner_auth_header, json=response_json
         )
 
-        assert response.status_code == 422
+        assert response.status_code == 422, response.json()
         assert response.json() == {"detail": expected_error_msg}
 
     async def test_create_record_response_without_authentication(self, async_client: "AsyncClient", db: "AsyncSession"):

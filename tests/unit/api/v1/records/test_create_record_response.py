@@ -79,6 +79,55 @@ class TestCreateRecordResponse:
             "updated_at": datetime.fromisoformat(response_json["updated_at"]).isoformat(),
         }
 
+    async def test_create_record_response_for_span_question_with_additional_value_attributes(
+        self, async_client: AsyncClient, db: AsyncSession, owner: User, owner_auth_header: dict
+    ):
+        dataset = await DatasetFactory.create()
+
+        await SpanQuestionFactory.create(name="span-question", dataset=dataset)
+
+        record = await RecordFactory.create(fields={"field-a": "Hello"}, dataset=dataset)
+
+        response = await async_client.post(
+            self.url(record.id),
+            headers=owner_auth_header,
+            json={
+                "values": {
+                    "span-question": {
+                        "value": [
+                            {"label": "label-a", "start": 0, "end": 1, "ignored": "value"},
+                            {"label": "label-b", "start": 2, "end": 3, "ignored": "value"},
+                            {"label": "label-c", "start": 4, "end": 5},
+                        ],
+                    },
+                },
+                "status": ResponseStatusFilter.submitted,
+            },
+        )
+
+        assert response.status_code == 201
+        assert (await db.execute(select(func.count(Response.id)))).scalar() == 1
+
+        response_json = response.json()
+        assert await db.get(Response, UUID(response_json["id"]))
+        assert response_json == {
+            "id": str(UUID(response_json["id"])),
+            "values": {
+                "span-question": {
+                    "value": [
+                        {"label": "label-a", "start": 0, "end": 1},
+                        {"label": "label-b", "start": 2, "end": 3},
+                        {"label": "label-c", "start": 4, "end": 5},
+                    ],
+                },
+            },
+            "status": ResponseStatusFilter.submitted,
+            "record_id": str(record.id),
+            "user_id": str(owner.id),
+            "inserted_at": datetime.fromisoformat(response_json["inserted_at"]).isoformat(),
+            "updated_at": datetime.fromisoformat(response_json["updated_at"]).isoformat(),
+        }
+
     async def test_create_record_response_for_span_question_with_empty_value(
         self, async_client: AsyncClient, db: AsyncSession, owner: User, owner_auth_header: dict
     ):
