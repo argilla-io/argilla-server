@@ -156,6 +156,7 @@ class TestDatasetQuestions:
                 {
                     "type": "span",
                     "field": "field-a",
+                    "visible_options": None,
                     "options": [
                         {"value": "label-a", "text": "Label A", "description": None},
                         {"value": "label-b", "text": "Label B", "description": None},
@@ -165,6 +166,32 @@ class TestDatasetQuestions:
                     "allow_character_annotation": True,
                     "allow_overlapping": False,
                 },
+            ),
+            (
+                    {
+                        "type": "span",
+                        "field": "field-a",
+                        "visible_options": 3,
+                        "options": [
+                            {"value": "label-a", "text": "Label A"},
+                            {"value": "label-b", "text": "Label B"},
+                            {"value": "label-c", "text": "Label C"},
+                            {"value": "label-d", "text": "Label D"},
+                        ],
+                    },
+                    {
+                        "type": "span",
+                        "field": "field-a",
+                        "visible_options": 3,
+                        "options": [
+                            {"value": "label-a", "text": "Label A", "description": None},
+                            {"value": "label-b", "text": "Label B", "description": None},
+                            {"value": "label-c", "text": "Label C", "description": None},
+                            {"value": "label-d", "text": "Label D", "description": None},
+                        ],
+                        "allow_character_annotation": True,
+                        "allow_overlapping": False,
+                    },
             ),
         ],
     )
