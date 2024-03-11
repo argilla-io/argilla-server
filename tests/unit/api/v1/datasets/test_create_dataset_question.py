@@ -22,7 +22,7 @@ from httpx import AsyncClient
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from tests.factories import DatasetFactory, TextFieldFactory
+from tests.factories import DatasetFactory, SpanQuestionFactory, TextFieldFactory
 
 
 @pytest.mark.asyncio
@@ -109,3 +109,32 @@ class TestCreateDatasetQuestion:
         }
 
         assert (await db.execute(select(func.count(Question.id)))).scalar() == 0
+
+    async def test_create_dataset_question_with_other_span_question_using_the_same_field(
+        self, async_client: AsyncClient, db: AsyncSession, owner_auth_header: dict
+    ):
+        dataset = await DatasetFactory.create()
+        question = await SpanQuestionFactory(dataset=dataset)
+
+        question_field = question.settings["field"]
+        await TextFieldFactory.create(name=question_field, dataset=dataset)
+
+        response = await async_client.post(
+            self.url(dataset.id),
+            headers=owner_auth_header,
+            json={
+                "name": "new-question",
+                "title": "Title",
+                "settings": {
+                    "type": QuestionType.span,
+                    "field": question_field,
+                    "options": [
+                        {"value": "label-c", "text": "Label C", "description": "Label C description"},
+                        {"value": "label-d", "text": "Label D", "description": "Label D description"},
+                    ],
+                },
+            },
+        )
+
+        assert response.status_code == 422
+        assert response.json() == {"detail": f"'field-a' is already used by span question with id '{question.id}'"}

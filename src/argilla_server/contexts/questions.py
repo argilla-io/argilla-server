@@ -120,6 +120,10 @@ def _validate_span_question_settings_before_create(
     if field not in field_names:
         raise ValueError(f"'{field}' is not a valid field name.\nValid field names are {field_names!r}")
 
+    for question in dataset.questions:
+        if question.type == QuestionType.span and field == question.parsed_settings.field:
+            raise ValueError(f"'{field}' is already used by span question with id '{question.id}'")
+
 
 async def create_question(db: AsyncSession, dataset: Dataset, question_create: QuestionCreate) -> Question:
     if dataset.is_ready:
