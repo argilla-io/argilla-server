@@ -81,6 +81,7 @@ from argilla_server.schemas.v1.vector_settings import (
 )
 from argilla_server.schemas.v1.vectors import Vector as VectorSchema
 from argilla_server.search_engine import SearchEngine
+from argilla_server.validators.responses import ResponseCreateValidator
 
 if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncSession
@@ -979,7 +980,7 @@ async def count_responses_by_dataset_id_and_user_id(
 async def create_response(
     db: "AsyncSession", search_engine: SearchEngine, record: Record, user: User, response_create: ResponseCreate
 ) -> Response:
-    _validate_response_values(record, response_values=response_create.values, response_status=response_create.status)
+    ResponseCreateValidator(response_create).validate_for(record)
 
     async with db.begin_nested():
         response = await Response.create(
