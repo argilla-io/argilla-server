@@ -50,6 +50,7 @@ def _validate_settings_type(settings: QuestionSettings, settings_update: Questio
 
 
 def _validate_label_options(settings: LabelSelectionQuestionSettings, settings_update: LabelSelectionSettingsUpdate):
+    # TODO: Validate visible_options on update
     if settings_update.options is None:
         return
 
@@ -142,7 +143,9 @@ async def create_question(db: AsyncSession, dataset: Dataset, question_create: Q
     )
 
 
-async def update_question(db: AsyncSession, question_id: UUID, question_update: QuestionUpdate, current_user: User):
+async def update_question(
+    db: AsyncSession, question_id: UUID, question_update: QuestionUpdate, current_user: User
+) -> Question:
     question = await get_question_by_id(db, question_id)
     if not question:
         raise errors.NotFoundError()
