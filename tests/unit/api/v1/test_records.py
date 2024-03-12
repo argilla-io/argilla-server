@@ -766,7 +766,9 @@ class TestSuiteRecords:
         )
 
         assert response.status_code == 422
-        assert response.json() == {"detail": "found response value for non configured question with name='unknown_question'"}
+        assert response.json() == {
+            "detail": "found response value for non configured question with name='unknown_question'"
+        }
 
     @pytest.mark.parametrize(
         "create_questions_func, responses, expected_error_msg",
@@ -1052,7 +1054,9 @@ class TestSuiteRecords:
         )
 
         assert response.status_code == 422
-        assert response.json() == {"detail": "found response value for non configured question with name='wrong_question'"}
+        assert response.json() == {
+            "detail": "found response value for non configured question with name='wrong_question'"
+        }
         assert (await db.execute(select(func.count(Response.id)))).scalar() == 0
 
     @pytest.mark.parametrize("role", [UserRole.owner, UserRole.admin, UserRole.annotator])
