@@ -20,7 +20,7 @@ from fastapi import Body
 from typing_extensions import Annotated
 
 from argilla_server.models import ResponseStatus
-from argilla_server.pydantic_v1 import BaseModel, Field, root_validator
+from argilla_server.pydantic_v1 import BaseModel, Field, StrictInt, StrictStr, root_validator
 from argilla_server.schemas.v1.questions import QuestionName
 
 try:
@@ -62,8 +62,8 @@ SpanQuestionResponseValue = Annotated[
     List[SpanQuestionResponseValueItem], Field(..., max_items=SPAN_QUESTION_RESPONSE_VALUE_MAX_ITEMS)
 ]
 MultiLabelSelectionQuestionResponseValue = List[str]
-RatingQuestionResponseValue = int
-TextAndLabelSelectionQuestionResponseValue = str
+RatingQuestionResponseValue = StrictInt
+TextAndLabelSelectionQuestionResponseValue = StrictStr
 
 ResponseValueTypes = Union[
     SpanQuestionResponseValue,
