@@ -692,7 +692,7 @@ async def _build_record_suggestions(
                 Suggestion(
                     type=suggestion_create.type,
                     score=suggestion_create.score,
-                    value=suggestion_create.value,
+                    value=jsonable_encoder(suggestion_create.value),
                     agent=suggestion_create.agent,
                     question_id=suggestion_create.question_id,
                     record=record,
