@@ -134,7 +134,7 @@ class TestCreateCurrentUserResponsesBulk:
                 {
                     "item": None,
                     "error": {
-                        "detail": "missing question with name=prompt-quality",
+                        "detail": "missing response value for required question with name='prompt-quality'",
                     },
                 },
                 {
@@ -326,7 +326,7 @@ class TestCreateCurrentUserResponsesBulk:
                 {
                     "item": None,
                     "error": {
-                        "detail": "found responses for non configured questions: ['prompt-quality']",
+                        "detail": "found response value for non configured question with name='prompt-quality'",
                     },
                 },
             ],
