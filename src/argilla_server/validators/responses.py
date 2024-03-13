@@ -12,8 +12,6 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from typing import Union
-
 from argilla_server.enums import QuestionType, ResponseStatus
 from argilla_server.models import Record
 from argilla_server.schemas.v1.responses import ResponseCreate, ResponseUpdate, ResponseUpsert
@@ -27,8 +25,8 @@ from argilla_server.validators.response_values import (
 )
 
 
-class ResponseValidator:
-    def __init__(self, response_change: Union[ResponseCreate, ResponseUpdate, ResponseUpsert]) -> None:
+class ResponseCreateValidator:
+    def __init__(self, response_change: ResponseCreate):
         self._response_change = response_change
 
     def validate_for(self, record: Record) -> None:
@@ -87,3 +85,13 @@ class ResponseValidator:
                     raise ValueError(
                         f"unknown question type f{question.type!r} for question with name f{question.name}"
                     )
+
+
+class ResponseUpdateValidator(ResponseCreateValidator):
+    def __init__(self, response_change: ResponseUpdate):
+        self._response_change = response_change
+
+
+class ResponseUpsertValidator(ResponseCreateValidator):
+    def __init__(self, response_change: ResponseUpsert):
+        self._response_change = response_change

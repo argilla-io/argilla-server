@@ -81,7 +81,11 @@ from argilla_server.schemas.v1.vector_settings import (
 )
 from argilla_server.schemas.v1.vectors import Vector as VectorSchema
 from argilla_server.search_engine import SearchEngine
-from argilla_server.validators.responses import ResponseValidator
+from argilla_server.validators.responses import (
+    ResponseCreateValidator,
+    ResponseUpdateValidator,
+    ResponseUpsertValidator,
+)
 
 if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncSession
@@ -658,7 +662,7 @@ async def _build_record_responses(
         try:
             cache = await validate_user_exists(db, response_create.user_id, cache)
 
-            ResponseValidator(response_create).validate_for(record)
+            ResponseCreateValidator(response_create).validate_for(record)
 
             responses.append(
                 Response(
@@ -979,7 +983,7 @@ async def count_responses_by_dataset_id_and_user_id(
 async def create_response(
     db: "AsyncSession", search_engine: SearchEngine, record: Record, user: User, response_create: ResponseCreate
 ) -> Response:
-    ResponseValidator(response_create).validate_for(record)
+    ResponseCreateValidator(response_create).validate_for(record)
 
     async with db.begin_nested():
         response = await Response.create(
@@ -1003,7 +1007,7 @@ async def create_response(
 async def update_response(
     db: "AsyncSession", search_engine: SearchEngine, response: Response, response_update: ResponseUpdate
 ):
-    ResponseValidator(response_update).validate_for(response.record)
+    ResponseUpdateValidator(response_update).validate_for(response.record)
 
     async with db.begin_nested():
         response = await response.update(
@@ -1026,7 +1030,7 @@ async def update_response(
 async def upsert_response(
     db: "AsyncSession", search_engine: SearchEngine, record: Record, user: User, response_upsert: ResponseUpsert
 ) -> Response:
-    ResponseValidator(response_upsert).validate_for(record)
+    ResponseUpsertValidator(response_upsert).validate_for(record)
 
     schema = {
         "values": jsonable_encoder(response_upsert.values),
