@@ -438,7 +438,7 @@ class TestSuiteRecords:
 
         assert response.status_code == 422
         assert response.json() == {
-            "detail": f"suggestion for question_id={question.id} is not valid: 'not a valid value' is not a valid option.\nValid options are: ['option1', 'option2', 'option3']"
+            "detail": f"suggestion for question_id={question.id} is not valid: 'not a valid value' is not a valid label for label selection question.\nValid labels are: ['option1', 'option2', 'option3']"
         }
 
     async def test_update_record_with_invalid_vector(self, async_client: "AsyncClient", owner_auth_header: dict):

@@ -3232,8 +3232,7 @@ class TestSuiteDatasets:
 
         assert response.status_code == 422
         assert response.json() == {
-            "detail": f"Record at position 0 is not valid because suggestion for question_id={question.id} is not "
-            "valid: 'option-a' is not a valid option.\nValid options are: ['option1', 'option2', 'option3']"
+            "detail": f"Record at position 0 is not valid because suggestion for question_id={question.id} is not valid: 'option-a' is not a valid label for label selection question.\nValid labels are: ['option1', 'option2', 'option3']"
         }
 
     async def test_update_dataset_records_with_invalid_vectors(

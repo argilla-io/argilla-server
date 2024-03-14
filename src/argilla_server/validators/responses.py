@@ -12,21 +12,16 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+from typing import Union
+
 from argilla_server.enums import QuestionType, ResponseStatus
 from argilla_server.models import Record
 from argilla_server.schemas.v1.responses import ResponseCreate, ResponseUpdate, ResponseUpsert
-from argilla_server.validators.response_values import (
-    LabelSelectionQuestionResponseValueValidator,
-    MultiLabelSelectionQuestionResponseValueValidator,
-    RankingQuestionResponseValueValidator,
-    RatingQuestionResponseValueValidator,
-    SpanQuestionResponseValueValidator,
-    TextQuestionResponseValueValidator,
-)
+from argilla_server.validators.response_values import ResponseValueValidator
 
 
-class ResponseCreateValidator:
-    def __init__(self, response_change: ResponseCreate):
+class ResponseValidator:
+    def __init__(self, response_change: Union[ResponseCreate, ResponseUpdate, ResponseUpsert]):
         self._response_change = response_change
 
     def validate_for(self, record: Record) -> None:
@@ -61,37 +56,21 @@ class ResponseCreateValidator:
 
         for question in record.dataset.questions:
             if question_response := self._response_change.values.get(question.name):
-                if question.type == QuestionType.text:
-                    TextQuestionResponseValueValidator(question_response.value).validate()
-                elif question.type == QuestionType.label_selection:
-                    LabelSelectionQuestionResponseValueValidator(question_response.value).validate_for(
-                        question.parsed_settings
-                    )
-                elif question.type == QuestionType.multi_label_selection:
-                    MultiLabelSelectionQuestionResponseValueValidator(question_response.value).validate_for(
-                        question.parsed_settings
-                    )
-                elif question.type == QuestionType.rating:
-                    RatingQuestionResponseValueValidator(question_response.value).validate_for(question.parsed_settings)
-                elif question.type == QuestionType.ranking:
-                    RankingQuestionResponseValueValidator(question_response.value).validate_for(
-                        self._response_change.status, question.parsed_settings
-                    )
-                elif question.type == QuestionType.span:
-                    SpanQuestionResponseValueValidator(question_response.value).validate_for(
-                        question.parsed_settings, record
-                    )
-                else:
-                    raise ValueError(
-                        f"unknown question type f{question.type!r} for question with name f{question.name}"
-                    )
+                ResponseValueValidator(question_response.value).validate_for(
+                    question.parsed_settings, record, self._response_change.status
+                )
 
 
-class ResponseUpdateValidator(ResponseCreateValidator):
-    def __init__(self, response_change: ResponseUpdate):
-        self._response_change = response_change
+class ResponseCreateValidator(ResponseValidator):
+    def __init__(self, response_create: ResponseCreate):
+        self._response_change = response_create
 
 
-class ResponseUpsertValidator(ResponseCreateValidator):
-    def __init__(self, response_change: ResponseUpsert):
-        self._response_change = response_change
+class ResponseUpdateValidator(ResponseValidator):
+    def __init__(self, response_update: ResponseUpdate):
+        self._response_change = response_update
+
+
+class ResponseUpsertValidator(ResponseValidator):
+    def __init__(self, response_upsert: ResponseUpsert):
+        self._response_change = response_upsert
