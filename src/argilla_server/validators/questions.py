@@ -42,3 +42,12 @@ class QuestionCreateValidator:
         for question in dataset.questions:
             if question.type == QuestionType.span and field == question.parsed_settings.field:
                 raise ValueError(f"'{field}' is already used by span question with id '{question.id}'")
+
+
+class QuestionDeleteValidator:
+    def validate_for(self, dataset: Dataset):
+        self._validate_dataset_is_not_ready(dataset)
+
+    def _validate_dataset_is_not_ready(self, dataset):
+        if dataset.is_ready:
+            raise ValueError("questions cannot be deleted for a published dataset")

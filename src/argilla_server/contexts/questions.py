@@ -32,7 +32,7 @@ from argilla_server.schemas.v1.questions import (
     QuestionUpdate,
     SpanQuestionSettingsCreate,
 )
-from argilla_server.validators.questions import QuestionCreateValidator
+from argilla_server.validators.questions import QuestionCreateValidator, QuestionDeleteValidator
 
 
 class InvalidQuestionSettings(Exception):
@@ -134,7 +134,6 @@ async def update_question(
 
 
 async def delete_question(db: AsyncSession, question: Question) -> Question:
-    if question.dataset.is_ready:
-        raise ValueError("Questions cannot be deleted for a published dataset")
+    QuestionDeleteValidator().validate_for(question.dataset)
 
     return await question.delete(db)
