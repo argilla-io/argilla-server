@@ -12,9 +12,15 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+from typing import List
+
 from argilla_server.enums import QuestionType
-from argilla_server.models.database import Dataset
-from argilla_server.schemas.v1.questions import QuestionCreate
+from argilla_server.models.database import Dataset, Question
+from argilla_server.schemas.v1.questions import QuestionCreate, QuestionSettings, QuestionSettingsUpdate, QuestionUpdate
+
+
+class InvalidQuestionSettings(Exception):
+    pass
 
 
 class QuestionCreateValidator:
@@ -42,6 +48,64 @@ class QuestionCreateValidator:
         for question in dataset.questions:
             if question.type == QuestionType.span and field == question.parsed_settings.field:
                 raise ValueError(f"'{field}' is already used by span question with id '{question.id}'")
+
+
+class QuestionUpdateValidator:
+    QUESTION_TYPES_WITH_LABEL_OPTIONS = [
+        QuestionType.label_selection,
+        QuestionType.multi_label_selection,
+        QuestionType.span,
+    ]
+
+    def __init__(self, question_update: QuestionUpdate):
+        self._question_update = question_update
+
+    def validate_for(self, question: Question):
+        self._validate_question_settings(question.parsed_settings)
+
+    def _validate_question_settings(self, question_settings: QuestionSettings):
+        if not self._question_update.settings:
+            return
+
+        self._validate_question_settings_type_is_the_same(question_settings, self._question_update.settings)
+        self._validate_question_settings_label_options(question_settings, self._question_update.settings)
+
+    def _validate_question_settings_type_is_the_same(
+        self, question_settings: QuestionSettings, question_settings_update: QuestionSettingsUpdate
+    ):
+        if question_settings.type != question_settings_update.type:
+            raise InvalidQuestionSettings(
+                f"question type cannot be changed. expected '{question_settings.type}' but got '{question_settings_update.type}'"
+            )
+
+    def _validate_question_settings_label_options(
+        self, question_settings: QuestionSettings, question_settings_update: QuestionSettingsUpdate
+    ):
+        if question_settings.type not in self.QUESTION_TYPES_WITH_LABEL_OPTIONS:
+            return
+
+        # TODO: Validate visible_options on update
+
+        if question_settings_update.options is None:
+            return
+
+        if len(question_settings.options) != len(question_settings_update.options):
+            raise InvalidQuestionSettings(
+                f"the number of options cannot be modified. expected {len(question_settings.options)} but got {len(question_settings_update.options)}"
+            )
+
+        sorted_options = sorted(question_settings.options, key=lambda option: option.value)
+        sorted_update_options = sorted(question_settings_update.options, key=lambda option: option.value)
+
+        unexpected_options: List[str] = []
+        for option, update_option in zip(sorted_options, sorted_update_options):
+            if option.value != update_option.value:
+                unexpected_options.append(update_option.value)
+
+        if unexpected_options:
+            raise InvalidQuestionSettings(
+                f"the option values cannot be modified. found unexpected option values: {unexpected_options!r}"
+            )
 
 
 class QuestionDeleteValidator:

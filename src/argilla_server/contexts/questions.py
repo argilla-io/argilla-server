@@ -12,7 +12,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from typing import List, Union
+from typing import Union
 from uuid import UUID
 
 from sqlalchemy import func, select
@@ -32,53 +32,11 @@ from argilla_server.schemas.v1.questions import (
     QuestionUpdate,
     SpanQuestionSettingsCreate,
 )
-from argilla_server.validators.questions import QuestionCreateValidator, QuestionDeleteValidator
-
-
-class InvalidQuestionSettings(Exception):
-    pass
-
-
-def _validate_settings_type(settings: QuestionSettings, settings_update: QuestionSettingsUpdate):
-    if settings.type != settings_update.type:
-        raise InvalidQuestionSettings(
-            f"Question type cannot be changed. Expected '{settings.type}' but got '{settings_update.type}'"
-        )
-
-
-def _validate_label_options(settings: LabelSelectionQuestionSettings, settings_update: LabelSelectionSettingsUpdate):
-    # TODO: Validate visible_options on update
-    if settings_update.options is None:
-        return
-
-    if len(settings.options) != len(settings_update.options):
-        raise InvalidQuestionSettings(
-            "The number of options cannot be modified. "
-            f"Expected {len(settings.options)} but got {len(settings_update.options)}"
-        )
-
-    sorted_options = sorted(settings.options, key=lambda option: option.value)
-    sorted_update_options = sorted(settings_update.options, key=lambda option: option.value)
-
-    unexpected_options: List[str] = []
-    for option, update_option in zip(sorted_options, sorted_update_options):
-        if option.value != update_option.value:
-            unexpected_options.append(update_option.value)
-
-    if unexpected_options:
-        raise InvalidQuestionSettings(
-            f"The option values cannot be modified. " f"Found unexpected option values: {unexpected_options!r}"
-        )
-
-
-def _validate_question_settings(
-    question_settings: QuestionSettings,
-    question_update_settings: QuestionSettingsUpdate,
-) -> None:
-    _validate_settings_type(question_settings, question_update_settings)
-
-    if question_settings.type in [QuestionType.label_selection, QuestionType.multi_label_selection, QuestionType.span]:
-        _validate_label_options(question_settings, question_update_settings)
+from argilla_server.validators.questions import (
+    QuestionCreateValidator,
+    QuestionDeleteValidator,
+    QuestionUpdateValidator,
+)
 
 
 async def get_question_by_id(db: AsyncSession, question_id: UUID) -> Union[Question, None]:
@@ -97,11 +55,6 @@ async def get_question_by_name_and_dataset_id_or_raise(db: AsyncSession, name: s
         raise errors.NotFoundError(f"Question with name `{name}` not found for dataset with id `{dataset_id}`")
 
     return question
-
-
-def _validate_question_before_update(question: Question, question_update: QuestionUpdate) -> None:
-    if question_update.settings:
-        _validate_question_settings(question.parsed_settings, question_update.settings)
 
 
 async def create_question(db: AsyncSession, dataset: Dataset, question_create: QuestionCreate) -> Question:
@@ -127,7 +80,7 @@ async def update_question(
 
     await authorize(current_user, QuestionPolicyV1.update(question))
 
-    _validate_question_before_update(question, question_update)
+    QuestionUpdateValidator(question_update).validate_for(question)
 
     params = question_update.dict(exclude_unset=True)
     return await question.update(db, **params)
