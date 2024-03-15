@@ -16,15 +16,11 @@ from typing import Any, Dict, Generic, List, Literal, Optional, Protocol, TypeVa
 
 from argilla_server.enums import QuestionType, ResponseStatus
 from argilla_server.pydantic_v1 import BaseModel, Field, root_validator
-from argilla_server.schemas.v1.commons.suggestions import SuggestionScoreField
 
 try:
     from typing import Annotated
 except ImportError:
     from typing_extensions import Annotated
-
-
-SPAN_QUESTION_RESPONSE_VALUE_MAX_ITEMS = 10_000
 
 
 class ResponseValue(Protocol):
@@ -126,8 +122,8 @@ class RankingQuestionSettings(ValidOptionCheckerMixin[str]):
         values = []
         ranks = []
         for response_option in response.value:
-            values.append(response_option.get("value"))
-            ranks.append(response_option.get("rank"))
+            values.append(response_option.value)
+            ranks.append(response_option.rank)
 
         # Only if the response is submitted check that all the possible options have been ranked or that all the
         # provided options contains a valid rank
@@ -157,29 +153,6 @@ class RankingQuestionSettings(ValidOptionCheckerMixin[str]):
             raise ValueError("This Ranking question expects a list of unique values, but duplicates were found")
 
 
-class SpanQuestionResponseValueItem(BaseModel):
-    label: str
-    start: int = Field(..., ge=0)
-    end: int = Field(..., ge=1)
-    # NOTE: score field it's only used for suggestions and not for responses, right now we don't have a
-    # way to differentiate between the two so we are defining it here to validate suggestions where the field
-    # it's available.
-    score: SuggestionScoreField
-
-    @root_validator(skip_on_failure=True)
-    def check_start_and_end(cls, values: Dict[str, Any]) -> Dict[str, Any]:
-        start, end = values.get("start"), values.get("end")
-
-        if start is not None and end is not None and end <= start:
-            raise ValueError("span question response value 'end' must have a value greater than 'start'")
-
-        return values
-
-
-class SpanQuestionResponseValue(BaseModel):
-    value: List[SpanQuestionResponseValueItem] = Field(..., max_items=SPAN_QUESTION_RESPONSE_VALUE_MAX_ITEMS)
-
-
 class SpanQuestionSettings(BaseQuestionSettings):
     type: Literal[QuestionType.span]
     field: str
@@ -192,14 +165,12 @@ class SpanQuestionSettings(BaseQuestionSettings):
         if self.field not in record.fields:
             raise ValueError(f"span question requires record to have field `{self.field}`")
 
-        span_question_response_value = self._parse_response_value(response)
-        self._check_response_start_end_ranges(span_question_response_value, len(record.fields[self.field]))
-        self._check_response_labels(span_question_response_value)
+        self._check_response_start_end_ranges(response, len(record.fields[self.field]))
+        self._check_response_labels(response)
 
-    def _parse_response_value(self, response_value: ResponseValue) -> SpanQuestionResponseValue:
-        return SpanQuestionResponseValue.parse_obj(response_value)
-
-    def _check_response_start_end_ranges(self, span_question_response_value: SpanQuestionResponseValue, field_len: int):
+    def _check_response_start_end_ranges(
+        self, span_question_response_value: "SpanQuestionResponseValue", field_len: int
+    ):
         for value_item in span_question_response_value.value:
             if value_item.start > (field_len - 1):
                 raise ValueError(
@@ -211,7 +182,7 @@ class SpanQuestionSettings(BaseQuestionSettings):
                     f"span question response value `end` must have a value lower or equal than record field `{self.field}` length that is `{field_len}`"
                 )
 
-    def _check_response_labels(self, span_question_response_value: SpanQuestionResponseValue):
+    def _check_response_labels(self, span_question_response_value: "SpanQuestionResponseValue"):
         labels = [option.value for option in self.options]
 
         for value_item in span_question_response_value.value:

@@ -199,8 +199,8 @@ class TestSuiteResponses:
                 RankingQuestionFactory,
                 [
                     {"value": "completion-a", "rank": 1},
-                    {"value": "completion-b"},
-                    {"value": "completion-c"},
+                    {"value": "completion-b", "rank": None},
+                    {"value": "completion-c", "rank": None},
                 ],
             ),
         ],

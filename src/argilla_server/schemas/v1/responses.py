@@ -20,7 +20,7 @@ from fastapi import Body
 from typing_extensions import Annotated
 
 from argilla_server.models import ResponseStatus
-from argilla_server.pydantic_v1 import BaseModel, Field
+from argilla_server.pydantic_v1 import BaseModel, Field, StrictInt, StrictStr, root_validator
 from argilla_server.schemas.v1.questions import QuestionName
 
 try:
@@ -31,22 +31,69 @@ except ImportError:
 RESPONSES_BULK_CREATE_MIN_ITEMS = 1
 RESPONSES_BULK_CREATE_MAX_ITEMS = 100
 
+SPAN_QUESTION_RESPONSE_VALUE_MAX_ITEMS = 10_000
+
+SPAN_QUESTION_RESPONSE_VALUE_ITEM_START_GREATER_THAN_OR_EQUAL = 0
+SPAN_QUESTION_RESPONSE_VALUE_ITEM_END_GREATER_THAN_OR_EQUAL = 1
+
+
+class RankingQuestionResponseValueItem(BaseModel):
+    value: str
+    rank: Optional[int]
+
+
+class SpanQuestionResponseValueItem(BaseModel):
+    label: str
+    start: int = Field(..., ge=SPAN_QUESTION_RESPONSE_VALUE_ITEM_START_GREATER_THAN_OR_EQUAL)
+    end: int = Field(..., ge=SPAN_QUESTION_RESPONSE_VALUE_ITEM_END_GREATER_THAN_OR_EQUAL)
+
+    @root_validator(skip_on_failure=True)
+    def check_start_and_end(cls, values: Dict[str, Any]) -> Dict[str, Any]:
+        start, end = values.get("start"), values.get("end")
+
+        if start is not None and end is not None and end <= start:
+            raise ValueError("span question response value 'end' must have a value greater than 'start'")
+
+        return values
+
+
+RankingQuestionResponseValue = List[RankingQuestionResponseValueItem]
+SpanQuestionResponseValue = Annotated[
+    List[SpanQuestionResponseValueItem], Field(..., max_items=SPAN_QUESTION_RESPONSE_VALUE_MAX_ITEMS)
+]
+MultiLabelSelectionQuestionResponseValue = List[str]
+RatingQuestionResponseValue = StrictInt
+TextAndLabelSelectionQuestionResponseValue = StrictStr
+
+ResponseValueTypes = Union[
+    SpanQuestionResponseValue,
+    RankingQuestionResponseValue,
+    MultiLabelSelectionQuestionResponseValue,
+    RatingQuestionResponseValue,
+    TextAndLabelSelectionQuestionResponseValue,
+]
+
 
 class ResponseValue(BaseModel):
     value: Any
 
 
 class ResponseValueCreate(BaseModel):
-    value: Any
+    value: ResponseValueTypes
 
 
 class ResponseValueUpdate(BaseModel):
-    value: Any
+    value: ResponseValueTypes
+
+
+ResponseValues = Dict[str, ResponseValue]
+ResponseValuesCreate = Dict[QuestionName, ResponseValueCreate]
+ResponseValuesUpdate = Dict[QuestionName, ResponseValueUpdate]
 
 
 class Response(BaseModel):
     id: UUID
-    values: Optional[Dict[str, ResponseValue]]
+    values: Optional[ResponseValues]
     status: ResponseStatus
     record_id: UUID
     user_id: Optional[UUID] = None  # Responses for delete users will have this field as None but still be present
@@ -58,7 +105,7 @@ class Response(BaseModel):
 
 
 class ResponseCreate(BaseModel):
-    values: Optional[Dict[str, ResponseValueCreate]]
+    values: Optional[ResponseValuesCreate]
     status: ResponseStatus
 
 
@@ -69,17 +116,17 @@ class ResponseFilterScope(BaseModel):
 
 
 class SubmittedResponseUpdate(BaseModel):
-    values: Dict[str, ResponseValueUpdate]
+    values: ResponseValuesUpdate
     status: Literal[ResponseStatus.submitted]
 
 
 class DiscardedResponseUpdate(BaseModel):
-    values: Optional[Dict[str, ResponseValueUpdate]]
+    values: Optional[ResponseValuesUpdate]
     status: Literal[ResponseStatus.discarded]
 
 
 class DraftResponseUpdate(BaseModel):
-    values: Optional[Dict[str, ResponseValueUpdate]]
+    values: Optional[ResponseValuesUpdate]
     status: Literal[ResponseStatus.draft]
 
 
@@ -90,19 +137,19 @@ ResponseUpdate = Annotated[
 
 
 class SubmittedResponseUpsert(BaseModel):
-    values: Dict[str, ResponseValueUpdate]
+    values: ResponseValuesUpdate
     status: Literal[ResponseStatus.submitted]
     record_id: UUID
 
 
 class DiscardedResponseUpsert(BaseModel):
-    values: Optional[Dict[str, ResponseValueUpdate]]
+    values: Optional[ResponseValuesUpdate]
     status: Literal[ResponseStatus.discarded]
     record_id: UUID
 
 
 class DraftResponseUpsert(BaseModel):
-    values: Optional[Dict[str, ResponseValueUpdate]]
+    values: Optional[ResponseValuesUpdate]
     status: Literal[ResponseStatus.draft]
     record_id: UUID
 
@@ -136,19 +183,19 @@ class ResponsesBulk(BaseModel):
 
 class UserDraftResponseCreate(BaseModel):
     user_id: UUID
-    values: Dict[str, ResponseValueCreate]
+    values: ResponseValuesCreate
     status: Literal[ResponseStatus.draft]
 
 
 class UserDiscardedResponseCreate(BaseModel):
     user_id: UUID
-    values: Optional[Dict[str, ResponseValueCreate]]
+    values: Optional[ResponseValuesCreate]
     status: Literal[ResponseStatus.discarded]
 
 
 class UserSubmittedResponseCreate(BaseModel):
     user_id: UUID
-    values: Dict[str, ResponseValueCreate]
+    values: ResponseValuesCreate
     status: Literal[ResponseStatus.submitted]
 
 

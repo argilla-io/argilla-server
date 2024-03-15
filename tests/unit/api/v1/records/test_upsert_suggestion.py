@@ -171,7 +171,50 @@ class TestUpsertSuggestion:
             "value": [
                 {"label": "label-a", "start": 0, "end": 1, "score": 0.2},
                 {"label": "label-b", "start": 2, "end": 3, "score": 1.0},
-                {"label": "label-c", "start": 4, "end": 5},
+                {"label": "label-c", "start": 4, "end": 5, "score": None},
+            ],
+            "agent": None,
+            "score": None,
+            "inserted_at": datetime.fromisoformat(response_json["inserted_at"]).isoformat(),
+            "updated_at": datetime.fromisoformat(response_json["updated_at"]).isoformat(),
+        }
+
+    async def test_upsert_suggestion_for_span_question_with_additional_value_attributes(
+        self, async_client: AsyncClient, db: AsyncSession, owner_auth_header: dict
+    ):
+        dataset = await DatasetFactory.create()
+
+        span_question = await SpanQuestionFactory.create(name="span-question", dataset=dataset)
+
+        record = await RecordFactory.create(fields={"field-a": "Hello"}, dataset=dataset)
+
+        response = await async_client.put(
+            self.url(record.id),
+            headers=owner_auth_header,
+            json={
+                "question_id": str(span_question.id),
+                "type": SuggestionType.model,
+                "value": [
+                    {"label": "label-a", "start": 0, "end": 1, "score": 0.2, "ignored": "value"},
+                    {"label": "label-b", "start": 2, "end": 3, "score": 1},
+                    {"label": "label-c", "start": 4, "end": 5, "ignored": "value"},
+                ],
+            },
+        )
+
+        assert response.status_code == 201
+        assert (await db.execute(select(func.count(Suggestion.id)))).scalar() == 1
+
+        response_json = response.json()
+        assert await db.get(Suggestion, UUID(response_json["id"]))
+        assert response_json == {
+            "id": str(UUID(response_json["id"])),
+            "question_id": str(span_question.id),
+            "type": SuggestionType.model,
+            "value": [
+                {"label": "label-a", "start": 0, "end": 1, "score": 0.2},
+                {"label": "label-b", "start": 2, "end": 3, "score": 1.0},
+                {"label": "label-c", "start": 4, "end": 5, "score": None},
             ],
             "agent": None,
             "score": None,
