@@ -12,11 +12,14 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from argilla_server.enums import ResponseStatus
+from typing import Optional
+
+from argilla_server.enums import QuestionType, ResponseStatus
 from argilla_server.models import Record
 from argilla_server.schemas.v1.questions import (
     LabelSelectionQuestionSettings,
     MultiLabelSelectionQuestionSettings,
+    QuestionSettings,
     RankingQuestionSettings,
     RatingQuestionSettings,
     SpanQuestionSettings,
@@ -28,9 +31,33 @@ from argilla_server.schemas.v1.responses import (
     ResponseCreate,
     ResponseValueCreate,
     ResponseValuesCreate,
+    ResponseValueTypes,
     SpanQuestionResponseValue,
     TextAndLabelSelectionQuestionResponseValue,
 )
+
+
+class ResponseValueValidator:
+    def __init__(self, response_value: ResponseValueTypes):
+        self._response_value = response_value
+
+    def validate_for(
+        self, question_settings: QuestionSettings, record: Record, response_status: Optional[ResponseStatus] = None
+    ) -> None:
+        if question_settings.type == QuestionType.text:
+            TextQuestionResponseValueValidator(self._response_value).validate()
+        elif question_settings.type == QuestionType.label_selection:
+            LabelSelectionQuestionResponseValueValidator(self._response_value).validate_for(question_settings)
+        elif question_settings.type == QuestionType.multi_label_selection:
+            MultiLabelSelectionQuestionResponseValueValidator(self._response_value).validate_for(question_settings)
+        elif question_settings.type == QuestionType.rating:
+            RatingQuestionResponseValueValidator(self._response_value).validate_for(question_settings)
+        elif question_settings.type == QuestionType.ranking:
+            RankingQuestionResponseValueValidator(self._response_value).validate_for(question_settings, response_status)
+        elif question_settings.type == QuestionType.span:
+            SpanQuestionResponseValueValidator(self._response_value).validate_for(question_settings, record)
+        else:
+            raise ValueError(f"unknown question type f{question_settings.type!r}")
 
 
 class TextQuestionResponseValueValidator:
@@ -123,10 +150,12 @@ class RankingQuestionResponseValueValidator:
     def __init__(self, response_value: RankingQuestionResponseValue):
         self._response_value = response_value
 
-    def validate_for(self, response_status: ResponseStatus, ranking_question_settings: RankingQuestionSettings) -> None:
+    def validate_for(
+        self, ranking_question_settings: RankingQuestionSettings, response_status: Optional[ResponseStatus] = None
+    ) -> None:
         self._validate_value_type()
-        self._validate_all_rankings_are_present_when_submitted(response_status, ranking_question_settings)
-        self._validate_all_rankings_are_valid_when_submitted(response_status, ranking_question_settings)
+        self._validate_all_rankings_are_present_when_submitted(ranking_question_settings, response_status)
+        self._validate_all_rankings_are_valid_when_submitted(ranking_question_settings, response_status)
         self._validate_values_are_available_at_question_settings(ranking_question_settings)
         self._validate_values_are_unique()
 
@@ -135,7 +164,7 @@ class RankingQuestionResponseValueValidator:
             raise ValueError(f"ranking question expects a list of values, found {type(self._response_value)}")
 
     def _validate_all_rankings_are_present_when_submitted(
-        self, response_status: ResponseStatus, ranking_question_settings: RankingQuestionSettings
+        self, ranking_question_settings: RankingQuestionSettings, response_status: Optional[ResponseStatus] = None
     ) -> None:
         if response_status != ResponseStatus.submitted:
             return
@@ -149,7 +178,9 @@ class RankingQuestionResponseValueValidator:
             )
 
     def _validate_all_rankings_are_valid_when_submitted(
-        self, response_status: ResponseStatus, ranking_question_settings: RankingQuestionSettings
+        self,
+        ranking_question_settings: RankingQuestionSettings,
+        response_status: Optional[ResponseStatus] = None,
     ) -> None:
         if response_status != ResponseStatus.submitted:
             return

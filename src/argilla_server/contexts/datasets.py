@@ -86,6 +86,7 @@ from argilla_server.validators.responses import (
     ResponseUpdateValidator,
     ResponseUpsertValidator,
 )
+from argilla_server.validators.suggestions import SuggestionCreateValidator
 
 if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncSession
@@ -492,28 +493,6 @@ async def _validate_metadata(
     return metadata_properties
 
 
-async def _validate_suggestion(
-    db: "AsyncSession",
-    record: Record,
-    suggestion_create: "SuggestionCreate",
-    questions_cache: Optional[Dict[UUID, Question]] = None,
-) -> Dict[UUID, Question]:
-    if not questions_cache:
-        questions_cache = {}
-
-    question = questions_cache.get(suggestion_create.question_id, None)
-
-    if not question:
-        question = await questions.get_question_by_id(db, suggestion_create.question_id)
-        if not question:
-            raise ValueError(f"question_id={str(suggestion_create.question_id)} does not exist")
-        questions_cache[suggestion_create.question_id] = question
-
-    question.parsed_settings.check_response(suggestion_create, record)
-
-    return questions_cache
-
-
 async def validate_user_exists(db: "AsyncSession", user_id: UUID, users_ids: Optional[Set[UUID]]) -> Set[UUID]:
     if not users_ids:
         users_ids = set()
@@ -682,7 +661,7 @@ async def _build_record_suggestions(
     db: "AsyncSession",
     record: Record,
     suggestions_create: Optional[List["SuggestionCreate"]],
-    cache: Optional[Dict[UUID, Question]] = None,
+    questions_cache: Optional[Dict[UUID, Question]] = None,
 ) -> List[Suggestion]:
     """Create suggestions for a record."""
     if not suggestions_create:
@@ -691,7 +670,18 @@ async def _build_record_suggestions(
     suggestions = []
     for suggestion_create in suggestions_create:
         try:
-            cache = await _validate_suggestion(db, record, suggestion_create, questions_cache=cache)
+            if not questions_cache:
+                questions_cache = {}
+
+            question = questions_cache.get(suggestion_create.question_id, None)
+            if not question:
+                question = await questions.get_question_by_id(db, suggestion_create.question_id)
+                if not question:
+                    raise ValueError(f"question_id={str(suggestion_create.question_id)} does not exist")
+                questions_cache[suggestion_create.question_id] = question
+
+            SuggestionCreateValidator(suggestion_create).validate_for(question.parsed_settings, record)
+
             suggestions.append(
                 Suggestion(
                     type=suggestion_create.type,
@@ -705,6 +695,7 @@ async def _build_record_suggestions(
 
         except ValueError as e:
             raise ValueError(f"suggestion for question_id={suggestion_create.question_id} is not valid: {e}") from e
+
     return suggestions
 
 
