@@ -81,7 +81,11 @@ from argilla_server.schemas.v1.vector_settings import (
 )
 from argilla_server.schemas.v1.vectors import Vector as VectorSchema
 from argilla_server.search_engine import SearchEngine
-from argilla_server.validators.responses import ResponseCreateValidator
+from argilla_server.validators.responses import (
+    ResponseCreateValidator,
+    ResponseUpdateValidator,
+    ResponseUpsertValidator,
+)
 
 if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncSession
@@ -657,9 +661,8 @@ async def _build_record_responses(
     for idx, response_create in enumerate(responses_create):
         try:
             cache = await validate_user_exists(db, response_create.user_id, cache)
-            _validate_response_values(
-                record, response_values=response_create.values, response_status=response_create.status
-            )
+
+            ResponseCreateValidator(response_create).validate_for(record)
 
             responses.append(
                 Response(
@@ -1004,9 +1007,7 @@ async def create_response(
 async def update_response(
     db: "AsyncSession", search_engine: SearchEngine, response: Response, response_update: ResponseUpdate
 ):
-    _validate_response_values(
-        response.record, response_values=response_update.values, response_status=response_update.status
-    )
+    ResponseUpdateValidator(response_update).validate_for(response.record)
 
     async with db.begin_nested():
         response = await response.update(
@@ -1029,7 +1030,7 @@ async def update_response(
 async def upsert_response(
     db: "AsyncSession", search_engine: SearchEngine, record: Record, user: User, response_upsert: ResponseUpsert
 ) -> Response:
-    _validate_response_values(record, response_values=response_upsert.values, response_status=response_upsert.status)
+    ResponseUpsertValidator(response_upsert).validate_for(record)
 
     schema = {
         "values": jsonable_encoder(response_upsert.values),
@@ -1065,33 +1066,6 @@ async def delete_response(db: "AsyncSession", search_engine: SearchEngine, respo
     await db.commit()
 
     return response
-
-
-def _validate_response_values(
-    record: Record,
-    response_values: Union[Dict[str, ResponseValueCreate], Dict[str, ResponseValueUpdate], None],
-    response_status: ResponseStatus,
-):
-    if not response_values:
-        if response_status not in [ResponseStatus.discarded, ResponseStatus.draft]:
-            raise ValueError("missing response values")
-
-        return
-
-    response_values_copy = copy.copy(response_values)
-    for question in record.dataset.questions:
-        if (
-            question.required
-            and response_status == ResponseStatus.submitted
-            and not (question.name in response_values and response_values_copy.get(question.name))
-        ):
-            raise ValueError(f"missing question with name={question.name}")
-
-        if question_response := response_values_copy.pop(question.name, None):
-            question.parsed_settings.check_response(question_response, record, response_status)
-
-    if response_values_copy:
-        raise ValueError(f"found responses for non configured questions: {list(response_values_copy.keys())!r}")
 
 
 def _validate_record_fields(dataset: Dataset, fields: Dict[str, Any]):

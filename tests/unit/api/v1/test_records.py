@@ -602,7 +602,7 @@ class TestSuiteRecords:
             f"/api/v1/records/{record.id}/responses", headers=owner_auth_header, json=response_json
         )
         assert response.status_code == 422
-        assert response.json() == {"detail": "missing response value for required question with name=input_ok"}
+        assert response.json() == {"detail": "missing response value for required question with name='input_ok'"}
 
     @pytest.mark.parametrize("response_status", [ResponseStatus.discarded, ResponseStatus.draft])
     async def test_create_record_response_with_missing_required_questions(

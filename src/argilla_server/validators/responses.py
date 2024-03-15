@@ -12,9 +12,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from argilla_server.enums import QuestionType
+from argilla_server.enums import QuestionType, ResponseStatus
 from argilla_server.models import Record
-from argilla_server.schemas.v1.responses import ResponseCreate
+from argilla_server.schemas.v1.responses import ResponseCreate, ResponseUpdate, ResponseUpsert
 from argilla_server.validators.response_values import (
     LabelSelectionQuestionResponseValueValidator,
     MultiLabelSelectionQuestionResponseValueValidator,
@@ -26,8 +26,8 @@ from argilla_server.validators.response_values import (
 
 
 class ResponseCreateValidator:
-    def __init__(self, response_create: ResponseCreate) -> None:
-        self._response_create = response_create
+    def __init__(self, response_change: ResponseCreate):
+        self._response_change = response_change
 
     def validate_for(self, record: Record) -> None:
         self._validate_values_are_present_when_submitted()
@@ -35,32 +35,32 @@ class ResponseCreateValidator:
         self._validate_values_have_configured_questions(record)
         self._validate_values(record)
 
+    @property
+    def _is_submitted_response(self) -> bool:
+        return self._response_change.status == ResponseStatus.submitted
+
     def _validate_values_are_present_when_submitted(self) -> None:
-        if self._response_create.is_submitted and not self._response_create.values:
+        if self._is_submitted_response and not self._response_change.values:
             raise ValueError("missing response values for submitted response")
 
     def _validate_required_questions_have_values(self, record: Record) -> None:
         for question in record.dataset.questions:
-            if (
-                self._response_create.is_submitted
-                and question.required
-                and question.name not in self._response_create.values
-            ):
-                raise ValueError(f"missing response value for required question with name={question.name}")
+            if self._is_submitted_response and question.required and question.name not in self._response_change.values:
+                raise ValueError(f"missing response value for required question with name={question.name!r}")
 
     def _validate_values_have_configured_questions(self, record: Record) -> None:
         question_names = [question.name for question in record.dataset.questions]
 
-        for value_question_name in self._response_create.values or []:
+        for value_question_name in self._response_change.values or []:
             if value_question_name not in question_names:
                 raise ValueError(f"found response value for non configured question with name={value_question_name!r}")
 
     def _validate_values(self, record: Record) -> None:
-        if not self._response_create.values:
+        if not self._response_change.values:
             return
 
         for question in record.dataset.questions:
-            if question_response := self._response_create.values.get(question.name):
+            if question_response := self._response_change.values.get(question.name):
                 if question.type == QuestionType.text:
                     TextQuestionResponseValueValidator(question_response.value).validate()
                 elif question.type == QuestionType.label_selection:
@@ -75,7 +75,7 @@ class ResponseCreateValidator:
                     RatingQuestionResponseValueValidator(question_response.value).validate_for(question.parsed_settings)
                 elif question.type == QuestionType.ranking:
                     RankingQuestionResponseValueValidator(question_response.value).validate_for(
-                        self._response_create.status, question.parsed_settings
+                        self._response_change.status, question.parsed_settings
                     )
                 elif question.type == QuestionType.span:
                     SpanQuestionResponseValueValidator(question_response.value).validate_for(
@@ -85,3 +85,13 @@ class ResponseCreateValidator:
                     raise ValueError(
                         f"unknown question type f{question.type!r} for question with name f{question.name}"
                     )
+
+
+class ResponseUpdateValidator(ResponseCreateValidator):
+    def __init__(self, response_change: ResponseUpdate):
+        self._response_change = response_change
+
+
+class ResponseUpsertValidator(ResponseCreateValidator):
+    def __init__(self, response_change: ResponseUpsert):
+        self._response_change = response_change
