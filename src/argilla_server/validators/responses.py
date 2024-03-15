@@ -57,7 +57,9 @@ class ResponseValidator:
         for question in record.dataset.questions:
             if question_response := self._response_change.values.get(question.name):
                 ResponseValueValidator(question_response.value).validate_for(
-                    question.parsed_settings, record, self._response_change.status
+                    question.parsed_settings,
+                    record,
+                    self._response_change.status,
                 )
 
 
