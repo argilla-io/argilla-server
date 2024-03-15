@@ -1100,7 +1100,7 @@ async def upsert_suggestion(
     question: Question,
     suggestion_create: "SuggestionCreate",
 ) -> Suggestion:
-    question.parsed_settings.check_response(suggestion_create, record)
+    SuggestionCreateValidator(suggestion_create).validate_for(question.parsed_settings, record)
 
     async with db.begin_nested():
         suggestion = await Suggestion.upsert(

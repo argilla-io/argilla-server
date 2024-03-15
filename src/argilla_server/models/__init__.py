@@ -16,6 +16,5 @@
 # We need to review and avoid this. This is only a workaround to not change everything right now
 
 from argilla_server.enums import *  # noqa: I001
-from .questions import *  # noqa: I001
 from .database import *  # noqa: I001
 from .metadata_properties import *  # noqa: I001
