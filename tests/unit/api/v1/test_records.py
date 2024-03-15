@@ -602,7 +602,7 @@ class TestSuiteRecords:
             f"/api/v1/records/{record.id}/responses", headers=owner_auth_header, json=response_json
         )
         assert response.status_code == 422
-        assert response.json() == {"detail": "missing question with name=input_ok"}
+        assert response.json() == {"detail": "missing response value for required question with name=input_ok"}
 
     @pytest.mark.parametrize("response_status", [ResponseStatus.discarded, ResponseStatus.draft])
     async def test_create_record_response_with_missing_required_questions(
@@ -766,7 +766,9 @@ class TestSuiteRecords:
         )
 
         assert response.status_code == 422
-        assert response.json() == {"detail": "found responses for non configured questions: ['unknown_question']"}
+        assert response.json() == {
+            "detail": "found response value for non configured question with name='unknown_question'"
+        }
 
     @pytest.mark.parametrize(
         "create_questions_func, responses, expected_error_msg",
@@ -788,7 +790,7 @@ class TestSuiteRecords:
                         "rating_question_1": {"value": "wrong-rating-value"},
                     },
                 },
-                "'wrong-rating-value' is not a valid option.\nValid options are: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]",
+                "'wrong-rating-value' is not a valid rating for rating question.\nValid ratings are: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]",
             ),
             (
                 create_label_selection_questions,
@@ -806,7 +808,7 @@ class TestSuiteRecords:
                         "multi_label_selection_question_1": {"value": "wrong-type"},
                     },
                 },
-                "This MultiLabelSelection question expects a list of values, found <class 'str'>",
+                "multi label selection questions expects a list of values, found <class 'str'>",
             ),
             (
                 create_multi_label_selection_questions,
@@ -815,22 +817,22 @@ class TestSuiteRecords:
                         "multi_label_selection_question_1": {"value": ["option4", "option5"]},
                     },
                 },
-                "['option4', 'option5'] are not valid options for this MultiLabelSelection question.\nValid options are: ['option1', 'option2', 'option3']",
+                "['option4', 'option5'] are not valid labels for multi label selection question.\nValid labels are: ['option1', 'option2', 'option3']",
             ),
             (
                 create_multi_label_selection_questions,
                 {"values": {"multi_label_selection_question_1": {"value": []}}},
-                "This MultiLabelSelection question expects a list of values, found empty list",
+                "multi label selection questions expects a list of values, found empty list",
             ),
             (
                 create_ranking_question,
                 {"values": {"ranking_question_1": {"value": "wrong-type"}}},
-                "This Ranking question expects a list of values, found <class 'str'>",
+                "ranking question expects a list of values, found <class 'str'>",
             ),
             (
                 create_ranking_question,
                 {"values": {"ranking_question_1": {"value": []}}},
-                "This Ranking question expects a list containing 3 values, found a list of 0 values",
+                "ranking question expects a list containing 3 values, found a list of 0 values",
             ),
             (
                 create_ranking_question,
@@ -843,7 +845,7 @@ class TestSuiteRecords:
                         }
                     }
                 },
-                "This Ranking question expects a list containing 3 values, found a list of 1 values",
+                "ranking question expects a list containing 3 values, found a list of 1 values",
             ),
             (
                 create_ranking_question,
@@ -859,7 +861,7 @@ class TestSuiteRecords:
                         }
                     }
                 },
-                "This Ranking question expects a list containing 3 values, found a list of 4 values",
+                "ranking question expects a list containing 3 values, found a list of 4 values",
             ),
             (
                 create_ranking_question,
@@ -874,7 +876,7 @@ class TestSuiteRecords:
                         }
                     }
                 },
-                "[4] are not valid ranks for this Ranking question.\nValid ranks are: [1, 2, 3]",
+                "[4] are not valid ranks for ranking question.\nValid ranks are: [1, 2, 3]",
             ),
             (
                 create_ranking_question,
@@ -889,7 +891,7 @@ class TestSuiteRecords:
                         }
                     }
                 },
-                "[None] are not valid ranks for this Ranking question.\nValid ranks are: [1, 2, 3]",
+                "[None] are not valid ranks for ranking question.\nValid ranks are: [1, 2, 3]",
             ),
             (
                 create_ranking_question,
@@ -897,14 +899,14 @@ class TestSuiteRecords:
                     "values": {
                         "ranking_question_1": {
                             "value": [
-                                {"value": "completion-z", "rank": 1},
+                                {"value": "completion-invalid", "rank": 1},
                                 {"value": "completion-c", "rank": 2},
                                 {"value": "completion-a", "rank": 3},
                             ]
                         }
                     }
                 },
-                "['completion-z'] are not valid options for this Ranking question.\nValid options are: ['completion-a', 'completion-b', 'completion-c']",
+                "['completion-invalid'] are not valid values for ranking question.\nValid values are: ['completion-a', 'completion-b', 'completion-c']",
             ),
             (
                 create_ranking_question,
@@ -919,7 +921,7 @@ class TestSuiteRecords:
                         }
                     }
                 },
-                "This Ranking question expects a list of unique values, but duplicates were found",
+                "ranking question expects a list of unique values, but duplicates were found",
             ),
         ],
     )
@@ -1054,7 +1056,9 @@ class TestSuiteRecords:
         )
 
         assert response.status_code == 422
-        assert response.json() == {"detail": "found responses for non configured questions: ['wrong_question']"}
+        assert response.json() == {
+            "detail": "found response value for non configured question with name='wrong_question'"
+        }
         assert (await db.execute(select(func.count(Response.id)))).scalar() == 0
 
     @pytest.mark.parametrize("role", [UserRole.owner, UserRole.admin, UserRole.annotator])
