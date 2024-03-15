@@ -431,7 +431,7 @@ class TestDatasetQuestions:
         )
 
         assert response.status_code == 422
-        assert response.json() == {"detail": "Question cannot be created for a published dataset"}
+        assert response.json() == {"detail": "questions cannot be created for a published dataset"}
         assert (await db.execute(select(func.count(Question.id)))).scalar() == 0
 
     async def test_create_dataset_question_with_nonexistent_dataset_id(

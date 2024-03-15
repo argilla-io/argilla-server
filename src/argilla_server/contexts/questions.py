@@ -32,6 +32,7 @@ from argilla_server.schemas.v1.questions import (
     QuestionUpdate,
     SpanQuestionSettingsCreate,
 )
+from argilla_server.validators.questions import QuestionCreateValidator
 
 
 class InvalidQuestionSettings(Exception):
@@ -98,35 +99,13 @@ async def get_question_by_name_and_dataset_id_or_raise(db: AsyncSession, name: s
     return question
 
 
-def _validate_question_before_create(dataset: Dataset, question_create: QuestionCreate) -> None:
-    if question_create.settings.type == QuestionType.span:
-        _validate_span_question_settings_before_create(dataset, question_create.settings)
-
-
 def _validate_question_before_update(question: Question, question_update: QuestionUpdate) -> None:
     if question_update.settings:
         _validate_question_settings(question.parsed_settings, question_update.settings)
 
 
-def _validate_span_question_settings_before_create(
-    dataset: Dataset, span_question_settings_create: SpanQuestionSettingsCreate
-) -> None:
-    field = span_question_settings_create.field
-    field_names = [field.name for field in dataset.fields]
-
-    if field not in field_names:
-        raise ValueError(f"'{field}' is not a valid field name.\nValid field names are {field_names!r}")
-
-    for question in dataset.questions:
-        if question.type == QuestionType.span and field == question.parsed_settings.field:
-            raise ValueError(f"'{field}' is already used by span question with id '{question.id}'")
-
-
 async def create_question(db: AsyncSession, dataset: Dataset, question_create: QuestionCreate) -> Question:
-    if dataset.is_ready:
-        raise ValueError("Question cannot be created for a published dataset")
-
-    _validate_question_before_create(dataset, question_create)
+    QuestionCreateValidator(question_create).validate_for(dataset)
 
     return await Question.create(
         db,
