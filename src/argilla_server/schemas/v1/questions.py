@@ -176,7 +176,7 @@ class LabelSelectionQuestionSettingsCreate(UniqueValuesCheckerMixin):
             num_options = len(values["options"])
             if visible_options > num_options:
                 raise ValueError(
-                    "The value for 'visible_options' must be less or equal to the number of items in 'options'"
+                    "the value for 'visible_options' must be less or equal to the number of items in 'options'"
                     f" ({num_options})"
                 )
 
@@ -255,7 +255,7 @@ class SpanQuestionSettingsCreate(UniqueValuesCheckerMixin):
             num_options = len(values["options"])
             if visible_options > num_options:
                 raise ValueError(
-                    "The value for 'visible_options' must be less or equal to the number of items in 'options'"
+                    "the value for 'visible_options' must be less or equal to the number of items in 'options'"
                     f" ({num_options})"
                 )
 

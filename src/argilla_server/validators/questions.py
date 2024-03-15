@@ -57,6 +57,12 @@ class QuestionUpdateValidator:
         QuestionType.span,
     ]
 
+    QUESTION_TYPES_WITH_VISIBLE_OPTIONS = [
+        QuestionType.label_selection,
+        QuestionType.multi_label_selection,
+        QuestionType.span,
+    ]
+
     def __init__(self, question_update: QuestionUpdate):
         self._question_update = question_update
 
@@ -69,6 +75,7 @@ class QuestionUpdateValidator:
 
         self._validate_question_settings_type_is_the_same(question_settings, self._question_update.settings)
         self._validate_question_settings_label_options(question_settings, self._question_update.settings)
+        self._validate_question_settings_visible_options(question_settings, self._question_update.settings)
 
     def _validate_question_settings_type_is_the_same(
         self, question_settings: QuestionSettings, question_settings_update: QuestionSettingsUpdate
@@ -83,8 +90,6 @@ class QuestionUpdateValidator:
     ):
         if question_settings.type not in self.QUESTION_TYPES_WITH_LABEL_OPTIONS:
             return
-
-        # TODO: Validate visible_options on update
 
         if question_settings_update.options is None:
             return
@@ -105,6 +110,21 @@ class QuestionUpdateValidator:
         if unexpected_options:
             raise InvalidQuestionSettings(
                 f"the option values cannot be modified. found unexpected option values: {unexpected_options!r}"
+            )
+
+    def _validate_question_settings_visible_options(
+        self, question_settings: QuestionSettings, question_settings_update: QuestionSettingsUpdate
+    ):
+        if question_settings_update.type not in self.QUESTION_TYPES_WITH_VISIBLE_OPTIONS:
+            return
+
+        if question_settings_update.visible_options is None:
+            return
+
+        number_of_options = len(question_settings.options)
+        if question_settings_update.visible_options > number_of_options:
+            raise InvalidQuestionSettings(
+                f"the value for 'visible_options' must be less or equal to the number of items in 'options' ({number_of_options})"
             )
 
 
