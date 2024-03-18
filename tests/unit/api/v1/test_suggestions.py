@@ -12,6 +12,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+from datetime import datetime
 from typing import TYPE_CHECKING
 from uuid import uuid4
 
@@ -43,14 +44,19 @@ class TestSuiteSuggestions:
         )
 
         assert response.status_code == 200
-        assert response.json() == {
+
+        response_json = response.json()
+        assert response_json == {
             "id": str(suggestion.id),
             "question_id": str(suggestion.question_id),
             "type": None,
             "score": None,
             "value": "negative",
             "agent": None,
+            "inserted_at": datetime.fromisoformat(response_json["inserted_at"]).isoformat(),
+            "updated_at": datetime.fromisoformat(response_json["updated_at"]).isoformat(),
         }
+
         assert (await db.execute(select(func.count(Suggestion.id)))).scalar() == 0
 
         mock_search_engine.delete_record_suggestion.assert_called_once_with(suggestion)

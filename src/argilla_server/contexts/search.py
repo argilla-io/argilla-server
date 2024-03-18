@@ -18,10 +18,8 @@ from sqlalchemy import func, select
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from argilla_server.contexts.datasets import (
-    get_metadata_property_by_name_and_dataset_id_or_raise,
-    get_question_by_name_and_dataset_id_or_raise,
-)
+from argilla_server.contexts.datasets import get_metadata_property_by_name_and_dataset_id_or_raise
+from argilla_server.contexts.questions import get_question_by_name_and_dataset_id_or_raise
 from argilla_server.models import Question, Suggestion
 from argilla_server.schemas.v1.records import (
     FilterScope,

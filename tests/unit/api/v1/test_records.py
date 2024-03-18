@@ -193,20 +193,24 @@ class TestSuiteRecords:
             "responses": [],
             "suggestions": [
                 {
-                    "question_id": str(question_0.id),
+                    "id": str(record.suggestions[0].id),
                     "type": None,
                     "score": None,
                     "value": "suggestion updated 1",
                     "agent": None,
-                    "id": str(record.suggestions[0].id),
+                    "question_id": str(question_0.id),
+                    "inserted_at": record.suggestions[0].inserted_at.isoformat(),
+                    "updated_at": record.suggestions[0].updated_at.isoformat(),
                 },
                 {
-                    "question_id": str(question_1.id),
+                    "id": str(record.suggestions[1].id),
                     "type": None,
                     "score": None,
                     "value": "suggestion updated 2",
                     "agent": None,
-                    "id": str(record.suggestions[1].id),
+                    "question_id": str(question_1.id),
+                    "inserted_at": record.suggestions[1].inserted_at.isoformat(),
+                    "updated_at": record.suggestions[1].updated_at.isoformat(),
                 },
             ],
             "vectors": {
@@ -1211,6 +1215,8 @@ class TestSuiteRecords:
                     "score": None,
                     "value": "This is a unit test suggestion",
                     "agent": None,
+                    "inserted_at": suggestion_a.inserted_at.isoformat(),
+                    "updated_at": suggestion_a.updated_at.isoformat(),
                 },
                 {
                     "id": str(suggestion_b.id),
@@ -1219,6 +1225,8 @@ class TestSuiteRecords:
                     "score": None,
                     "value": "This is a another unit test suggestion",
                     "agent": None,
+                    "inserted_at": suggestion_b.inserted_at.isoformat(),
+                    "updated_at": suggestion_b.updated_at.isoformat(),
                 },
             ]
         }
@@ -1255,9 +1263,21 @@ class TestSuiteRecords:
             json={"question_id": str(question.id), **payload},
         )
 
-        response_body = response.json()
         assert response.status_code == 201
-        assert response_body == {"id": response_body["id"], "question_id": str(question.id), **payload}
+
+        response_json = response.json()
+        payload.update(
+            {
+                "inserted_at": datetime.fromisoformat(response_json["inserted_at"]).isoformat(),
+                "updated_at": datetime.fromisoformat(response_json["updated_at"]).isoformat(),
+            }
+        )
+        assert response_json == {
+            "id": response_json["id"],
+            "question_id": str(question.id),
+            **payload,
+        }
+
         assert (await db.execute(select(func.count(Suggestion.id)))).scalar() == 1
 
     async def test_create_record_suggestion_update(
@@ -1274,16 +1294,18 @@ class TestSuiteRecords:
             json={"question_id": str(question.id), "value": "Testing updating a suggestion"},
         )
 
-        response_body = response.json()
         assert response.status_code == 200
-        assert response_body == {
+        assert response.json() == {
             "id": str(suggestion.id),
             "question_id": str(question.id),
             "type": None,
             "score": None,
             "value": "Testing updating a suggestion",
             "agent": None,
+            "inserted_at": suggestion.inserted_at.isoformat(),
+            "updated_at": suggestion.updated_at.isoformat(),
         }
+
         assert (await db.execute(select(func.count(Suggestion.id)))).scalar() == 1
 
         mock_search_engine.update_record_suggestion.assert_called_once_with(suggestion)

@@ -16,13 +16,20 @@ These are the section headers that we use:
 
 ## [Unreleased]()
 
+### Added
+
+- Add support for creating and listing questions with `SpanQuestionSettings`. ([#24](https://github.com/argilla-io/argilla-server/pull/24))
+- Add support for creating and updating responses for questions of type `span`. ([#54](https://github.com/argilla-io/argilla-server/pull/54))
+- Add support for upserting suggestions for questions of type `span`. ([#54](https://github.com/argilla-io/argilla-server/pull/54))
+- Add `inserted_at` and `updated_at` missing fields to API v1 `Suggestion` schema. ([#52](https://github.com/argilla-io/argilla-server/pull/52))
+
 ### Fixed
 
 - Fixed error when returning responses from deleted users (which contains user_id=None). ([#57](https://github.com/argilla-io/argilla-server/pull/57))
 
 ## [1.25.0](https://github.com/argilla-io/argilla-server/compare/v1.24.0...v1.25.0)
 
->[!IMPORTANT]
+> [!IMPORTANT]
 > This version include changes related to the search index. So, a reindex is needed.
 > Visit the [docs](https://docs.argilla.io/en/latest/getting_started/installation/configurations/database_migrations.html#feedback-datasets) for more info.
 
@@ -46,12 +53,12 @@ These are the section headers that we use:
 
 ### Fixed
 
-- Max size parameter for getting the metadata property metrics is currently set as 2^14(=12) instead of 2 ** 14 ([#30](https://github.com/argilla-io/argilla-server/pull/30)) ([v1.24-fix](https://github.com/bharath97-git/argilla-server/releases/tag/v1.24-fix))
+- Max size parameter for getting the metadata property metrics is currently set as 2^14(=12) instead of 2 \*\* 14 ([#30](https://github.com/argilla-io/argilla-server/pull/30)) ([v1.24-fix](https://github.com/bharath97-git/argilla-server/releases/tag/v1.24-fix))
 - Fixed error when combining similarity search with text search. ([#32](https://github.com/argilla-io/argilla-server/pull/32))
 
 ## [1.24.0](https://github.com/argilla-io/argilla-server/releases/tag/v1.24.0)
 
->[!NOTE]
+> [!NOTE]
 > This version is the first release of the Argilla Server. Before this release, the Argilla Server was part of the [Argilla SDK](https://github.com/argilla-io/argilla).
 > Now, the Argilla Server is a separate package that can be installed and used independently of the [Argilla SDK](https://github.com/argilla-io/argilla).
 
