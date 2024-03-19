@@ -201,12 +201,9 @@ class RecordsUpdate(BaseModel):
 
 
 class RecordUpsert(BaseModel):
-    fields: Opç[πDict[str, str]
+    fields: Optional[Dict[str, str]]
     metadata: Optional[Dict[str, Any]]
     external_id: Optional[str]
-    responses: Optional[List[UserResponseCreate]]
-    suggestions: Optional[List[SuggestionCreate]]
-    vectors: Optional[Dict[str, List[float]]]
     id: Optional[UUID]
 
 
