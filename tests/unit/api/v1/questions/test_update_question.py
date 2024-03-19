@@ -90,3 +90,24 @@ class TestUpdateQuestion:
         assert response.json() == {
             "detail": "the option values cannot be modified. found unexpected option values: ['label-a', 'label-b', 'label-c']"
         }
+
+    async def test_update_question_with_more_visible_options_than_allowed(
+        self, async_client: AsyncClient, owner_auth_header: dict
+    ):
+        question = await LabelSelectionQuestionFactory.create()
+
+        response = await async_client.patch(
+            self.url(question.id),
+            headers=owner_auth_header,
+            json={
+                "settings": {
+                    "type": QuestionType.label_selection,
+                    "visible_options": 4,
+                },
+            },
+        )
+
+        assert response.status_code == 422
+        assert response.json() == {
+            "detail": "the value for 'visible_options' must be less or equal to the number of items in 'options' (3)"
+        }
