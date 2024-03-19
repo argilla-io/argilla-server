@@ -13,14 +13,14 @@
 #  limitations under the License.
 
 from datetime import datetime
-from typing import Annotated, Any, Dict, List, Literal, Optional, Union
+from typing import Any, Dict, List, Literal, Optional, Union
 from uuid import UUID
 
 import fastapi
 from typing_extensions import Annotated
 
 from argilla_server.enums import RecordInclude, RecordSortField, SimilarityOrder, SortOrder
-from argilla_server.pydantic_v1 import BaseModel, Field, root_validator, validator
+from argilla_server.pydantic_v1 import BaseModel, Field, root_validator, validator, conlist
 from argilla_server.pydantic_v1.utils import GetterDict
 from argilla_server.schemas.base import UpdateSchema
 from argilla_server.schemas.v1.metadata_properties import MetadataPropertyName
@@ -84,7 +84,7 @@ class Record(BaseModel):
 
 
 class RecordCreate(BaseModel):
-    fields: Dict[str, Any]
+    fields: Dict[str, str]
     metadata: Optional[Dict[str, Any]]
     external_id: Optional[str]
     responses: Optional[List[UserResponseCreate]]
@@ -104,7 +104,7 @@ class RecordCreate(BaseModel):
 
         return values
 
-    @validator("metadata", pre=True)
+    @validator("metadata")
     @classmethod
     def prevent_nan_values(cls, metadata: Optional[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
         if metadata is None:
@@ -198,6 +198,24 @@ class RecordsCreate(BaseModel):
 class RecordsUpdate(BaseModel):
     # TODO: review this definition and align to create model
     items: List[RecordUpdateWithId] = Field(..., min_items=RECORDS_UPDATE_MIN_ITEMS, max_items=RECORDS_UPDATE_MAX_ITEMS)
+
+
+class RecordUpsert(BaseModel):
+    fields: Opç[πDict[str, str]
+    metadata: Optional[Dict[str, Any]]
+    external_id: Optional[str]
+    responses: Optional[List[UserResponseCreate]]
+    suggestions: Optional[List[SuggestionCreate]]
+    vectors: Optional[Dict[str, List[float]]]
+    id: Optional[UUID]
+
+
+class RecordsBulkUpsert(BaseModel):
+    items: conlist(item_type=RecordUpsert, min_items=RECORDS_CREATE_MIN_ITEMS, max_items=RECORDS_CREATE_MAX_ITEMS)
+
+
+class RecordsBulk(BaseModel):
+    items: List[Record]
 
 
 class MetadataParsedQueryParam:
