@@ -57,7 +57,6 @@ from argilla_server.schemas.v1.datasets import (
 )
 from argilla_server.schemas.v1.fields import FieldCreate
 from argilla_server.schemas.v1.metadata_properties import MetadataPropertyCreate, MetadataPropertyUpdate
-from argilla_server.schemas.v1.questions import QuestionCreate
 from argilla_server.schemas.v1.records import (
     RecordCreate,
     RecordIncludeParam,
@@ -69,8 +68,6 @@ from argilla_server.schemas.v1.responses import (
     ResponseCreate,
     ResponseUpdate,
     ResponseUpsert,
-    ResponseValueCreate,
-    ResponseValueUpdate,
     UserResponseCreate,
 )
 from argilla_server.schemas.v1.vector_settings import (
@@ -95,7 +92,6 @@ if TYPE_CHECKING:
         DatasetUpdate,
     )
     from argilla_server.schemas.v1.fields import FieldUpdate
-    from argilla_server.schemas.v1.questions import QuestionUpdate
     from argilla_server.schemas.v1.records import RecordUpdate
     from argilla_server.schemas.v1.suggestions import SuggestionCreate
     from argilla_server.schemas.v1.vector_settings import VectorSettingsUpdate
@@ -329,6 +325,17 @@ async def get_vector_settings_by_name_and_dataset_id(
     db: "AsyncSession", name: str, dataset_id: UUID
 ) -> Union[VectorSettings, None]:
     return await VectorSettings.read_by(db, name=name, dataset_id=dataset_id)
+
+
+async def get_vector_settings_by_name_and_dataset_id_or_raise(
+    db: "AsyncSession", name: str, dataset_id: UUID
+) -> VectorSettings:
+    vector_settings = await get_vector_settings_by_name_and_dataset_id(db, name, dataset_id)
+
+    if vector_settings is None:
+        raise errors.NotFoundError(f"Vector settings with name `{name}` not found for dataset with id `{dataset_id}`")
+
+    return vector_settings
 
 
 async def update_vector_settings(
