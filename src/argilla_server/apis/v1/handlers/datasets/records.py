@@ -39,10 +39,10 @@ from argilla_server.schemas.v1.records import (
     Record,
     RecordIncludeParam,
     Records,
-    RecordsCreate,
-    RecordsUpdate,
     RecordsBulk,
     RecordsBulkUpsert,
+    RecordsCreate,
+    RecordsUpdate,
 )
 from argilla_server.search_engine import (
     SearchEngine,
