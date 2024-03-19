@@ -1,8 +1,22 @@
+#  Copyright 2021-present, the Recognai S.L. team.
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+
 import re
-from typing import Optional, List, Dict, Union, Any
+from typing import Any, Dict, List, Optional, Union
 from uuid import UUID
 
-from fastapi import Depends, Query, Security, HTTPException, APIRouter
+from fastapi import APIRouter, Depends, HTTPException, Query, Security
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
 from typing_extensions import Annotated
@@ -11,46 +25,49 @@ from argilla_server import search_engine as search_engine
 from argilla_server.apis.v1.handlers.datasets.datasets import _get_dataset_or_raise
 from argilla_server.contexts import datasets, search
 from argilla_server.database import get_async_db
-from argilla_server.enums import ResponseStatusFilter, MetadataPropertyType, SortOrder, RecordSortField
+from argilla_server.enums import MetadataPropertyType, RecordSortField, ResponseStatusFilter, SortOrder
 from argilla_server.errors import future as errors
-from argilla_server.models import User, Dataset as DatasetModel, Record
-from argilla_server.policies import authorize, DatasetPolicyV1
+from argilla_server.models import Dataset as DatasetModel
+from argilla_server.models import Record, User
+from argilla_server.policies import DatasetPolicyV1, authorize
 from argilla_server.schemas.v1.datasets import Dataset
 from argilla_server.schemas.v1.records import (
-    SearchRecordsResult,
-    SearchRecordsQuery,
+    Filters,
+    FilterScope,
+    MetadataFilterScope,
+    MetadataParsedQueryParam,
     MetadataQueryParams,
+    Order,
+    RangeFilter,
+    RecordFilterScope,
     RecordIncludeParam,
     SearchRecord,
-    Record as RecordSchema,
-    MetadataParsedQueryParam,
-    FilterScope,
-    RecordFilterScope,
-    MetadataFilterScope,
-    Filters,
+    SearchRecordsQuery,
+    SearchRecordsResult,
     TermsFilter,
-    RangeFilter,
-    Order,
+)
+from argilla_server.schemas.v1.records import (
+    Record as RecordSchema,
 )
 from argilla_server.schemas.v1.responses import ResponseFilterScope
 from argilla_server.schemas.v1.suggestions import (
-    SuggestionFilterScope,
-    SearchSuggestionsOptions,
     SearchSuggestionOptions,
     SearchSuggestionOptionsQuestion,
+    SearchSuggestionsOptions,
+    SuggestionFilterScope,
 )
 from argilla_server.schemas.v1.vector_settings import VectorSettings
 from argilla_server.search_engine import (
-    SearchEngine,
-    get_search_engine,
     AndFilter,
-    SearchResponses,
-    MetadataFilter,
-    TermsMetadataFilter,
-    IntegerMetadataFilter,
     FloatMetadataFilter,
-    UserResponseStatusFilter,
+    IntegerMetadataFilter,
+    MetadataFilter,
+    SearchEngine,
+    SearchResponses,
     SortBy,
+    TermsMetadataFilter,
+    UserResponseStatusFilter,
+    get_search_engine,
 )
 from argilla_server.security import auth
 from argilla_server.telemetry import TelemetryClient, get_telemetry_client
