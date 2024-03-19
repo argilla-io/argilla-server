@@ -98,14 +98,6 @@ async def get_question_by_name_and_dataset_id_or_raise(db: AsyncSession, name: s
     return question
 
 
-async def get_question_by_id_or_raise(db: AsyncSession, question_id: UUID) -> Question:
-    question = await get_question_by_id(db, question_id)
-    if question is None:
-        raise errors.NotFoundError(f"Question with id `{question_id}` not found")
-
-    return question
-
-
 def _validate_question_before_create(dataset: Dataset, question_create: QuestionCreate) -> None:
     if question_create.settings.type == QuestionType.span:
         _validate_span_question_settings_before_create(dataset, question_create.settings)
