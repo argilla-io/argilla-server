@@ -20,7 +20,7 @@ import fastapi
 from typing_extensions import Annotated
 
 from argilla_server.enums import RecordInclude, RecordSortField, SimilarityOrder, SortOrder
-from argilla_server.pydantic_v1 import BaseModel, Field, conlist, root_validator, validator
+from argilla_server.pydantic_v1 import BaseModel, Field, root_validator, validator
 from argilla_server.pydantic_v1.utils import GetterDict
 from argilla_server.schemas.base import UpdateSchema
 from argilla_server.schemas.v1.metadata_properties import MetadataPropertyName
@@ -33,6 +33,9 @@ RECORDS_CREATE_MAX_ITEMS = 1000
 
 RECORDS_UPDATE_MIN_ITEMS = 1
 RECORDS_UPDATE_MAX_ITEMS = 1000
+
+RECORDS_BULK_UPSERT_MIN_ITEMS = 1
+RECORDS_BULK_UPSERT_MAX_ITEMS = 1000
 
 FILTERS_AND_MIN_ITEMS = 1
 FILTERS_AND_MAX_ITEMS = 50
@@ -201,14 +204,18 @@ class RecordsUpdate(BaseModel):
 
 
 class RecordUpsert(BaseModel):
+    id: Optional[UUID]
     fields: Optional[Dict[str, Any]]
     metadata: Optional[Dict[str, Any]]
     external_id: Optional[str]
-    id: Optional[UUID]
 
 
 class RecordsBulkUpsert(BaseModel):
-    items: conlist(item_type=RecordUpsert, min_items=RECORDS_CREATE_MIN_ITEMS, max_items=RECORDS_CREATE_MAX_ITEMS)
+    items: List[RecordUpsert] = Field(
+        ...,
+        min_items=RECORDS_BULK_UPSERT_MIN_ITEMS,
+        max_items=RECORDS_BULK_UPSERT_MAX_ITEMS,
+    )
 
 
 class RecordsBulk(BaseModel):
