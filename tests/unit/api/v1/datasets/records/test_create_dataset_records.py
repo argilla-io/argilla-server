@@ -15,12 +15,12 @@
 from uuid import UUID
 
 import pytest
+from argilla_server.enums import DatasetStatus, QuestionType, ResponseStatus, SuggestionType
+from argilla_server.models.database import Record, Response, Suggestion, User
 from httpx import AsyncClient
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from argilla_server.enums import DatasetStatus, QuestionType, ResponseStatus, SuggestionType
-from argilla_server.models.database import Record, Response, Suggestion, User
 from tests.factories import (
     DatasetFactory,
     LabelSelectionQuestionFactory,
