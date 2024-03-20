@@ -147,7 +147,7 @@ class TestCreateDatasetQuestion:
         "visible_options,error_msg",
         [
             (1, "ensure this value is greater than or equal to 3"),
-            (4, "The value for 'visible_options' must be less or equal to the number of items in 'options' (3)"),
+            (4, "the value for 'visible_options' must be less or equal to the number of items in 'options' (3)"),
         ],
     )
     async def test_create_question_with_wrong_visible_options(

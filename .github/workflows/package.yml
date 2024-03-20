@@ -21,6 +21,7 @@ on:
       - "main"
       - "develop"
       - "releases/**"
+      - "refactor/**"
       - "feature/**"
       - "feat/**"
       - "fix/**"

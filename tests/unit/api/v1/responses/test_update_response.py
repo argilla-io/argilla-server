@@ -88,6 +88,68 @@ class TestUpdateResponse:
             "updated_at": datetime.fromisoformat(resp_json["updated_at"]).isoformat(),
         }
 
+    async def test_update_response_for_span_question_with_additional_value_attributes(
+        self, async_client: AsyncClient, db: AsyncSession, owner: User, owner_auth_header: dict
+    ):
+        dataset = await DatasetFactory.create()
+
+        await SpanQuestionFactory.create(name="span-question", dataset=dataset)
+
+        record = await RecordFactory.create(fields={"field-a": "Hello"}, dataset=dataset)
+        response = await ResponseFactory.create(
+            status=ResponseStatus.submitted,
+            values={
+                "span-question": {
+                    "value": [
+                        {"label": "label-a", "start": 0, "end": 1},
+                    ]
+                }
+            },
+            user=owner,
+            record=record,
+        )
+
+        resp = await async_client.put(
+            self.url(response.id),
+            headers=owner_auth_header,
+            json={
+                "status": ResponseStatus.submitted,
+                "values": {
+                    "span-question": {
+                        "value": [
+                            {"label": "label-a", "start": 0, "end": 1, "ignored": "value"},
+                            {"label": "label-b", "start": 2, "end": 3, "ignored": "value"},
+                            {"label": "label-c", "start": 4, "end": 5},
+                        ],
+                    },
+                },
+            },
+        )
+
+        expected_values = {
+            "span-question": {
+                "value": [
+                    {"label": "label-a", "start": 0, "end": 1},
+                    {"label": "label-b", "start": 2, "end": 3},
+                    {"label": "label-c", "start": 4, "end": 5},
+                ],
+            },
+        }
+
+        assert resp.status_code == 200
+        assert (await db.execute(select(Response).filter_by(id=response.id))).scalar_one().values == expected_values
+
+        resp_json = resp.json()
+        assert resp_json == {
+            "id": str(response.id),
+            "status": ResponseStatus.submitted,
+            "values": expected_values,
+            "record_id": str(record.id),
+            "user_id": str(owner.id),
+            "inserted_at": response.inserted_at.isoformat(),
+            "updated_at": datetime.fromisoformat(resp_json["updated_at"]).isoformat(),
+        }
+
     async def test_update_response_for_span_question_with_empty_value(
         self, async_client: AsyncClient, db: AsyncSession, owner: User, owner_auth_header: dict
     ):
