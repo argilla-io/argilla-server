@@ -84,7 +84,7 @@ class Record(BaseModel):
 
 
 class RecordCreate(BaseModel):
-    fields: Dict[str, str]
+    fields: Dict[str, Any]
     metadata: Optional[Dict[str, Any]]
     external_id: Optional[str]
     responses: Optional[List[UserResponseCreate]]
@@ -122,7 +122,7 @@ class RecordUpdate(UpdateSchema):
     suggestions: Optional[List[SuggestionCreate]] = None
     vectors: Optional[Dict[str, List[float]]]
 
-    @validator("metadata_", pre=True)
+    @validator("metadata_")
     @classmethod
     def prevent_nan_values(cls, metadata: Optional[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
         if metadata is None:
@@ -201,7 +201,7 @@ class RecordsUpdate(BaseModel):
 
 
 class RecordUpsert(BaseModel):
-    fields: Optional[Dict[str, str]]
+    fields: Optional[Dict[str, Any]]
     metadata: Optional[Dict[str, Any]]
     external_id: Optional[str]
     id: Optional[UUID]
