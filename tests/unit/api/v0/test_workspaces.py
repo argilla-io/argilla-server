@@ -16,11 +16,10 @@ from typing import TYPE_CHECKING
 from uuid import UUID, uuid4
 
 import pytest
-from argilla_server.constants import API_KEY_HEADER_NAME
-from argilla_server.models import User, Workspace, WorkspaceUser
-from fastapi.testclient import TestClient
 from sqlalchemy import func, select
 
+from argilla_server.constants import API_KEY_HEADER_NAME
+from argilla_server.models import User, Workspace, WorkspaceUser
 from tests.factories import (
     AdminFactory,
     AnnotatorFactory,
@@ -31,44 +30,6 @@ from tests.factories import (
 
 if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncSession
-
-
-@pytest.mark.asyncio
-async def test_list_workspaces(async_client: "AsyncClient", owner_auth_header):
-    await WorkspaceFactory.create(name="workspace-a")
-    await WorkspaceFactory.create(name="workspace-b")
-
-    response = await async_client.get("/api/workspaces", headers=owner_auth_header)
-
-    assert response.status_code == 200
-
-    response_body = response.json()
-    assert list(map(lambda ws: ws["name"], response_body)) == ["workspace-a", "workspace-b"]
-
-
-@pytest.mark.asyncio
-async def test_list_workspaces_without_authentication(async_client: "AsyncClient"):
-    response = await async_client.get("/api/workspaces")
-
-    assert response.status_code == 401
-
-
-@pytest.mark.asyncio
-async def test_list_workspaces_as_admin(async_client: "AsyncClient"):
-    admin = await AdminFactory.create()
-
-    response = await async_client.get("/api/workspaces", headers={API_KEY_HEADER_NAME: admin.api_key})
-
-    assert response.status_code == 200
-
-
-@pytest.mark.asyncio
-async def test_list_workspaces_as_annotator(async_client: "AsyncClient"):
-    annotator = await AnnotatorFactory.create()
-
-    response = await async_client.get("/api/workspaces", headers={API_KEY_HEADER_NAME: annotator.api_key})
-
-    assert response.status_code == 200
 
 
 @pytest.mark.asyncio
