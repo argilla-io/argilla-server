@@ -36,7 +36,7 @@ async def upsert_dataset_records(
         found_records = await _list_records_by_ids_and_dataset_id(db, record_ids, dataset.id)
 
         for record_upsert, record_found in zip(records_upsert, found_records):
-            record = await _upsert_record_model(db, dataset, record_found, record_upsert)
+            record = await _upsert_record(db, dataset, record_found, record_upsert)
             records.append(record)
 
         await db.flush(records)
@@ -50,10 +50,9 @@ async def _list_records_by_ids_and_dataset_id(
     db: "AsyncSession", records_ids: Sequence[UUID], dataset_id: UUID
 ) -> List[Union[Record, None]]:
 
-    query = select(Record).filter(Record.dataset_id == dataset_id).filter(Record.id.in_(records_ids))
+    query = select(Record).filter(Record.id.in_(records_ids), Record.dataset_id == dataset_id)
 
-    result = await db.execute(query)
-    records = result.unique().scalars().all()
+    records = (await db.execute(query)).unique().scalars().all()
 
     # Preserve the order of the `record_ids` list
     record_order_map = {record.id: record for record in records}
@@ -62,26 +61,24 @@ async def _list_records_by_ids_and_dataset_id(
     return ordered_records
 
 
-async def _upsert_record_model(
+async def _upsert_record(
     db: AsyncSession,
     dataset: Dataset,
-    found_record: Optional[Record],
+    record: Optional[Record],
     record_upsert: RecordUpsert,
 ) -> Record:
 
-    if found_record:
+    if record:
         record_update = RecordUpdate(metadata=record_upsert.metadata)
-        return await _update_record_model(db, dataset, record=found_record, record_update=record_update)
-    else:
-        record_create = RecordCreate(
-            fields=record_upsert.fields,
-            metadata_=record_upsert.metadata,
-            external_id=record_upsert.external_id,
-        )
-        return await _create_record_model(db, dataset, record_create=record_create)
+        return await _update_record(db, record=record, record_update=record_update)
+
+    record_create = RecordCreate(
+        fields=record_upsert.fields, metadata_=record_upsert.metadata, external_id=record_upsert.external_id
+    )
+    return await _create_record(db, dataset, record_create=record_create)
 
 
-async def _create_record_model(db: AsyncSession, dataset: Dataset, record_create: RecordCreate) -> Record:
+async def _create_record(db: AsyncSession, dataset: Dataset, record_create: RecordCreate) -> Record:
     # TODO(@frascuchon): Validate the record_create object
     return await Record.create(
         db,
@@ -93,8 +90,6 @@ async def _create_record_model(db: AsyncSession, dataset: Dataset, record_create
     )
 
 
-async def _update_record_model(
-    db: AsyncSession, dataset: Dataset, record: Record, record_update: RecordUpdate
-) -> Record:
+async def _update_record(db: AsyncSession, record: Record, record_update: RecordUpdate) -> Record:
     # TODO(@frascuchon): Validate the record_update object
     return await record.update(db, metadata_=record_update.metadata_, replace_dict=True, autocommit=False)
