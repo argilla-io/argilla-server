@@ -17,8 +17,8 @@ from datetime import datetime
 from typing import Any, List, Optional, Union
 from uuid import UUID
 
-from sqlalchemy import Enum as SAEnum
 from sqlalchemy import JSON, ForeignKey, String, Text, UniqueConstraint, and_, sql
+from sqlalchemy import Enum as SAEnum
 from sqlalchemy.engine.default import DefaultExecutionContext
 from sqlalchemy.ext.mutable import MutableDict, MutableList
 from sqlalchemy.orm import Mapped, mapped_column, relationship
