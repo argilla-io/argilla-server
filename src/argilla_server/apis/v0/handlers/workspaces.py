@@ -30,17 +30,6 @@ from argilla_server.security import auth
 router = APIRouter(tags=["workspaces"])
 
 
-@router.get("/workspaces", response_model=List[Workspace], response_model_exclude_none=True)
-async def list_workspaces(
-    *, db: AsyncSession = Depends(get_async_db), current_user: User = Security(auth.get_current_user)
-):
-    await authorize(current_user, WorkspacePolicy.list)
-
-    workspaces = await accounts.list_workspaces(db)
-
-    return parse_obj_as(List[Workspace], workspaces)
-
-
 @router.post("/workspaces", response_model=Workspace, response_model_exclude_none=True)
 async def create_workspace(
     *,
