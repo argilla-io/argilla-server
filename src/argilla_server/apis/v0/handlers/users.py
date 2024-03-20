@@ -61,7 +61,7 @@ async def whoami(
     #  Returning all workspaces from the `/api/me` for owner users keeps the
     #  backward compatibility with the client flow.
     #  This logic will be removed in future versions, when python client
-    #  start using the list workspaces (`/api/workspaces`) endpoint to handle
+    #  start using the list workspaces (`/api/v1/me/workspaces`) endpoint to handle
     #  accessible workspaces for connected user.
     if current_user.is_owner:
         workspaces = await accounts.list_workspaces(db)

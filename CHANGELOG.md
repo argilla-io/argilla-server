@@ -23,6 +23,10 @@ These are the section headers that we use:
 - Add support for upserting suggestions for questions of type `span`. ([#54](https://github.com/argilla-io/argilla-server/pull/54))
 - Add `inserted_at` and `updated_at` missing fields to API v1 `Suggestion` schema. ([#52](https://github.com/argilla-io/argilla-server/pull/52))
 
+### Removed
+
+- Removed unused `GET /api/workspaces` endpoint. ([#83](https://github.com/argilla-io/argilla-server/pull/83))
+
 ### Fixed
 
 - Fixed error when returning responses from deleted users (which contains user_id=None). ([#57](https://github.com/argilla-io/argilla-server/pull/57))
