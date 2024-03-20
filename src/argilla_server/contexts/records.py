@@ -21,6 +21,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from argilla_server.models import Dataset, Record
 from argilla_server.schemas.v1.records import RecordCreate, RecordUpdate, RecordUpsert
 from argilla_server.search_engine import SearchEngine
+from argilla_server.validators.records import RecordCreateValidator, RecordUpdateValidator
 
 
 async def upsert_dataset_records(
@@ -70,7 +71,7 @@ async def _upsert_record(
 
     if record:
         record_update = RecordUpdate(metadata=record_upsert.metadata)
-        return await _update_record(db, record=record, record_update=record_update)
+        return await _update_record(db, dataset, record=record, record_update=record_update)
 
     record_create = RecordCreate(
         fields=record_upsert.fields, metadata_=record_upsert.metadata, external_id=record_upsert.external_id
@@ -79,7 +80,7 @@ async def _upsert_record(
 
 
 async def _create_record(db: AsyncSession, dataset: Dataset, record_create: RecordCreate) -> Record:
-    # TODO(@frascuchon): Validate the record_create object
+    RecordCreateValidator(record_create).validate_for(dataset)
     return await Record.create(
         db,
         fields=record_create.fields,
@@ -90,6 +91,6 @@ async def _create_record(db: AsyncSession, dataset: Dataset, record_create: Reco
     )
 
 
-async def _update_record(db: AsyncSession, record: Record, record_update: RecordUpdate) -> Record:
-    # TODO(@frascuchon): Validate the record_update object
+async def _update_record(db: AsyncSession, dataset: Dataset, record: Record, record_update: RecordUpdate) -> Record:
+    RecordUpdateValidator(record_update).validate_for(dataset)
     return await record.update(db, metadata_=record_update.metadata_, replace_dict=True, autocommit=False)
