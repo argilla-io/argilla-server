@@ -16,10 +16,10 @@ from typing import TYPE_CHECKING
 from uuid import UUID, uuid4
 
 import pytest
-from sqlalchemy import func, select
-
 from argilla_server.constants import API_KEY_HEADER_NAME
 from argilla_server.models import User, Workspace, WorkspaceUser
+from sqlalchemy import func, select
+
 from tests.factories import (
     AdminFactory,
     AnnotatorFactory,
