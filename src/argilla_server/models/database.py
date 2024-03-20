@@ -17,8 +17,8 @@ from datetime import datetime
 from typing import Any, List, Optional, Union
 from uuid import UUID
 
-from sqlalchemy import JSON, ForeignKey, String, Text, UniqueConstraint, and_, sql
 from sqlalchemy import Enum as SAEnum
+from sqlalchemy import JSON, ForeignKey, String, Text, UniqueConstraint, and_, sql
 from sqlalchemy.engine.default import DefaultExecutionContext
 from sqlalchemy.ext.mutable import MutableDict, MutableList
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -351,6 +351,11 @@ class Dataset(DatabaseModel):
     @property
     def is_ready(self):
         return self.status == DatasetStatus.ready
+
+    def metadata_property_by_name(self, name: str) -> Optional["MetadataProperty"]:
+        for metadata_property in self.metadata_properties:
+            if metadata_property.name == name:
+                return metadata_property
 
     def __repr__(self):
         return (

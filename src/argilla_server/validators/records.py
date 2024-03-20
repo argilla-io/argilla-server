@@ -23,7 +23,7 @@ class RecordValidatorBase(ABC):
     def _validate_metadata(self, dataset: Dataset) -> None:
         metadata = self._record_change.metadata or {}
         for name, value in metadata.items():
-            metadata_property = dataset.get_metadata_property_by_name(name)
+            metadata_property = dataset.metadata_property_by_name(name)
             # TODO(@frascuchon): Create a MetadataPropertyValidator instead of using the parsed_settings
             if metadata_property and value is not None:
                 try:
