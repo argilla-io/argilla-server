@@ -87,7 +87,7 @@ class Record(BaseModel):
 
 
 class RecordCreate(BaseModel):
-    fields: Dict[str, Optional[StrictStr]]
+    fields: Dict[str, Union[StrictStr, None]]
     metadata: Optional[Dict[str, Any]]
     external_id: Optional[str]
     responses: Optional[List[UserResponseCreate]]
