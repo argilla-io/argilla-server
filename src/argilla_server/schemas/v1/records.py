@@ -20,7 +20,7 @@ import fastapi
 from typing_extensions import Annotated
 
 from argilla_server.enums import RecordInclude, RecordSortField, SimilarityOrder, SortOrder
-from argilla_server.pydantic_v1 import BaseModel, Field, root_validator, validator
+from argilla_server.pydantic_v1 import BaseModel, Field, StrictStr, root_validator, validator
 from argilla_server.pydantic_v1.utils import GetterDict
 from argilla_server.schemas.base import UpdateSchema
 from argilla_server.schemas.v1.metadata_properties import MetadataPropertyName
@@ -87,7 +87,7 @@ class Record(BaseModel):
 
 
 class RecordCreate(BaseModel):
-    fields: Dict[str, Any]
+    fields: Dict[str, Union[StrictStr, None]]
     metadata: Optional[Dict[str, Any]]
     external_id: Optional[str]
     responses: Optional[List[UserResponseCreate]]
@@ -124,6 +124,12 @@ class RecordUpdate(UpdateSchema):
     metadata_: Optional[Dict[str, Any]] = Field(None, alias="metadata")
     suggestions: Optional[List[SuggestionCreate]] = None
     vectors: Optional[Dict[str, List[float]]]
+
+    @property
+    def metadata(self) -> Optional[Dict[str, Any]]:
+        # Align with the RecordCreate model. Both should have the same name for the metadata field.
+        # TODO(@frascuchon): This will be properly adapted once the bulk records refactor is completed.
+        return self.metadata_
 
     @validator("metadata_")
     @classmethod
@@ -205,7 +211,7 @@ class RecordsUpdate(BaseModel):
 
 class RecordUpsert(BaseModel):
     id: Optional[UUID]
-    fields: Optional[Dict[str, Any]]
+    fields: Optional[Dict[str, Union[StrictStr, None]]]
     metadata: Optional[Dict[str, Any]]
     external_id: Optional[str]
 
