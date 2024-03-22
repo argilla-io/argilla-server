@@ -211,7 +211,7 @@ class RecordsUpdate(BaseModel):
 
 class RecordUpsert(BaseModel):
     id: Optional[UUID]
-    fields: Optional[Dict[str, Optional[StrictStr]]]
+    fields: Optional[Dict[str, Union[StrictStr, None]]]
     metadata: Optional[Dict[str, Any]]
     external_id: Optional[str]
 
