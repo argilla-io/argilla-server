@@ -48,7 +48,7 @@ async def upsert_dataset_records(
 
 
 async def _list_records_by_ids_and_dataset_id(
-    db: "AsyncSession", records_ids: Sequence[UUID], dataset_id: UUID
+    db: AsyncSession, records_ids: Sequence[UUID], dataset_id: UUID
 ) -> List[Union[Record, None]]:
 
     query = select(Record).filter(Record.id.in_(records_ids), Record.dataset_id == dataset_id)
@@ -68,7 +68,6 @@ async def _upsert_record(
     record: Optional[Record],
     record_upsert: RecordUpsert,
 ) -> Record:
-
     if record:
         record_update = RecordUpdate(metadata=record_upsert.metadata)
         return await _update_record(db, dataset, record=record, record_update=record_update)
