@@ -213,3 +213,45 @@ class TestCreateDatasetRecords:
         assert (await db.execute(select(func.count(Record.id)))).scalar_one() == 1
         assert (await db.execute(select(func.count(Response.id)))).scalar_one() == 1
         assert (await db.execute(select(func.count(Suggestion.id)))).scalar_one() == 6
+
+    async def test_create_dataset_records_with_wrong_metadata_type(
+        self, async_client: AsyncClient, db: AsyncSession, owner: User, owner_auth_header: dict
+    ):
+        dataset = await DatasetFactory.create(status=DatasetStatus.ready, allow_extra_metadata=True)
+
+        await TextFieldFactory.create(name="prompt", dataset=dataset)
+        await TextFieldFactory.create(name="response", dataset=dataset)
+        await TextQuestionFactory.create(name="text-question", dataset=dataset)
+
+        response = await async_client.post(
+            self.url(dataset.id),
+            headers=owner_auth_header,
+            json={
+                "items": [
+                    {
+                        "fields": {
+                            "prompt": "Does exercise help reduce stress?",
+                            "response": "Exercise can definitely help reduce stress.",
+                        },
+                        "external_id": "1",
+                        "metadata": "this is not a dict",
+                    },
+                ],
+            },
+        )
+
+        assert response.status_code == 422
+        assert response.json() == {
+            "detail": {
+                "code": "argilla.api.errors::ValidationError",
+                "params": {
+                    "errors": [
+                        {
+                            "loc": ["body", "items", 0, "metadata"],
+                            "msg": "value is not a valid dict",
+                            "type": "type_error.dict",
+                        }
+                    ]
+                },
+            }
+        }

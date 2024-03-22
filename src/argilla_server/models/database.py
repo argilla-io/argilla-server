@@ -352,6 +352,11 @@ class Dataset(DatabaseModel):
     def is_ready(self):
         return self.status == DatasetStatus.ready
 
+    def metadata_property_by_name(self, name: str) -> Union["MetadataProperty", None]:
+        for metadata_property in self.metadata_properties:
+            if metadata_property.name == name:
+                return metadata_property
+
     def __repr__(self):
         return (
             f"Dataset(id={str(self.id)!r}, name={self.name!r}, guidelines={self.guidelines!r}, "

@@ -15,8 +15,8 @@
 from uuid import UUID
 
 import pytest
-from argilla_server.enums import DatasetStatus, QuestionType, ResponseStatus, SuggestionType
-from argilla_server.models.database import Record, Response, Suggestion, User
+from argilla_server.enums import DatasetStatus, QuestionType, SuggestionType
+from argilla_server.models.database import Record, Suggestion, User
 from httpx import AsyncClient
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -183,3 +183,46 @@ class TestUpdateDatasetRecords:
 
         assert (await db.execute(select(func.count(Record.id)))).scalar_one() == 1
         assert (await db.execute(select(func.count(Suggestion.id)))).scalar_one() == 6
+
+    async def test_update_dataset_records_with_wrong_metadata_type(
+        self, async_client: AsyncClient, db: AsyncSession, owner: User, owner_auth_header: dict
+    ):
+        dataset = await DatasetFactory.create(status=DatasetStatus.ready, allow_extra_metadata=True)
+
+        record = await RecordFactory.create(
+            fields={
+                "prompt": "Does exercise help reduce stress?",
+                "response": "Exercise can definitely help reduce stress.",
+            },
+            external_id="1",
+            dataset=dataset,
+        )
+
+        response = await async_client.patch(
+            self.url(dataset.id),
+            headers=owner_auth_header,
+            json={
+                "items": [
+                    {
+                        "id": str(record.id),
+                        "metadata": "wrong_metadata_type",
+                    },
+                ],
+            },
+        )
+
+        assert response.status_code == 422
+        assert response.json() == {
+            "detail": {
+                "code": "argilla.api.errors::ValidationError",
+                "params": {
+                    "errors": [
+                        {
+                            "loc": ["body", "items", 0, "metadata"],
+                            "msg": "value is not a valid dict",
+                            "type": "type_error.dict",
+                        }
+                    ]
+                },
+            }
+        }
