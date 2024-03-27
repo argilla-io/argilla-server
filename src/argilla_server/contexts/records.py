@@ -33,8 +33,7 @@ async def upsert_dataset_records(
 
     records = []
     async with db.begin_nested():
-        record_ids = [record.id for record in records_upsert]
-        found_records = await _list_records_by_ids_and_dataset_id(db, record_ids, dataset.id)
+        found_records = await _fetch_existing_dataset_records_if_any(db, dataset, records_upsert)
 
         for record_upsert, record_found in zip(records_upsert, found_records):
             record = await _upsert_record(db, dataset, record_found, record_upsert)
@@ -47,19 +46,45 @@ async def upsert_dataset_records(
     return records
 
 
-async def _list_records_by_ids_and_dataset_id(
-    db: AsyncSession, records_ids: Sequence[UUID], dataset_id: UUID
+async def _fetch_existing_dataset_records_if_any(
+    db: AsyncSession,
+    dataset: Dataset,
+    records_upsert: List[RecordUpsert],
 ) -> List[Union[Record, None]]:
 
-    query = select(Record).filter(Record.id.in_(records_ids), Record.dataset_id == dataset_id)
+    external_ids_map, record_ids_map = {}, {}
+    for record_upsert in records_upsert:
+        if record_upsert.external_id:
+            external_ids_map.setdefault(record_upsert.external_id)
+        else:
+            record_ids_map.setdefault(record_upsert.id)
 
-    records = (await db.execute(query)).unique().scalars().all()
+    records_by_external_ids = await _list_dataset_records_by_external_ids_and_dataset_id(db, dataset.id, external_ids_map)
+    external_ids_map.update({record.external_id: record for record in records_by_external_ids})
 
-    # Preserve the order of the `record_ids` list
-    record_order_map = {record.id: record for record in records}
-    ordered_records = [record_order_map.get(record_id, None) for record_id in records_ids]
+    records_by_ids = await _list_dataset_records_by_ids_and_dataset_id(db, dataset.id, record_ids_map)
+    record_ids_map.update({record.id: record for record in records_by_ids})
 
-    return ordered_records
+    return [
+        external_ids_map.get(record_upsert.external_id) or record_ids_map.get(record_upsert.id)
+        for record_upsert in records_upsert
+    ]
+
+
+async def _list_dataset_records_by_external_ids_and_dataset_id(
+    db: AsyncSession, dataset_id: UUID, external_ids: Sequence[str]
+) -> Sequence[Record]:
+
+    query = select(Record).filter(Record.external_id.in_(external_ids), Record.dataset_id == dataset_id)
+    return (await db.execute(query)).unique().scalars().all()
+
+
+async def _list_dataset_records_by_ids_and_dataset_id(
+    db: AsyncSession, dataset_id: UUID, record_ids: Sequence[UUID]
+) -> Sequence[Record]:
+
+    query = select(Record).filter(Record.id.in_(record_ids), Record.dataset_id == dataset_id)
+    return (await db.execute(query)).unique().scalars().all()
 
 
 async def _upsert_record(
