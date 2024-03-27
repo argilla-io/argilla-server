@@ -27,7 +27,7 @@ from argilla_server.apis.v1.handlers.datasets.records_search import (
     _get_search_responses,
     parse_record_include_param,
 )
-from argilla_server.contexts import datasets, records
+from argilla_server.contexts import datasets, records as records_context
 from argilla_server.database import get_async_db
 from argilla_server.enums import ResponseStatusFilter
 from argilla_server.models import User
@@ -178,7 +178,7 @@ async def update_dataset_records(
     status_code=status.HTTP_200_OK,
     response_model_exclude_unset=True,
 )
-async def create_dataset_records_bulk(
+async def upsert_dataset_records_bulk(
     *,
     dataset_id: UUID,
     records_bulk_upsert: RecordsBulkUpsert,
@@ -197,8 +197,8 @@ async def create_dataset_records_bulk(
 
     await authorize(current_user, DatasetPolicyV1.create_records(dataset))
 
-    created_records = await records.upsert_dataset_records(db, search_engine, dataset, records_bulk_upsert.items)
-    return RecordsBulk(items=created_records)
+    records = await records_context.upsert_dataset_records(db, search_engine, dataset, records_bulk_upsert.items)
+    return RecordsBulk(items=records)
 
 
 @router.delete("/datasets/{dataset_id}/records", status_code=status.HTTP_204_NO_CONTENT)
