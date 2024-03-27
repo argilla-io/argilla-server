@@ -24,7 +24,12 @@ from pathlib import Path
 from typing import List, Optional
 from urllib.parse import urlparse
 
-from argilla_server.constants import DEFAULT_MAX_KEYWORD_LENGTH, DEFAULT_TELEMETRY_KEY
+from argilla_server.constants import (
+    DEFAULT_LABEL_SELECTION_OPTIONS_MAX_ITEMS,
+    DEFAULT_MAX_KEYWORD_LENGTH,
+    DEFAULT_SPAN_OPTIONS_MAX_ITEMS,
+    DEFAULT_TELEMETRY_KEY,
+)
 from argilla_server.pydantic_v1 import BaseSettings, Field, root_validator, validator
 
 
@@ -109,6 +114,16 @@ class Settings(BaseSettings):
         default=DEFAULT_MAX_KEYWORD_LENGTH,
         description="Max length supported for the string metadata fields."
         " Values containing higher than this will be truncated",
+    )
+
+    # Questions settings
+    label_selection_options_max_items: int = Field(
+        default=DEFAULT_LABEL_SELECTION_OPTIONS_MAX_ITEMS,
+        description="Max number of label options for questions of type `label_selection` and `multi_label_selection`",
+    )
+
+    span_options_max_items: int = Field(
+        default=DEFAULT_SPAN_OPTIONS_MAX_ITEMS, description="Max number of label options for questions of type `span`"
     )
 
     # See also the telemetry.py module
