@@ -12,5 +12,13 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# coding: utf-8
-__version__ = "1.27.0-dev"
+from typing import TYPE_CHECKING
+
+import pytest
+from pytest_mock import MockerFixture
+from sqlalchemy.ext.asyncio import AsyncSession
+
+
+@pytest.fixture(autouse=True)
+def mock_session_local(mocker: MockerFixture, async_db_proxy: AsyncSession) -> None:
+    mocker.patch("argilla_server.cli.search_engine.reindex.AsyncSessionLocal", return_value=async_db_proxy)

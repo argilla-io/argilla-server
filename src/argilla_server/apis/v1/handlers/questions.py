@@ -25,6 +25,7 @@ from argilla_server.policies import QuestionPolicyV1, authorize
 from argilla_server.schemas.v1.questions import Question as QuestionSchema
 from argilla_server.schemas.v1.questions import QuestionUpdate
 from argilla_server.security import auth
+from argilla_server.validators.questions import InvalidQuestionSettings
 
 router = APIRouter(tags=["questions"])
 
@@ -51,7 +52,7 @@ async def update_question(
         return await questions.update_question(db, question_id, question_update, current_user)
     except errors.NotFoundError as err:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Question with id `{question_id}` not found")
-    except questions.InvalidQuestionSettings as err:
+    except InvalidQuestionSettings as err:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(err))
 
 
