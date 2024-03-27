@@ -59,7 +59,9 @@ async def _fetch_existing_dataset_records_if_any(
         else:
             record_ids_map.setdefault(record_upsert.id)
 
-    records_by_external_ids = await _list_dataset_records_by_external_ids_and_dataset_id(db, dataset.id, external_ids_map)
+    records_by_external_ids = await _list_dataset_records_by_external_ids_and_dataset_id(
+        db, dataset.id, external_ids_map
+    )
     external_ids_map.update({record.external_id: record for record in records_by_external_ids})
 
     records_by_ids = await _list_dataset_records_by_ids_and_dataset_id(db, dataset.id, record_ids_map)
