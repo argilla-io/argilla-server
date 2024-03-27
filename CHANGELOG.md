@@ -16,6 +16,16 @@ These are the section headers that we use:
 
 ## [Unreleased]()
 
+## [1.26.1](https://github.com/argilla-io/argilla-server/compare/v1.26.0...v1.26.1)
+
+> [!NOTE]
+> This patch version only includes changes in the argilla frontend to support RTL languages.
+> No changes where made on `argilla-server` repository for this patch version.
+
+### Added
+
+- Added latests changes from argilla to support for automatic detection of RTL languages. ([#4686](https://github.com/argilla-io/argilla/pull/4686))
+
 ## [1.26.0](https://github.com/argilla-io/argilla-server/compare/v1.25.0...v1.26.0)
 
 ### Added
