@@ -91,4 +91,3 @@ class RecordUpdateValidator(RecordValidatorBase):
         question_ids = [s.question_id for s in self._record_change.suggestions]
         if len(question_ids) != len(set(question_ids)):
             raise ValueError("found duplicate suggestions question IDs")
-

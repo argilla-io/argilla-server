@@ -1,3 +1,17 @@
+#  Copyright 2021-present, the Recognai S.L. team.
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+
 import asyncio
 from typing import List
 
@@ -16,9 +30,7 @@ class RecordsCreateBulk:
         self._db = db
         self._search_engine = search_engine
 
-    async def create_dataset_records(
-        self,dataset: Dataset, records_create: RecordsCreate
-    ) -> List[Record]:
+    async def create_dataset_records(self, dataset: Dataset, records_create: RecordsCreate) -> List[Record]:
         helpers.check_is_ready_dataset(dataset)
 
         records = []
@@ -46,9 +58,7 @@ class RecordsCreateBulk:
         await self._db.commit()
         return records
 
-    async def _create_records_relationships(
-        self, records: List[Record], records_create: RecordsCreate
-    ) -> None:
+    async def _create_records_relationships(self, records: List[Record], records_create: RecordsCreate) -> None:
 
         records_and_suggestions = list(zip(records, [r.suggestions for r in records_create.items]))
         records_and_responses = list(zip(records, [r.responses for r in records_create.items]))
