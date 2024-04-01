@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from argilla_server.contexts import accounts
-from argilla_server.models import Record, Suggestion, Response, Vector, Dataset, Question
+from argilla_server.models import Record, Suggestion, Response, Vector, Dataset, Question, VectorSettings
 from argilla_server.schemas.v1.records import RecordCreate, RecordUpdateWithId, RecordUpsert
 from argilla_server.validators.responses import ResponseCreateValidator
 from argilla_server.validators.suggestions import SuggestionCreateValidator
@@ -66,6 +66,12 @@ def _get_question_by_id(dataset: Dataset, question_id: UUID) -> Union[Question, 
     for question in dataset.questions:
         if question.id == question_id:
             return question
+
+
+def _get_vector_settings_by_name(dataset: Dataset, name: str) -> Union[VectorSettings, None]:
+    for vector_settings in dataset.vectors_settings:
+        if vector_settings.name == name:
+            return vector_settings
 
 
 async def upsert_records_suggestions(
@@ -148,7 +154,7 @@ async def upsert_records_vectors(
         try:
             for name, value in (records_upsert.vectors or {}).items():
                 try:
-                    settings = record.dataset.vector_settings_by_name(name)
+                    settings = _get_vector_settings_by_name(record.dataset, name)
                     if not settings:
                         raise ValueError(f"vector with name={name} does not exist for dataset_id={record.dataset.id}")
 
