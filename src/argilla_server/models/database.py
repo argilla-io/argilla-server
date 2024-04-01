@@ -14,11 +14,12 @@
 
 import secrets
 from datetime import datetime
+from functools import cached_property
 from typing import Any, List, Optional, Union
 from uuid import UUID
 
-from sqlalchemy import JSON, ForeignKey, String, Text, UniqueConstraint, and_, sql
 from sqlalchemy import Enum as SAEnum
+from sqlalchemy import JSON, ForeignKey, String, Text, UniqueConstraint, and_, sql
 from sqlalchemy.engine.default import DefaultExecutionContext
 from sqlalchemy.ext.mutable import MutableDict, MutableList
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -241,7 +242,7 @@ class Question(DatabaseModel):
 
     __table_args__ = (UniqueConstraint("name", "dataset_id", name="question_name_dataset_id_uq"),)
 
-    @property
+    @cached_property
     def parsed_settings(self) -> QuestionSettings:
         return parse_obj_as(QuestionSettings, self.settings)
 
