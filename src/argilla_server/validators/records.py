@@ -76,8 +76,19 @@ class RecordCreateValidator(RecordValidatorBase):
 
 
 class RecordUpdateValidator(RecordValidatorBase):
-    def __init__(self, record_upsert: RecordUpdate):
-        super().__init__(record_upsert)
+    def __init__(self, record_update: RecordUpdate):
+        super().__init__(record_update)
 
     def validate_for(self, dataset: Dataset) -> None:
         self._validate_metadata(dataset)
+        self._validate_duplicated_suggestions()
+
+    def _validate_duplicated_suggestions(self):
+        if not self._record_change.suggestions:
+            return
+        # TODO: This validation should be defined as pydantic model validation
+        #  We keep it here to maintain the generated error message.
+        question_ids = [s.question_id for s in self._record_change.suggestions]
+        if len(question_ids) != len(set(question_ids)):
+            raise ValueError("found duplicate suggestions question IDs")
+
