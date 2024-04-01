@@ -49,8 +49,13 @@ class RecordsCreateBulk:
     async def _create_records_relationships(
         self, records: List[Record], records_create: RecordsCreate
     ) -> None:
+
+        records_and_suggestions = list(zip(records, [r.suggestions for r in records_create.items]))
+        records_and_responses = list(zip(records, [r.responses for r in records_create.items]))
+        records_and_vectors = list(zip(records, [r.vectors for r in records_create.items]))
+
         await asyncio.gather(
-            helpers.upsert_records_suggestions(self._db, records, records_create.items),
-            helpers.upsert_records_responses(self._db, records, records_create.items),
-            helpers.upsert_records_vectors(self._db, records, records_create.items),
+            helpers.upsert_records_suggestions(self._db, records_and_suggestions),
+            helpers.upsert_records_responses(self._db, records_and_responses),
+            helpers.upsert_records_vectors(self._db, records_and_vectors),
         )
