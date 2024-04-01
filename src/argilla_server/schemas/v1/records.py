@@ -95,17 +95,20 @@ class RecordCreate(BaseModel):
     vectors: Optional[Dict[str, List[float]]]
 
     @validator("responses")
-    def check_user_id_is_unique(cls, values: Optional[List[UserResponseCreate]]) -> Optional[List[UserResponseCreate]]:
-        if values is None:
-            return values
+    @classmethod
+    def check_user_id_is_unique(
+        cls, responses: Optional[List[UserResponseCreate]]
+    ) -> Optional[List[UserResponseCreate]]:
+        if responses is None:
+            return responses
 
-        user_ids = []
-        for value in values:
-            if value.user_id in user_ids:
+        user_ids = {}
+        for value in responses:
+            if user_ids.get(value.user_id):
                 raise ValueError(f"'responses' contains several responses for the same user_id={str(value.user_id)!r}")
-            user_ids.append(value.user_id)
+            user_ids.setdefault(value.user_id, True)
 
-        return values
+        return responses
 
     @validator("metadata")
     @classmethod
