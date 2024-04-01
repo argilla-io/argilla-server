@@ -29,6 +29,8 @@ from argilla_server.apis.v1.handlers.datasets.records_search import (
 )
 from argilla_server.contexts import datasets
 from argilla_server.contexts import records as records_context
+from argilla_server.contexts.bulk.records.records_create_bulk import RecordsCreateBulk
+from argilla_server.contexts.bulk.records.records_update_bulk import RecordsUpdateBulk
 from argilla_server.database import get_async_db
 from argilla_server.enums import ResponseStatusFilter
 from argilla_server.models import User
@@ -144,7 +146,7 @@ async def create_dataset_records(
     # TODO: We should split API v1 into different FastAPI apps so we can customize error management.
     #  After mapping ValueError to 422 errors for API v1 then we can remove this try except.
     try:
-        await datasets.create_records(db, search_engine, dataset=dataset, records_create=records_create)
+        await RecordsCreateBulk(db, search_engine).create_dataset_records(dataset, records_create)
         telemetry_client.track_data(action="DatasetRecordsCreated", data={"records": len(records_create.items)})
     except ValueError as err:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(err))
@@ -161,13 +163,18 @@ async def update_dataset_records(
     current_user: User = Security(auth.get_current_user),
 ):
     dataset = await _get_dataset_or_raise(
-        db, dataset_id, with_fields=True, with_questions=True, with_metadata_properties=True
+        db,
+        dataset_id,
+        with_fields=True,
+        with_questions=True,
+        with_metadata_properties=True,
+        with_vectors_settings=True,
     )
 
     await authorize(current_user, DatasetPolicyV1.update_records(dataset))
 
     try:
-        await datasets.update_records(db, search_engine, dataset, records_update)
+        await RecordsUpdateBulk(db, search_engine).update_dataset_records(dataset, records_update)
         telemetry_client.track_data(action="DatasetRecordsUpdated", data={"records": len(records_update.items)})
     except ValueError as err:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(err))
