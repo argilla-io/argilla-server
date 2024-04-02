@@ -13,6 +13,7 @@
 #  limitations under the License.
 
 import asyncio
+from datetime import datetime
 from typing import List
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -52,9 +53,9 @@ class RecordsUpdateBulk:
 
                     RecordUpdateValidator(record_update).validate_for(dataset)
 
-                    # TODO(@frascuchon): Review this code and improve it
                     if self._metadata_is_set(record_update):
                         record_found.metadata_ = record_update.metadata
+                        record_found.updated_at = datetime.utcnow()
 
                     records.append(record_found)
                 except ValueError as ex:
