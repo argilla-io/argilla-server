@@ -87,3 +87,20 @@ class RecordUpdateValidator(RecordValidatorBase):
         question_ids = [s.question_id for s in self._record_change.suggestions]
         if len(question_ids) != len(set(question_ids)):
             raise ValueError("found duplicate suggestions question IDs")
+
+
+class RecordUpsertValidator(RecordValidatorBase):
+    def __init__(self, record_upsert: RecordUpsert):
+        super().__init__(record_upsert)
+
+    @overload
+    def validate_for(self, dataset: Dataset) -> None: ...
+    @overload
+    def validate_for(self, record: Record) -> None: ...
+
+    def validate_for(self, model: Union[Dataset, Record]) -> None:
+        if isinstance(model, Dataset):
+            self._validate_fields(model)
+            self._validate_metadata(model)
+        else:
+            self._validate_metadata(model.dataset)
