@@ -17,12 +17,12 @@ from typing import Union
 from uuid import UUID
 
 import pytest
+from argilla_server.enums import QuestionType
+from argilla_server.models import Question
 from httpx import AsyncClient
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from argilla_server.enums import QuestionType
-from argilla_server.models import Question
 from tests.factories import DatasetFactory, SpanQuestionFactory, TextFieldFactory
 
 
@@ -62,12 +62,7 @@ class TestCreateDatasetQuestion:
         response = await async_client.post(
             self.url(dataset.id),
             headers=owner_auth_header,
-            json={
-                "name": "name",
-                "title": "Title",
-                "description": "Description",
-                "settings": settings
-            },
+            json={"name": "name", "title": "Title", "description": "Description", "settings": settings},
         )
 
         assert response.status_code == 201

@@ -15,10 +15,10 @@
 from uuid import UUID
 
 import pytest
+from argilla_server.enums import QuestionType
 from httpx import AsyncClient
 
-from argilla_server.enums import QuestionType
-from tests.factories import LabelSelectionQuestionFactory, TextQuestionFactory, SpanQuestionFactory
+from tests.factories import LabelSelectionQuestionFactory, SpanQuestionFactory, TextQuestionFactory
 
 
 @pytest.mark.asyncio
@@ -132,10 +132,7 @@ class TestUpdateQuestion:
             self.url(question.id),
             headers=owner_auth_header,
             json={
-                "settings": {
-                    "type": QuestionType.span,
-                    "allow_overlapping": False
-                },
+                "settings": {"type": QuestionType.span, "allow_overlapping": False},
             },
         )
 
