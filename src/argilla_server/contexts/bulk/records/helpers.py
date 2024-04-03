@@ -57,14 +57,14 @@ async def fetch_records_by_external_ids(
     return {record.external_id: record for record in records_by_external_ids}
 
 
-async def upsert_records_suggestions(
-    db: AsyncSession, records_and_suggestions: List[Tuple[Record, List[SuggestionCreate]]]
-) -> List[Suggestion]:
+async def delete_suggestions_by_record_ids(db: AsyncSession, record_ids: Iterable[UUID]) -> None:
+    await db.execute(sql.delete(Suggestion).filter(Suggestion.record_id.in_(record_ids)))
 
-    # TODO: This should be removed and aligned to the rest of the the upsert relationships
-    await _delete_suggestions_by_record_ids(
-        db, set([record.id for record, suggestions in records_and_suggestions if suggestions is not None])
-    )
+
+async def upsert_records_suggestions(
+    db: AsyncSession,
+    records_and_suggestions: List[Tuple[Record, List[SuggestionCreate]]],
+) -> List[Suggestion]:
 
     upsert_many_suggestions = []
     for idx, (record, suggestions) in enumerate(records_and_suggestions):
@@ -187,7 +187,3 @@ def _get_vector_settings_by_name(dataset: Dataset, name: str) -> Union[VectorSet
     for vector_settings in dataset.vectors_settings:
         if vector_settings.name == name:
             return vector_settings
-
-
-async def _delete_suggestions_by_record_ids(db: AsyncSession, record_ids: Iterable[UUID]) -> None:
-    await db.execute(sql.delete(Suggestion).filter(Suggestion.record_id.in_(record_ids)))

@@ -71,13 +71,21 @@ class RecordsUpdateBulk:
         await self._db.commit()
 
     async def _update_records_relationships(self, records: List[Record], records_update: RecordsUpdate) -> None:
-        records_and_suggestions = list(zip(records, [r.suggestions for r in records_update.items]))
         records_and_vectors = list(zip(records, [r.vectors for r in records_update.items]))
 
         await asyncio.gather(
-            helpers.upsert_records_suggestions(self._db, records_and_suggestions),
+            self._update_suggestions_for_records(records, records_update),
             helpers.upsert_records_vectors(self._db, records_and_vectors),
         )
+
+    async def _update_suggestions_for_records(self, records: List[Record], records_update: RecordsUpdate) -> None:
+        records_and_suggestions = list(zip(records, [r.suggestions for r in records_update.items]))
+
+        await helpers.delete_suggestions_by_record_ids(
+            self._db, set([record.id for record, suggestions in records_and_suggestions if suggestions is not None])
+        )
+
+        await helpers.upsert_records_suggestions(self._db, records_and_suggestions),
 
     def _metadata_is_set(self, record_update: RecordUpdate) -> bool:
         return "metadata_" in record_update.__fields_set__
