@@ -711,7 +711,7 @@ async def _build_record_update(
     db: "AsyncSession", record: Record, record_update: "RecordUpdateWithId", caches: Optional[Dict[str, Any]] = None
 ) -> Tuple[Dict[str, Any], Union[List[Suggestion], None], List[VectorSchema], bool, Dict[str, Any]]:
 
-    RecordUpdateValidator(record_update).validate_for(record.dataset)
+    RecordUpdateValidator(record_update).validate_for(record)
 
     if caches is None:
         caches = {

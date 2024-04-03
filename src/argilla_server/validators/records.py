@@ -13,20 +13,16 @@
 #  limitations under the License.
 
 import copy
-from abc import ABC, abstractmethod
-from typing import Dict, Union
+from abc import ABC
+from typing import Dict, Union, overload
 
-from argilla_server.models import Dataset
-from argilla_server.schemas.v1.records import RecordCreate, RecordUpdate
+from argilla_server.models import Dataset, Record
+from argilla_server.schemas.v1.records import RecordCreate, RecordUpdate, RecordUpsert
 
 
 class RecordValidatorBase(ABC):
-    def __init__(self, record_change: Union[RecordCreate, RecordUpdate]):
+    def __init__(self, record_change: Union[RecordCreate, RecordUpdate, RecordUpsert]):
         self._record_change = record_change
-
-    @abstractmethod
-    def validate_for(self, dataset: Dataset) -> None:
-        pass
 
     def _validate_fields(self, dataset: Dataset) -> None:
         fields = self._record_change.fields or {}
@@ -79,8 +75,8 @@ class RecordUpdateValidator(RecordValidatorBase):
     def __init__(self, record_update: RecordUpdate):
         super().__init__(record_update)
 
-    def validate_for(self, dataset: Dataset) -> None:
-        self._validate_metadata(dataset)
+    def validate_for(self, record: Record) -> None:
+        self._validate_metadata(record.dataset)
         self._validate_duplicated_suggestions()
 
     def _validate_duplicated_suggestions(self):

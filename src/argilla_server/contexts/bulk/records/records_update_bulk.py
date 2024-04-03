@@ -51,7 +51,7 @@ class RecordsUpdateBulk:
                 try:
                     record_found = records_by_id[record_update.id]
 
-                    RecordUpdateValidator(record_update).validate_for(dataset)
+                    RecordUpdateValidator(record_update).validate_for(record_found)
 
                     if self._metadata_is_set(record_update):
                         record_found.metadata_ = record_update.metadata

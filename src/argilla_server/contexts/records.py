@@ -116,5 +116,5 @@ async def _create_record(db: AsyncSession, dataset: Dataset, record_create: Reco
 
 
 async def _update_record(db: AsyncSession, dataset: Dataset, record: Record, record_update: RecordUpdate) -> Record:
-    RecordUpdateValidator(record_update).validate_for(dataset)
+    RecordUpdateValidator(record_update).validate_for(record)
     return await record.update(db, metadata_=record_update.metadata_, replace_dict=True, autocommit=False)
