@@ -43,7 +43,7 @@ from argilla_server.schemas.v1.records import (
     RecordIncludeParam,
     Records,
     RecordsBulk,
-    RecordsBulkUpsert,
+    RecordsUpsert,
     RecordsCreate,
     RecordsUpdate,
 )
@@ -189,7 +189,7 @@ async def update_dataset_records(
 async def upsert_dataset_records_bulk(
     *,
     dataset_id: UUID,
-    records_bulk_upsert: RecordsBulkUpsert,
+    records_upsert: RecordsUpsert,
     db: AsyncSession = Depends(get_async_db),
     search_engine: SearchEngine = Depends(get_search_engine),
     current_user: User = Security(auth.get_current_user),
@@ -205,7 +205,7 @@ async def upsert_dataset_records_bulk(
 
     await authorize(current_user, DatasetPolicyV1.create_records(dataset))
 
-    records = await records_context.upsert_dataset_records(db, search_engine, dataset, records_bulk_upsert.items)
+    records = await records_context.upsert_dataset_records(db, search_engine, dataset, records_upsert.items)
     return RecordsBulk(items=records)
 
 

@@ -251,7 +251,7 @@ class RecordUpsert(BaseModel):
         return metadata
 
 
-class RecordsBulkUpsert(BaseModel):
+class RecordsUpsert(BaseModel):
     items: List[RecordUpsert] = Field(
         ...,
         min_items=RECORDS_BULK_UPSERT_MIN_ITEMS,
