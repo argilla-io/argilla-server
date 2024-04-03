@@ -14,7 +14,6 @@
 
 import secrets
 from datetime import datetime
-from functools import cached_property
 from typing import Any, List, Optional, Union
 from uuid import UUID
 
@@ -242,7 +241,7 @@ class Question(DatabaseModel):
 
     __table_args__ = (UniqueConstraint("name", "dataset_id", name="question_name_dataset_id_uq"),)
 
-    @cached_property
+    @property
     def parsed_settings(self) -> QuestionSettings:
         return parse_obj_as(QuestionSettings, self.settings)
 
