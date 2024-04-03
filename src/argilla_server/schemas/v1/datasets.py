@@ -60,6 +60,11 @@ class DatasetMetrics(BaseModel):
     responses: ResponseMetrics
 
 
+class DatasetProgress(BaseModel):
+    total: int
+    submitted: int
+
+
 class Dataset(BaseModel):
     id: UUID
     name: str

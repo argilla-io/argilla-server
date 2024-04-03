@@ -449,6 +449,18 @@ async def count_records_by_dataset_id(db: "AsyncSession", dataset_id: UUID) -> i
     return (await db.execute(select(func.count(Record.id)).filter_by(dataset_id=dataset_id))).scalar_one()
 
 
+async def count_records_by_dataset_id_with_at_least_one_response_with_status(
+    db: "AsyncSession", dataset_id: UUID, response_status: ResponseStatus
+) -> int:
+    return (
+        await db.execute(
+            select(func.count(Record.id.distinct()))
+            .join(Response)
+            .filter(Record.dataset_id == dataset_id, Response.status == response_status)
+        )
+    ).scalar_one()
+
+
 _EXTRA_METADATA_FLAG = "extra"
 
 
