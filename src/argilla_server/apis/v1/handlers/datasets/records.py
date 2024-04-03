@@ -28,9 +28,9 @@ from argilla_server.apis.v1.handlers.datasets.records_search import (
     parse_record_include_param,
 )
 from argilla_server.contexts import datasets
-from argilla_server.contexts import records as records_context
 from argilla_server.contexts.bulk.records.records_create_bulk import RecordsCreateBulk
 from argilla_server.contexts.bulk.records.records_update_bulk import RecordsUpdateBulk
+from argilla_server.contexts.bulk.records.records_upsert_bulk import RecordsUpsertBulk
 from argilla_server.database import get_async_db
 from argilla_server.enums import ResponseStatusFilter
 from argilla_server.models import User
@@ -205,7 +205,7 @@ async def upsert_dataset_records_bulk(
 
     await authorize(current_user, DatasetPolicyV1.create_records(dataset))
 
-    records = await records_context.upsert_dataset_records(db, search_engine, dataset, records_upsert.items)
+    records = await RecordsUpsertBulk(db, search_engine).upsert_dataset_records(dataset, records_upsert)
     return RecordsBulk(items=records)
 
 
