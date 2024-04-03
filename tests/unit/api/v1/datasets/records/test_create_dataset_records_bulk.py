@@ -15,17 +15,20 @@
 from uuid import UUID
 
 import pytest
-from argilla_server.enums import DatasetStatus
-from argilla_server.models import Dataset, Record
 from httpx import AsyncClient
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from argilla_server.enums import DatasetStatus
+from argilla_server.models import Dataset, Record
 from tests.factories import (
     DatasetFactory,
     RecordFactory,
     TermsMetadataPropertyFactory,
     TextFieldFactory,
+    TextQuestionFactory,
+    RatingQuestionFactory,
+    VectorSettingsFactory,
 )
 
 
@@ -39,7 +42,9 @@ class TestCreateDatasetRecordsBulk:
         dataset = await DatasetFactory.create(status=DatasetStatus.ready, **kwargs)
 
         await self._configure_dataset_fields(dataset)
+        await self._configure_dataset_questions(dataset)
         await self._configure_dataset_metadata_properties(dataset)
+        await self._configure_dataset_vector_settings(dataset)
 
         return dataset
 
@@ -51,14 +56,14 @@ class TestCreateDatasetRecordsBulk:
                     "prompt": "Does exercise help reduce stress?",
                     "response": "Exercise can definitely help reduce stress.",
                 },
-                "metadata": {"terms_metadata": ["A", "B", "C"]},
+                "metadata": {"terms_metadata": ["a", "b", "c"]},
             },
             {
                 "fields": {
                     "prompt": "Does exercise help reduce stress?",
                     "response": "Exercise can definitely help reduce stress.",
                 },
-                "metadata": {"terms_metadata": "A"},
+                "metadata": {"terms_metadata": "a"},
                 "external_id": "external-id-1",
             },
             {
@@ -94,6 +99,9 @@ class TestCreateDatasetRecordsBulk:
                     "metadata": record.metadata_,
                     "inserted_at": record.inserted_at.isoformat(),
                     "updated_at": record.updated_at.isoformat(),
+                    "responses": [],
+                    "suggestions": [],
+                    "vectors": {},
                 }
             ]
         }
@@ -148,3 +156,15 @@ class TestCreateDatasetRecordsBulk:
         await TextFieldFactory.create(name="response", dataset=dataset)
 
         await dataset.awaitable_attrs.fields
+
+    async def _configure_dataset_questions(self, dataset):
+        await TextQuestionFactory.create(name="comments", dataset=dataset)
+        await RatingQuestionFactory.create(name="rating", dataset=dataset)
+
+        await dataset.awaitable_attrs.questions
+
+    async def _configure_dataset_vector_settings(self, dataset: Dataset):
+        await VectorSettingsFactory.create(name="small", dimensions=16, dataset=dataset)
+        await VectorSettingsFactory.create(name="medium", dimensions=128, dataset=dataset)
+
+        await dataset.awaitable_attrs.vectors_settings
