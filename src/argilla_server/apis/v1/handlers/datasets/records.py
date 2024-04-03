@@ -43,9 +43,9 @@ from argilla_server.schemas.v1.records import (
     RecordIncludeParam,
     Records,
     RecordsBulk,
-    RecordsUpsert,
     RecordsCreate,
     RecordsUpdate,
+    RecordsUpsert,
 )
 from argilla_server.search_engine import (
     SearchEngine,
