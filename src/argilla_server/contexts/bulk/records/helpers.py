@@ -28,7 +28,7 @@ from argilla_server.validators.suggestions import SuggestionCreateValidator
 from argilla_server.validators.vectors import VectorValidator
 
 
-def check_is_ready_dataset(dataset: Dataset) -> None:
+def check_dataset_is_ready(dataset: Dataset) -> None:
     if not dataset.is_ready:
         raise ValueError("Records cannot be created for a non published dataset")
 

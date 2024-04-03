@@ -31,7 +31,7 @@ class RecordsCreateBulk:
         self._search_engine = search_engine
 
     async def create_dataset_records(self, dataset: Dataset, records_create: RecordsCreate) -> List[Record]:
-        helpers.check_is_ready_dataset(dataset)
+        helpers.check_dataset_is_ready(dataset)
 
         records = []
         async with self._db.begin_nested():
