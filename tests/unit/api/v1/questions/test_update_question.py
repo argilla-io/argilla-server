@@ -15,10 +15,10 @@
 from uuid import UUID
 
 import pytest
-from argilla_server.enums import QuestionType
 from httpx import AsyncClient
 
-from tests.factories import LabelSelectionQuestionFactory, TextQuestionFactory
+from argilla_server.enums import QuestionType
+from tests.factories import LabelSelectionQuestionFactory, TextQuestionFactory, SpanQuestionFactory
 
 
 @pytest.mark.asyncio
@@ -110,4 +110,36 @@ class TestUpdateQuestion:
         assert response.status_code == 422
         assert response.json() == {
             "detail": "the value for 'visible_options' must be less or equal to the number of items in 'options' (3)"
+        }
+
+    async def test_update_span_question_with_unsupported_allow_overlapping_value(
+        self, async_client: AsyncClient, owner_auth_header: dict
+    ):
+        question = await SpanQuestionFactory.create(
+            settings={
+                "type": QuestionType.span.value,
+                "field": "field-a",
+                "options": [
+                    {"value": "label-a", "text": "Label A", "description": "Label A description"},
+                    {"value": "label-b", "text": "Label B", "description": "Label B description"},
+                    {"value": "label-c", "text": "Label C", "description": "Label C description"},
+                ],
+                "allow_overlapping": True,
+            }
+        )
+
+        response = await async_client.patch(
+            self.url(question.id),
+            headers=owner_auth_header,
+            json={
+                "settings": {
+                    "type": QuestionType.span,
+                    "allow_overlapping": False
+                },
+            },
+        )
+
+        assert response.status_code == 422
+        assert response.json() == {
+            "detail": "'allow_overlapping' can't be disabled because responses may become inconsistent"
         }
