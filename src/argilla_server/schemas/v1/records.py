@@ -217,6 +217,38 @@ class RecordUpsert(BaseModel):
     fields: Optional[Dict[str, Union[StrictStr, None]]]
     metadata: Optional[Dict[str, Any]]
     external_id: Optional[str]
+    responses: Optional[List[UserResponseCreate]]
+    # TODO: Align suggestions with vectors and metadata format
+    suggestions: Optional[List[SuggestionCreate]]
+    vectors: Optional[Dict[str, List[float]]]
+
+    @validator("responses")
+    @classmethod
+    def check_user_id_is_unique(
+        cls, responses: Optional[List[UserResponseCreate]]
+    ) -> Optional[List[UserResponseCreate]]:
+        if responses is None:
+            return responses
+
+        user_ids = {}
+        for value in responses:
+            if user_ids.get(value.user_id):
+                raise ValueError(f"'responses' contains several responses for the same user_id={str(value.user_id)!r}")
+            user_ids.setdefault(value.user_id, True)
+
+        return responses
+
+    @validator("metadata")
+    @classmethod
+    def prevent_nan_values(cls, metadata: Optional[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
+        if metadata is None:
+            return metadata
+
+        for k, v in metadata.items():
+            if v != v:
+                raise ValueError(f"NaN is not allowed as metadata value, found NaN for key {k!r}")
+
+        return metadata
 
 
 class RecordsBulkUpsert(BaseModel):
