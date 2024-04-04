@@ -84,6 +84,8 @@ class QuestionUpdateValidator:
         self._validate_question_settings_visible_options(question_settings, self._question_update.settings)
         self._validate_span_question_settings(question_settings, self._question_update.settings)
 
+        self._validate_span_question_settings(question_settings, self._question_update.settings)
+
     def _validate_question_settings_type_is_the_same(
         self, question_settings: QuestionSettings, question_settings_update: QuestionSettingsUpdate
     ):
