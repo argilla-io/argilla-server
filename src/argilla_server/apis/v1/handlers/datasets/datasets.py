@@ -175,9 +175,7 @@ async def get_dataset_progress(
 
     return {
         "total": await datasets.count_records_by_dataset_id(db, dataset_id),
-        "submitted": await datasets.count_records_by_dataset_id_with_at_least_one_response_with_status(
-            db, dataset_id, ResponseStatus.submitted
-        ),
+        "submitted": await datasets.count_submitted_records_for_dataset_progress(db, dataset_id),
     }
 
 

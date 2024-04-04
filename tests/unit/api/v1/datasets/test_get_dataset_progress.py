@@ -91,7 +91,7 @@ class TestGetDatasetProgress:
         assert response.status_code == 200
         assert response.json() == {
             "total": 8,
-            "submitted": 3,
+            "submitted": 2,
         }
 
     async def test_get_dataset_progress_with_empty_dataset(self, async_client: AsyncClient, owner_auth_header: dict):
