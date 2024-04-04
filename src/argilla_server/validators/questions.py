@@ -16,7 +16,13 @@ from typing import List
 
 from argilla_server.enums import QuestionType
 from argilla_server.models.database import Dataset, Question
-from argilla_server.schemas.v1.questions import QuestionCreate, QuestionSettings, QuestionSettingsUpdate, QuestionUpdate
+from argilla_server.schemas.v1.questions import (
+    QuestionCreate,
+    QuestionSettings,
+    QuestionSettingsUpdate,
+    QuestionUpdate,
+    SpanQuestionSettings,
+)
 
 
 class InvalidQuestionSettings(Exception):
@@ -76,6 +82,7 @@ class QuestionUpdateValidator:
         self._validate_question_settings_type_is_the_same(question_settings, self._question_update.settings)
         self._validate_question_settings_label_options(question_settings, self._question_update.settings)
         self._validate_question_settings_visible_options(question_settings, self._question_update.settings)
+        self._validate_span_question_settings(question_settings, self._question_update.settings)
 
     def _validate_question_settings_type_is_the_same(
         self, question_settings: QuestionSettings, question_settings_update: QuestionSettingsUpdate
@@ -125,6 +132,17 @@ class QuestionUpdateValidator:
         if question_settings_update.visible_options > number_of_options:
             raise InvalidQuestionSettings(
                 f"the value for 'visible_options' must be less or equal to the number of items in 'options' ({number_of_options})"
+            )
+
+    def _validate_span_question_settings(
+        self, question_settings: SpanQuestionSettings, question_settings_update: QuestionSettingsUpdate
+    ) -> None:
+        if question_settings_update.type != QuestionType.span:
+            return
+
+        if question_settings.allow_overlapping and not question_settings_update.allow_overlapping:
+            raise InvalidQuestionSettings(
+                "'allow_overlapping' can't be disabled because responses may become inconsistent"
             )
 
 

@@ -247,6 +247,7 @@ class SpanQuestionSettingsCreate(UniqueValuesCheckerMixin):
         max_items=SPAN_OPTIONS_MAX_ITEMS,
     )
     visible_options: Optional[int] = Field(None, ge=SPAN_MIN_VISIBLE_OPTIONS)
+    allow_overlapping: bool = False
 
     @root_validator(skip_on_failure=True)
     def check_visible_options_value(cls, values: Dict[str, Any]) -> Dict[str, Any]:
@@ -272,6 +273,7 @@ class SpanQuestionSettingsUpdate(UpdateSchema):
         )
     ]
     visible_options: Optional[int] = Field(None, ge=SPAN_MIN_VISIBLE_OPTIONS)
+    allow_overlapping: Optional[bool]
 
 
 QuestionSettings = Annotated[
