@@ -82,6 +82,7 @@ class QuestionUpdateValidator:
         self._validate_question_settings_type_is_the_same(question_settings, self._question_update.settings)
         self._validate_question_settings_label_options(question_settings, self._question_update.settings)
         self._validate_question_settings_visible_options(question_settings, self._question_update.settings)
+        self._validate_span_question_settings(question_settings, self._question_update.settings)
 
         self._validate_span_question_settings(question_settings, self._question_update.settings)
 
@@ -141,10 +142,7 @@ class QuestionUpdateValidator:
         if question_settings_update.type != QuestionType.span:
             return
 
-        if (
-            question_settings.allow_overlapping is True
-            and question_settings_update.allow_overlapping != question_settings.allow_overlapping
-        ):
+        if question_settings.allow_overlapping and not question_settings_update.allow_overlapping:
             raise InvalidQuestionSettings(
                 "'allow_overlapping' can't be disabled because responses may become inconsistent"
             )

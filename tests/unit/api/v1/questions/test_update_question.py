@@ -11,7 +11,7 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-
+from datetime import datetime
 from uuid import UUID
 
 import pytest
@@ -112,7 +112,57 @@ class TestUpdateQuestion:
             "detail": "the value for 'visible_options' must be less or equal to the number of items in 'options' (3)"
         }
 
-    async def test_update_span_question_with_unsupported_allow_overlapping_value(
+    async def test_update_span_question_enabling_allow_overlapping(
+        self, async_client: AsyncClient, owner_auth_header: dict
+    ):
+        question = await SpanQuestionFactory.create(
+            settings={
+                "type": QuestionType.span.value,
+                "field": "field-a",
+                "options": [
+                    {"value": "label-a", "text": "Label A", "description": "Label A description"},
+                    {"value": "label-b", "text": "Label B", "description": "Label B description"},
+                    {"value": "label-c", "text": "Label C", "description": "Label C description"},
+                ],
+                "allow_overlapping": False,
+            }
+        )
+
+        response = await async_client.patch(
+            self.url(question.id),
+            headers=owner_auth_header,
+            json={
+                "settings": {"type": QuestionType.span, "allow_overlapping": True},
+            },
+        )
+
+        assert response.status_code == 200
+
+        response_json = response.json()
+        assert response_json == {
+            "id": str(question.id),
+            "name": question.name,
+            "description": question.description,
+            "title": question.title,
+            "dataset_id": str(question.dataset_id),
+            "required": False,
+            "settings": {
+                "type": QuestionType.span.value,
+                "field": "field-a",
+                "options": [
+                    {"value": "label-a", "text": "Label A", "description": "Label A description"},
+                    {"value": "label-b", "text": "Label B", "description": "Label B description"},
+                    {"value": "label-c", "text": "Label C", "description": "Label C description"},
+                ],
+                "allow_overlapping": True,
+                "allow_character_annotation": True,
+                "visible_options": None,
+            },
+            "inserted_at": datetime.fromisoformat(response_json["inserted_at"]).isoformat(),
+            "updated_at": datetime.fromisoformat(response_json["updated_at"]).isoformat(),
+        }
+
+    async def test_update_span_question_disabling_allow_overlapping(
         self, async_client: AsyncClient, owner_auth_header: dict
     ):
         question = await SpanQuestionFactory.create(
