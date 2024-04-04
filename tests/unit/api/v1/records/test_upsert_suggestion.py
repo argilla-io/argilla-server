@@ -538,8 +538,6 @@ class TestUpsertSuggestion:
         )
 
         assert response.status_code == 422
-        assert response.json() == {
-            "detail": "overlapping values found between spans at index idx=0 and idx=2"
-        }
+        assert response.json() == {"detail": "overlapping values found between spans at index idx=0 and idx=2"}
 
         assert (await db.execute(select(func.count(Suggestion.id)))).scalar() == 0

@@ -256,7 +256,7 @@ class SpanQuestionResponseValueValidator:
                     f"undefined label '{value_item.label}' for span question.\nValid labels are: {available_labels!r}"
                 )
 
-    def _validate_overlapped_values(self, span_question_settings: SpanQuestionSettings)->None:
+    def _validate_overlapped_values(self, span_question_settings: SpanQuestionSettings) -> None:
         if span_question_settings.allow_overlapping:
             return
 
@@ -266,6 +266,4 @@ class SpanQuestionResponseValueValidator:
                     continue
 
                 if value_item.start < other_value_item.end and value_item.end > other_value_item.start:
-                    raise ValueError(
-                        f"overlapping values found between spans at index idx={span_i} and idx={span_j}"
-                    )
+                    raise ValueError(f"overlapping values found between spans at index idx={span_i} and idx={span_j}")
