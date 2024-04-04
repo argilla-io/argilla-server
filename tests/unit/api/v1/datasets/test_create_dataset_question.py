@@ -16,12 +16,12 @@ from datetime import datetime
 from uuid import UUID
 
 import pytest
+from argilla_server.enums import QuestionType
+from argilla_server.models import Question
 from httpx import AsyncClient
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from argilla_server.enums import QuestionType
-from argilla_server.models import Question
 from tests.factories import DatasetFactory, SpanQuestionFactory, TextFieldFactory
 
 

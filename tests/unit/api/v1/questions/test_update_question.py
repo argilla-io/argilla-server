@@ -15,9 +15,9 @@ from datetime import datetime
 from uuid import UUID
 
 import pytest
+from argilla_server.enums import QuestionType
 from httpx import AsyncClient
 
-from argilla_server.enums import QuestionType
 from tests.factories import LabelSelectionQuestionFactory, SpanQuestionFactory, TextQuestionFactory
 
 
