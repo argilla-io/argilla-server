@@ -219,7 +219,7 @@ class SpanQuestionResponseValueValidator:
         self._validate_question_settings_field_is_present_at_record(span_question_settings, record)
         self._validate_start_end_are_within_record_field_limits(span_question_settings, record)
         self._validate_labels_are_available_at_question_settings(span_question_settings)
-        self. _validate_values_are_not_overlapped(span_question_settings)
+        self._validate_values_are_not_overlapped(span_question_settings)
 
     def _validate_value_type(self) -> None:
         if not isinstance(self._response_value, list):
@@ -262,5 +262,9 @@ class SpanQuestionResponseValueValidator:
 
         for span_i, value_item in enumerate(self._response_value):
             for span_j, other_value_item in enumerate(self._response_value):
-                if span_i != span_j and value_item.start < other_value_item.end and value_item.end > other_value_item.start:
+                if (
+                    span_i != span_j
+                    and value_item.start < other_value_item.end
+                    and value_item.end > other_value_item.start
+                ):
                     raise ValueError(f"overlapping values found between spans at index idx={span_i} and idx={span_j}")
