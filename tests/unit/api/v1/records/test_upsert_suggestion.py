@@ -514,7 +514,7 @@ class TestUpsertSuggestion:
 
         assert (await db.execute(select(func.count(Suggestion.id)))).scalar() == 0
 
-    async def test_upsert_suggestion_for_span_question_with_overlapped_spans(
+    async def test_upsert_suggestion_for_span_question_with_overlapped_values(
         self, async_client: AsyncClient, db: AsyncSession, owner_auth_header: dict
     ):
         dataset = await DatasetFactory.create()

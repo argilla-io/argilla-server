@@ -424,7 +424,7 @@ class TestCreateRecordResponse:
 
         assert (await db.execute(select(func.count(Response.id)))).scalar() == 0
 
-    async def test_create_record_response_with_overlapped_spans(
+    async def test_create_record_response_for_span_question_with_overlapped_values(
         self, async_client: AsyncClient, db: AsyncSession, owner: User, owner_auth_header: dict
     ):
         dataset = await DatasetFactory.create()
