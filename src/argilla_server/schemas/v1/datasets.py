@@ -63,6 +63,7 @@ class DatasetMetrics(BaseModel):
 class DatasetProgress(BaseModel):
     total: int
     submitted: int
+    discarded: int
 
 
 class Dataset(BaseModel):

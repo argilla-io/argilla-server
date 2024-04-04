@@ -467,6 +467,24 @@ async def count_submitted_records_for_dataset_progress(db: "AsyncSession", datas
     ).scalar_one()
 
 
+async def count_discarded_records_for_dataset_progress(db: "AsyncSession", dataset_id: UUID) -> int:
+    submitted_query = (
+        select(Record.id.distinct())
+        .join(Response, and_(Response.record_id == Record.id, Response.status == ResponseStatus.submitted))
+        .filter(Record.dataset_id == dataset_id)
+    )
+
+    discarded_query = (
+        select(Record.id.distinct())
+        .join(Response, and_(Response.record_id == Record.id, Response.status == ResponseStatus.discarded))
+        .filter(Record.dataset_id == dataset_id)
+    )
+
+    return (
+        await db.execute(select(func.count("*")).select_from(discarded_query.except_(submitted_query)))
+    ).scalar_one()
+
+
 _EXTRA_METADATA_FLAG = "extra"
 
 
