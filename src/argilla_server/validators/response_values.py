@@ -219,7 +219,7 @@ class SpanQuestionResponseValueValidator:
         self._validate_question_settings_field_is_present_at_record(span_question_settings, record)
         self._validate_start_end_are_within_record_field_limits(span_question_settings, record)
         self._validate_labels_are_available_at_question_settings(span_question_settings)
-        self._validate_overlapped_values(span_question_settings)
+        self. _validate_values_are_not_overlapped(span_question_settings)
 
     def _validate_value_type(self) -> None:
         if not isinstance(self._response_value, list):
