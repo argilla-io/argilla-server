@@ -140,7 +140,7 @@ class QuestionUpdateValidator:
         if question_settings_update.type != QuestionType.span:
             return
 
-        if (question_settings.allow_overlapping and not question_settings_update.allow_overlapping):
+        if question_settings.allow_overlapping and not question_settings_update.allow_overlapping:
             raise InvalidQuestionSettings(
                 "'allow_overlapping' can't be disabled because responses may become inconsistent"
             )
