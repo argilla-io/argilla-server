@@ -54,6 +54,7 @@ from argilla_server.models.suggestions import SuggestionCreateWithRecordId
 from argilla_server.schemas.v0.users import User
 from argilla_server.schemas.v1.datasets import (
     DatasetCreate,
+    DatasetProgress,
 )
 from argilla_server.schemas.v1.fields import FieldCreate
 from argilla_server.schemas.v1.metadata_properties import MetadataPropertyCreate, MetadataPropertyUpdate
@@ -449,7 +450,7 @@ async def count_records_by_dataset_id(db: "AsyncSession", dataset_id: UUID) -> i
     return (await db.execute(select(func.count(Record.id)).filter_by(dataset_id=dataset_id))).scalar_one()
 
 
-async def count_submitted_records_for_dataset_progress(db: "AsyncSession", dataset_id: UUID) -> int:
+async def get_dataset_progress(db: "AsyncSession", dataset_id: UUID) -> DatasetProgress:
     submitted_query = (
         select(Record.id.distinct())
         .join(Response, and_(Response.record_id == Record.id, Response.status == ResponseStatus.submitted))
@@ -462,45 +463,23 @@ async def count_submitted_records_for_dataset_progress(db: "AsyncSession", datas
         .filter(Record.dataset_id == dataset_id)
     )
 
-    return (
+    total = await count_records_by_dataset_id(db, dataset_id)
+    submitted = (
         await db.execute(select(func.count("*")).select_from(submitted_query.except_(discarded_query)))
     ).scalar_one()
-
-
-async def count_discarded_records_for_dataset_progress(db: "AsyncSession", dataset_id: UUID) -> int:
-    submitted_query = (
-        select(Record.id.distinct())
-        .join(Response, and_(Response.record_id == Record.id, Response.status == ResponseStatus.submitted))
-        .filter(Record.dataset_id == dataset_id)
-    )
-
-    discarded_query = (
-        select(Record.id.distinct())
-        .join(Response, and_(Response.record_id == Record.id, Response.status == ResponseStatus.discarded))
-        .filter(Record.dataset_id == dataset_id)
-    )
-
-    return (
+    discarded = (
         await db.execute(select(func.count("*")).select_from(discarded_query.except_(submitted_query)))
     ).scalar_one()
-
-
-async def count_conflicting_records_for_dataset_progress(db: "AsyncSession", dataset_id: UUID) -> int:
-    submitted_query = (
-        select(Record.id.distinct())
-        .join(Response, and_(Response.record_id == Record.id, Response.status == ResponseStatus.submitted))
-        .filter(Record.dataset_id == dataset_id)
-    )
-
-    discarded_query = (
-        select(Record.id.distinct())
-        .join(Response, and_(Response.record_id == Record.id, Response.status == ResponseStatus.discarded))
-        .filter(Record.dataset_id == dataset_id)
-    )
-
-    return (
+    conflicting = (
         await db.execute(select(func.count("*")).select_from(submitted_query.intersect(discarded_query)))
     ).scalar_one()
+
+    return DatasetProgress(
+        total=total,
+        submitted=submitted,
+        discarded=discarded,
+        conflicting=conflicting,
+    )
 
 
 _EXTRA_METADATA_FLAG = "extra"
