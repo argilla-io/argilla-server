@@ -177,6 +177,7 @@ async def get_dataset_progress(
         "total": await datasets.count_records_by_dataset_id(db, dataset_id),
         "submitted": await datasets.count_submitted_records_for_dataset_progress(db, dataset_id),
         "discarded": await datasets.count_discarded_records_for_dataset_progress(db, dataset_id),
+        "conflicting": await datasets.count_conflicting_records_for_dataset_progress(db, dataset_id),
     }
 
 
