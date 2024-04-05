@@ -452,13 +452,13 @@ async def count_records_by_dataset_id(db: "AsyncSession", dataset_id: UUID) -> i
 
 async def get_dataset_progress(db: "AsyncSession", dataset_id: UUID) -> DatasetProgress:
     submitted_query = (
-        select(Record.id.distinct())
+        select(Record.id)
         .join(Response, and_(Response.record_id == Record.id, Response.status == ResponseStatus.submitted))
         .filter(Record.dataset_id == dataset_id)
     )
 
     discarded_query = (
-        select(Record.id.distinct())
+        select(Record.id)
         .join(Response, and_(Response.record_id == Record.id, Response.status == ResponseStatus.discarded))
         .filter(Record.dataset_id == dataset_id)
     )
