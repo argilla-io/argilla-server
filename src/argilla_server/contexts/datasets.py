@@ -473,12 +473,14 @@ async def get_dataset_progress(db: "AsyncSession", dataset_id: UUID) -> DatasetP
     conflicting = (
         await db.execute(select(func.count("*")).select_from(submitted_query.intersect(discarded_query)))
     ).scalar_one()
+    pending = total - submitted - discarded - conflicting
 
     return DatasetProgress(
         total=total,
         submitted=submitted,
         discarded=discarded,
         conflicting=conflicting,
+        pending=pending,
     )
 
 

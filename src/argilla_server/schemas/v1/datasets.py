@@ -65,6 +65,7 @@ class DatasetProgress(BaseModel):
     submitted: int
     discarded: int
     conflicting: int
+    pending: int
 
 
 class Dataset(BaseModel):

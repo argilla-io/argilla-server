@@ -94,6 +94,7 @@ class TestGetDatasetProgress:
             "submitted": 2,
             "discarded": 2,
             "conflicting": 1,
+            "pending": 3,
         }
 
     async def test_get_dataset_progress_with_empty_dataset(self, async_client: AsyncClient, owner_auth_header: dict):
@@ -107,6 +108,7 @@ class TestGetDatasetProgress:
             "submitted": 0,
             "discarded": 0,
             "conflicting": 0,
+            "pending": 0,
         }
 
     @pytest.mark.parametrize("user_role", [UserRole.admin, UserRole.annotator])
