@@ -45,7 +45,7 @@ from argilla_server.schemas.v1.records import (
     RecordsBulk,
     RecordsCreate,
     RecordsUpdate,
-    RecordsUpsert,
+    RecordsBulkCreate,
 )
 from argilla_server.search_engine import (
     SearchEngine,
@@ -186,10 +186,10 @@ async def update_dataset_records(
     status_code=status.HTTP_200_OK,
     response_model_exclude_unset=True,
 )
-async def upsert_dataset_records_bulk(
+async def create_bulk_dataset_records(
     *,
     dataset_id: UUID,
-    records_upsert: RecordsUpsert,
+    records_upsert: RecordsBulkCreate,
     db: AsyncSession = Depends(get_async_db),
     search_engine: SearchEngine = Depends(get_search_engine),
     current_user: User = Security(auth.get_current_user),

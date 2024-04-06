@@ -20,7 +20,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from argilla_server.contexts.bulk.records import helpers
 from argilla_server.models import Dataset, Record
-from argilla_server.schemas.v1.records import RecordsUpsert, RecordUpsert
+from argilla_server.schemas.v1.records import RecordsBulkCreate, RecordUpsert
 from argilla_server.search_engine import SearchEngine
 from argilla_server.validators.records import RecordUpsertValidator
 
@@ -31,13 +31,13 @@ class RecordsUpsertBulk:
         self._db = db
         self._search_engine = search_engine
 
-    async def upsert_dataset_records(self, dataset: Dataset, records_upsert: RecordsUpsert) -> List[Record]:
+    async def upsert_dataset_records(self, dataset: Dataset, records_bulk: RecordsBulkCreate) -> List[Record]:
         helpers.check_dataset_is_ready(dataset)
 
         records = []
         async with self._db.begin_nested():
-            found_records = await self._fetch_existing_dataset_records(dataset, records_upsert.items)
-            for idx, (record_upsert, record_found) in enumerate(zip(records_upsert.items, found_records)):
+            found_records = await self._fetch_existing_dataset_records(dataset, records_bulk.items)
+            for idx, (record_upsert, record_found) in enumerate(zip(records_bulk.items, found_records)):
                 try:
                     validator = RecordUpsertValidator(record_upsert)
                     if record_found:
@@ -61,7 +61,7 @@ class RecordsUpsertBulk:
             self._db.add_all(records)
             await self._db.flush(records)
 
-            await self._upsert_records_relationships(records, records_upsert)
+            await self._upsert_records_relationships(records, records_bulk)
 
             await helpers.preload_records_relationships_before_index(self._db, records)
             await self._search_engine.index_records(dataset, records)
@@ -87,11 +87,11 @@ class RecordsUpsertBulk:
             for record_upsert in records_upsert
         ]
 
-    async def _upsert_records_relationships(self, records: List[Record], records_upsert: RecordsUpsert) -> None:
+    async def _upsert_records_relationships(self, records: List[Record], records_bulk: RecordsBulkCreate) -> None:
 
-        records_and_suggestions = list(zip(records, [r.suggestions for r in records_upsert.items]))
-        records_and_responses = list(zip(records, [r.responses for r in records_upsert.items]))
-        records_and_vectors = list(zip(records, [r.vectors for r in records_upsert.items]))
+        records_and_suggestions = list(zip(records, [r.suggestions for r in records_bulk.items]))
+        records_and_responses = list(zip(records, [r.responses for r in records_bulk.items]))
+        records_and_vectors = list(zip(records, [r.vectors for r in records_bulk.items]))
 
         await asyncio.gather(
             helpers.upsert_records_suggestions(self._db, records_and_suggestions),
