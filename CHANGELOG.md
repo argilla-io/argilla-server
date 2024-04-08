@@ -16,6 +16,10 @@ These are the section headers that we use:
 
 ## [Unreleased]()
 
+### Fixed
+
+-  Fixed errors when adding records with existing record external ids. ([#97](https://github.com/argilla-io/argilla-server/pull/97))
+
 ## [1.26.0](https://github.com/argilla-io/argilla-server/compare/v1.25.0...v1.26.0)
 
 ### Added
