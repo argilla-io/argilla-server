@@ -33,7 +33,7 @@ from uuid import UUID
 
 import sqlalchemy
 from fastapi.encoders import jsonable_encoder
-from sqlalchemy import Select, and_, func, select, case
+from sqlalchemy import Select, and_, case, func, select
 from sqlalchemy.orm import contains_eager, joinedload, selectinload
 
 import argilla_server.errors.future as errors
