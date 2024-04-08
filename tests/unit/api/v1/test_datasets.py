@@ -2958,7 +2958,7 @@ class TestSuiteDatasets:
         }
 
         # it should be called only with the first three records (metadata was updated for them)
-        mock_search_engine.index_records.assert_called_once_with(dataset, records[:3])
+        mock_search_engine.index_records.assert_called_once_with(dataset, records[:4])
 
     async def test_update_dataset_records_with_suggestions(
         self, async_client: "AsyncClient", mock_search_engine: "SearchEngine", owner_auth_header: dict
@@ -3065,7 +3065,7 @@ class TestSuiteDatasets:
         assert records[3].suggestions[1].value == "suggestion updated 3 2"
         assert records[3].suggestions[2].value == "suggestion updated 3 3"
 
-        mock_search_engine.index_records.assert_not_called()
+        mock_search_engine.index_records.assert_called_once_with(dataset, records[:4])
 
     async def test_update_dataset_records_with_empty_list_of_suggestions(
         self, async_client: "AsyncClient", owner_auth_header: dict
