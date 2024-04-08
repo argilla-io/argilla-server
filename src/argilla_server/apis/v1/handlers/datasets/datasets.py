@@ -173,7 +173,7 @@ async def get_dataset_progress(
 
     await authorize(current_user, DatasetPolicyV1.get(dataset))
 
-    return await datasets.get_dataset_progress(db, dataset_id)
+    return await datasets.get_dataset_progress_with_group_by(db, dataset_id)
 
 
 @router.post("/datasets", status_code=status.HTTP_201_CREATED, response_model=Dataset)
