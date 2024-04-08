@@ -11,6 +11,7 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
+import asyncio
 import copy
 from datetime import datetime
 from typing import (
@@ -463,16 +464,16 @@ async def get_dataset_progress(db: "AsyncSession", dataset_id: UUID) -> DatasetP
         .filter(Record.dataset_id == dataset_id)
     )
 
-    total = await count_records_by_dataset_id(db, dataset_id)
-    submitted = (
-        await db.execute(select(func.count("*")).select_from(submitted_query.except_(discarded_query)))
-    ).scalar_one()
-    discarded = (
-        await db.execute(select(func.count("*")).select_from(discarded_query.except_(submitted_query)))
-    ).scalar_one()
-    conflicting = (
-        await db.execute(select(func.count("*")).select_from(submitted_query.intersect(discarded_query)))
-    ).scalar_one()
+    total, submitted, discarded, conflicting = await asyncio.gather(
+        count_records_by_dataset_id(db, dataset_id),
+        db.execute(select(func.count("*")).select_from(submitted_query.except_(discarded_query))),
+        db.execute(select(func.count("*")).select_from(discarded_query.except_(submitted_query))),
+        db.execute(select(func.count("*")).select_from(submitted_query.intersect(discarded_query))),
+    )
+
+    submitted = submitted.scalar_one()
+    discarded = discarded.scalar_one()
+    conflicting = conflicting.scalar_one()
     pending = total - submitted - discarded - conflicting
 
     return DatasetProgress(
