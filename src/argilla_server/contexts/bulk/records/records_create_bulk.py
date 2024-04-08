@@ -33,8 +33,20 @@ class RecordsCreateBulk:
     async def create_dataset_records(self, dataset: Dataset, records_create: RecordsCreate) -> List[Record]:
         helpers.check_dataset_is_ready(dataset)
 
+        # TODO: RecordsCreateValidator(records_create).validate_for(dataset) ????
+        external_ids = [r.external_id for r in records_create.items if r.external_id is not None]
+        if len(external_ids) != len(set(external_ids)):
+            raise ValueError("Found duplicate external IDs")
+
         records = []
         async with self._db.begin_nested():
+            records_by_external_id = await helpers.fetch_records_by_external_ids(self._db, dataset, external_ids)
+            found_records = [
+                str(external_id) for external_id in external_ids if external_id in records_by_external_id
+            ]
+            if found_records:
+                raise ValueError(f"Found records with same external ids: {', '.join(found_records)}")
+
             for idx, record_create in enumerate(records_create.items):
                 try:
                     RecordCreateValidator(record_create).validate_for(dataset)
