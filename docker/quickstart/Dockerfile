@@ -5,9 +5,9 @@ FROM argilla/argilla-server:${ARGILLA_VERSION}
 USER root
 
 RUN apt-get update && apt-get install -y \
-  apt-transport-https \
-  gnupg \
-  wget
+    apt-transport-https \
+    gnupg \
+    wget
 
 # Install Elasticsearch signing key
 RUN wget -qO - https://artifacts.elastic.co/GPG-KEY-elasticsearch | gpg --dearmor -o /usr/share/keyrings/elasticsearch-keyring.gpg
@@ -18,27 +18,28 @@ RUN echo "deb [signed-by=/usr/share/keyrings/elasticsearch-keyring.gpg] https://
 # Copy Argilla distribution files
 COPY scripts/start_quickstart_argilla.sh /home/argilla
 COPY scripts/load_data.py /home/argilla
+COPY Procfile /home/argilla
 COPY requirements.txt /packages/requirements.txt
 
 RUN \
-  # Indicate that this is a quickstart deployment
-  echo -e "{  \"deployment\":  \"quickstart\" }" > /opt/venv/lib/python3.10/site-packages/argilla_server/static/deployment.json && \
-  # Create a directory where Elasticsearch and Argilla will store their data
-  mkdir /data && \
-  # Install Elasticsearch and configure it
-  apt-get update && apt-get install -y elasticsearch=8.8.2 && \
-  chown -R argilla:argilla /usr/share/elasticsearch /etc/elasticsearch /var/lib/elasticsearch /var/log/elasticsearch && \
-  chown argilla:argilla /etc/default/elasticsearch && \
-  # Install quickstart image dependencies
-  pip install -r /packages/requirements.txt && \
-  chmod +x /home/argilla/start_quickstart_argilla.sh && \
-  # Give ownership of the data directory to the argilla user
-  chown -R argilla:argilla /data && \
-  # Clean up
-  apt-get remove -y wget gnupg && \
-  apt-get clean && \
-  rm -rf /var/lib/apt/lists/* && \
-  rm -rf /packages
+    # Indicate that this is a quickstart deployment
+    echo -e "{  \"deployment\":  \"quickstart\" }" > /opt/venv/lib/python3.10/site-packages/argilla_server/static/deployment.json && \
+    # Create a directory where Elasticsearch and Argilla will store their data
+    mkdir /data && \
+    # Install Elasticsearch and configure it
+    apt-get update && apt-get install -y elasticsearch=8.8.2 && \
+    chown -R argilla:argilla /usr/share/elasticsearch /etc/elasticsearch /var/lib/elasticsearch /var/log/elasticsearch && \
+    chown argilla:argilla /etc/default/elasticsearch && \
+    # Install quickstart image dependencies
+    pip install -r /packages/requirements.txt && \
+    chmod +x /home/argilla/start_quickstart_argilla.sh && \
+    # Give ownership of the data directory to the argilla user
+    chown -R argilla:argilla /data && \
+    # Clean up
+    apt-get remove -y wget gnupg && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/* && \
+    rm -rf /packages
 
 COPY config/elasticsearch.yml /etc/elasticsearch/elasticsearch.yml
 
@@ -66,4 +67,4 @@ ENV REINDEX_DATASETS=0
 
 ENV ES_JAVA_OPTS=-'Xms512m -Xmx512m'
 
-CMD ["/bin/bash", "start_quickstart_argilla.sh"]
+CMD ["honcho", "start"]
