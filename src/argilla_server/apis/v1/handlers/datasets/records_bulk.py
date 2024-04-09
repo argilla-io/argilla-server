@@ -1,6 +1,20 @@
+#  Copyright 2021-present, the Recognai S.L. team.
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+
 from uuid import UUID
 
-from fastapi import Depends, Security, HTTPException, APIRouter
+from fastapi import APIRouter, Depends, HTTPException, Security
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
 
@@ -8,7 +22,7 @@ from argilla_server.apis.v1.handlers.datasets.datasets import _get_dataset_or_ra
 from argilla_server.bulk.records_bulk import CreateRecordsBulk, UpsertRecordsBulk
 from argilla_server.database import get_async_db
 from argilla_server.models import User
-from argilla_server.policies import authorize, DatasetPolicyV1
+from argilla_server.policies import DatasetPolicyV1, authorize
 from argilla_server.schemas.v1.records_bulk import RecordsBulk, RecordsBulkCreate, RecordsBulkUpsert
 from argilla_server.search_engine import SearchEngine, get_search_engine
 from argilla_server.security import auth
