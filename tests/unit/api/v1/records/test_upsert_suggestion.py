@@ -268,8 +268,8 @@ class TestUpsertSuggestion:
                 "question_id": str(span_question.id),
                 "type": SuggestionType.model,
                 "value": [
-                    {"label": "label-a", "start": 0, "end": 1, "score": 0.2},
-                    {"label": "label-b", "start": 2, "end": 3, "score": 1},
+                    {"label": "label-a", "start": 0, "end": 1},
+                    {"label": "label-b", "start": 2, "end": 3},
                     {"label": "label-c", "start": 4, "end": 5},
                 ],
             },
@@ -285,9 +285,9 @@ class TestUpsertSuggestion:
             "question_id": str(span_question.id),
             "type": SuggestionType.model,
             "value": [
-                {"label": "label-a", "start": 0, "end": 1, "score": 0.2},
-                {"label": "label-b", "start": 2, "end": 3, "score": 1.0},
-                {"label": "label-c", "start": 4, "end": 5, "score": None},
+                {"label": "label-a", "start": 0, "end": 1},
+                {"label": "label-b", "start": 2, "end": 3},
+                {"label": "label-c", "start": 4, "end": 5},
             ],
             "agent": None,
             "score": None,
@@ -311,8 +311,8 @@ class TestUpsertSuggestion:
                 "question_id": str(span_question.id),
                 "type": SuggestionType.model,
                 "value": [
-                    {"label": "label-a", "start": 0, "end": 1, "score": 0.2, "ignored": "value"},
-                    {"label": "label-b", "start": 2, "end": 3, "score": 1},
+                    {"label": "label-a", "start": 0, "end": 1, "ignored": "value"},
+                    {"label": "label-b", "start": 2, "end": 3},
                     {"label": "label-c", "start": 4, "end": 5, "ignored": "value"},
                 ],
             },
@@ -328,9 +328,9 @@ class TestUpsertSuggestion:
             "question_id": str(span_question.id),
             "type": SuggestionType.model,
             "value": [
-                {"label": "label-a", "start": 0, "end": 1, "score": 0.2},
-                {"label": "label-b", "start": 2, "end": 3, "score": 1.0},
-                {"label": "label-c", "start": 4, "end": 5, "score": None},
+                {"label": "label-a", "start": 0, "end": 1},
+                {"label": "label-b", "start": 2, "end": 3},
+                {"label": "label-c", "start": 4, "end": 5},
             ],
             "agent": None,
             "score": None,
@@ -417,31 +417,6 @@ class TestUpsertSuggestion:
                 "value": [
                     {"label": "label-a", "start": 0, "end": 1},
                     {"invalid": "value"},
-                ],
-            },
-        )
-
-        assert response.status_code == 422
-        assert (await db.execute(select(func.count(Suggestion.id)))).scalar() == 0
-
-    @pytest.mark.parametrize("invalid_score", [-0.1, 1.1, "not-a-number"])
-    async def test_upsert_suggestion_for_span_question_with_invalid_score(
-        self, async_client: AsyncClient, db: AsyncSession, owner_auth_header: dict, invalid_score: Any
-    ):
-        dataset = await DatasetFactory.create()
-
-        span_question = await SpanQuestionFactory.create(name="span-question", dataset=dataset)
-
-        record = await RecordFactory.create(fields={"field-a": "Hello"}, dataset=dataset)
-
-        response = await async_client.put(
-            self.url(record.id),
-            headers=owner_auth_header,
-            json={
-                "question_id": str(span_question.id),
-                "type": SuggestionType.model,
-                "value": [
-                    {"label": "label-a", "start": 0, "end": 1, "score": invalid_score},
                 ],
             },
         )

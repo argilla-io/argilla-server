@@ -20,11 +20,10 @@ from argilla_server.models import SuggestionType
 from argilla_server.pydantic_v1 import BaseModel, Field, root_validator
 from argilla_server.schemas.v1.questions import QuestionName
 from argilla_server.schemas.v1.responses import (
-    SPAN_QUESTION_RESPONSE_VALUE_MAX_ITEMS,
     MultiLabelSelectionQuestionResponseValue,
     RankingQuestionResponseValue,
     RatingQuestionResponseValue,
-    SpanQuestionResponseValueItem,
+    SpanQuestionResponseValue,
     TextAndLabelSelectionQuestionResponseValue,
 )
 
@@ -78,29 +77,9 @@ class Suggestions(BaseModel):
     items: List[Suggestion]
 
 
-SuggestionScoreField = Annotated[
-    Optional[Union[float, List[float]]],
-    Field(
-        min_items=SCORE_MIN_ITEMS,
-        ge=SCORE_GREATER_THAN_OR_EQUAL,
-        le=SCORE_LESS_THAN_OR_EQUAL,
-        description="The score assigned to the suggestion",
-    ),
-]
-
-
-class SpanQuestionSuggestionResponseValueItem(SpanQuestionResponseValueItem):
-    score: SuggestionScoreField
-
-
-SpanQuestionSuggestionResponseValue = Annotated[
-    List[SpanQuestionSuggestionResponseValueItem], Field(..., max_items=SPAN_QUESTION_RESPONSE_VALUE_MAX_ITEMS)
-]
-
-
 class SuggestionCreate(BaseSuggestion):
     value: Union[
-        SpanQuestionSuggestionResponseValue,
+        SpanQuestionResponseValue,
         RankingQuestionResponseValue,
         MultiLabelSelectionQuestionResponseValue,
         RatingQuestionResponseValue,
@@ -113,7 +92,13 @@ class SuggestionCreate(BaseSuggestion):
         max_length=AGENT_MAX_LENGTH,
         description="Agent used to generate the suggestion",
     )
-    score: SuggestionScoreField
+    score: Optional[Union[float, List[float]]] = Field(
+        None,
+        min_items=SCORE_MIN_ITEMS,
+        ge=SCORE_GREATER_THAN_OR_EQUAL,
+        le=SCORE_LESS_THAN_OR_EQUAL,
+        description="The score assigned to the suggestion",
+    )
 
     @root_validator(skip_on_failure=True)
     def check_value_and_score_length(cls, values: dict) -> dict:
