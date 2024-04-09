@@ -32,6 +32,7 @@ AGENT_REGEX = r"^(?=.*[a-zA-Z0-9])[a-zA-Z0-9-_:\.\/\s]+$"
 AGENT_MIN_LENGTH = 1
 AGENT_MAX_LENGTH = 200
 
+SCORE_MIN_ITEMS = 1
 SCORE_GREATER_THAN_OR_EQUAL = 0
 SCORE_LESS_THAN_OR_EQUAL = 1
 
@@ -61,7 +62,7 @@ class BaseSuggestion(BaseModel):
     type: Optional[SuggestionType]
     value: Any
     agent: Optional[str]
-    score: Optional[float]
+    score: Optional[Union[float, List[float]]]
 
 
 class Suggestion(BaseSuggestion):
@@ -78,8 +79,9 @@ class Suggestions(BaseModel):
 
 
 SuggestionScoreField = Annotated[
-    Optional[float],
+    Optional[Union[float, List[float]]],
     Field(
+        min_items=SCORE_MIN_ITEMS,
         ge=SCORE_GREATER_THAN_OR_EQUAL,
         le=SCORE_LESS_THAN_OR_EQUAL,
         description="The score assigned to the suggestion",
