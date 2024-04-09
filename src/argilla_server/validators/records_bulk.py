@@ -3,7 +3,7 @@ from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from argilla_server.contexts import records
+from argilla_server.bulk import helpers
 from argilla_server.models import Dataset, Record
 from argilla_server.schemas.v1.records import RecordCreate
 from argilla_server.schemas.v1.records_bulk import RecordsBulkCreate, RecordsBulkUpsert, RecordUpsert
@@ -26,7 +26,7 @@ class RecordsBulkCreateValidator:
 
     async def _validate_external_ids_are_not_present_in_db(self, dataset: Dataset):
         external_ids = [r.external_id for r in self._records_create.items if r.external_id is not None]
-        records_by_external_id = await records.fetch_records_by_external_ids(self._db, dataset, external_ids)
+        records_by_external_id = await helpers.fetch_records_by_external_ids(self._db, dataset, external_ids)
 
         found_records = [str(external_id) for external_id in external_ids if external_id in records_by_external_id]
         if found_records:
