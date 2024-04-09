@@ -20,6 +20,10 @@ These are the section headers that we use:
 
 - Add support to specify a list of score values for suggestions `score` attribute. ([#98](https://github.com/argilla-io/argilla-server/pull/98))
 
+### Removed
+
+- Removed support for specifying `score` attributes for individual value items when creating suggestions associated with span questions. ([#101](https://github.com/argilla-io/argilla-server/pull/101))
+
 ## [1.26.1](https://github.com/argilla-io/argilla-server/compare/v1.26.0...v1.26.1)
 
 > [!NOTE]
