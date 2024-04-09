@@ -15,12 +15,12 @@
 from uuid import UUID
 
 import pytest
+from argilla_server.enums import DatasetStatus
+from argilla_server.models import Dataset, Record
 from httpx import AsyncClient
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from argilla_server.enums import DatasetStatus
-from argilla_server.models import Dataset, Record
 from tests.factories import (
     DatasetFactory,
     RecordFactory,

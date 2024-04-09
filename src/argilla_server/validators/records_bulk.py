@@ -1,3 +1,17 @@
+#  Copyright 2021-present, the Recognai S.L. team.
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+
 from typing import Dict, List, Union
 from uuid import UUID
 
@@ -62,7 +76,9 @@ class RecordsBulkUpsertValidator:
     def _validate_all_bulk_records(self, dataset: Dataset, records_upsert: List[RecordUpsert]):
         for idx, record_upsert in enumerate(records_upsert):
             try:
-                record = self._existing_records_by_external_id_or_record_id.get(record_upsert.external_id or record_upsert.id)
+                record = self._existing_records_by_external_id_or_record_id.get(
+                    record_upsert.external_id or record_upsert.id
+                )
                 if record:
                     RecordUpdateValidator(record_upsert).validate_for(dataset)
                 else:
