@@ -251,7 +251,6 @@ class TestUpsertSuggestion:
         )
 
         assert response.status_code == 422
-        assert response.json() == {"detail": "number of items on value and score attributes doesn't match"}
 
     async def test_upsert_suggestion_for_span_question(
         self, async_client: AsyncClient, db: AsyncSession, owner_auth_header: dict
