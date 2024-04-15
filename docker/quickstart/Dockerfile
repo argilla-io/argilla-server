@@ -17,6 +17,7 @@ RUN echo "deb [signed-by=/usr/share/keyrings/elasticsearch-keyring.gpg] https://
 
 # Copy Argilla distribution files
 COPY scripts/start_quickstart_argilla.sh /home/argilla
+COPY scripts/start_argilla_server.sh /home/argilla
 COPY scripts/load_data.py /home/argilla
 COPY Procfile /home/argilla
 COPY requirements.txt /packages/requirements.txt
@@ -33,6 +34,7 @@ RUN \
     # Install quickstart image dependencies
     pip install -r /packages/requirements.txt && \
     chmod +x /home/argilla/start_quickstart_argilla.sh && \
+    chmod +x /home/argilla/start_argilla_server.sh && \
     # Give ownership of the data directory to the argilla user
     chown -R argilla:argilla /data && \
     # Clean up
@@ -67,4 +69,4 @@ ENV REINDEX_DATASETS=0
 
 ENV ES_JAVA_OPTS=-'Xms512m -Xmx512m'
 
-CMD ["honcho", "start"]
+CMD ["/bin/bash", "start_quickstart_argilla.sh"]
