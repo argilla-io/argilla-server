@@ -23,7 +23,7 @@ DEFAULT_MAX_KEYWORD_LENGTH = 128
 DEFAULT_TELEMETRY_KEY = "C6FkcaoCbt78rACAgvyBxGBcMB3dM3nn"
 
 # Questions settings defaults
-DEFAULT_LABEL_SELECTION_OPTIONS_MAX_ITEMS = 250
+DEFAULT_LABEL_SELECTION_OPTIONS_MAX_ITEMS = 500
 DEFAULT_SPAN_OPTIONS_MAX_ITEMS = 500
 
 # The metadata field name prefix defined for protected (non-searchable) values
