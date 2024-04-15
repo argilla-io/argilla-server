@@ -16,11 +16,21 @@ These are the section headers that we use:
 
 ## [Unreleased]()
 
+## [1.26.1](https://github.com/argilla-io/argilla-server/compare/v1.26.0...v1.26.1)
+
+> [!NOTE]
+> This patch version only includes changes in the argilla frontend to support RTL languages.
+> No changes where made on `argilla-server` repository for this patch version.
+
 ### Added
 
-- Add support for creating and listing questions with `SpanQuestionSettings`. ([#24](https://github.com/argilla-io/argilla-server/pull/24))
-- Add support for creating and updating responses for questions of type `span`. ([#54](https://github.com/argilla-io/argilla-server/pull/54))
-- Add support for upserting suggestions for questions of type `span`. ([#54](https://github.com/argilla-io/argilla-server/pull/54))
+- Added latests changes from argilla to support for automatic detection of RTL languages. ([#4686](https://github.com/argilla-io/argilla/pull/4686))
+
+## [1.26.0](https://github.com/argilla-io/argilla-server/compare/v1.25.0...v1.26.0)
+
+### Added
+
+- Add support for new `span` questions. ([#54](https://github.com/argilla-io/argilla-server/pull/54))
 - Add `inserted_at` and `updated_at` missing fields to API v1 `Suggestion` schema. ([#52](https://github.com/argilla-io/argilla-server/pull/52))
 - Add validation for `visible_options` attribute when updating a a question. ([#76](https://github.com/argilla-io/argilla-server/pull/76))
 
