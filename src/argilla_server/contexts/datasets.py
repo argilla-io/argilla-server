@@ -11,6 +11,7 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
+import asyncio
 import copy
 from datetime import datetime
 from typing import (
@@ -32,7 +33,7 @@ from uuid import UUID
 
 import sqlalchemy
 from fastapi.encoders import jsonable_encoder
-from sqlalchemy import Select, and_, func, select
+from sqlalchemy import Select, and_, case, func, select
 from sqlalchemy.orm import contains_eager, joinedload, selectinload
 
 import argilla_server.errors.future as errors
@@ -54,10 +55,10 @@ from argilla_server.models.suggestions import SuggestionCreateWithRecordId
 from argilla_server.schemas.v0.users import User
 from argilla_server.schemas.v1.datasets import (
     DatasetCreate,
+    DatasetProgress,
 )
 from argilla_server.schemas.v1.fields import FieldCreate
 from argilla_server.schemas.v1.metadata_properties import MetadataPropertyCreate, MetadataPropertyUpdate
-from argilla_server.schemas.v1.questions import QuestionCreate
 from argilla_server.schemas.v1.records import (
     RecordCreate,
     RecordIncludeParam,
@@ -69,8 +70,6 @@ from argilla_server.schemas.v1.responses import (
     ResponseCreate,
     ResponseUpdate,
     ResponseUpsert,
-    ResponseValueCreate,
-    ResponseValueUpdate,
     UserResponseCreate,
 )
 from argilla_server.schemas.v1.vector_settings import (
@@ -95,7 +94,6 @@ if TYPE_CHECKING:
         DatasetUpdate,
     )
     from argilla_server.schemas.v1.fields import FieldUpdate
-    from argilla_server.schemas.v1.questions import QuestionUpdate
     from argilla_server.schemas.v1.records import RecordUpdate
     from argilla_server.schemas.v1.suggestions import SuggestionCreate
     from argilla_server.schemas.v1.vector_settings import VectorSettingsUpdate
@@ -447,6 +445,37 @@ async def _configure_query_relationships(
 
 async def count_records_by_dataset_id(db: "AsyncSession", dataset_id: UUID) -> int:
     return (await db.execute(select(func.count(Record.id)).filter_by(dataset_id=dataset_id))).scalar_one()
+
+
+async def get_dataset_progress(db: "AsyncSession", dataset_id: UUID) -> DatasetProgress:
+    submitted_case = case((Response.status == ResponseStatus.submitted, 1), else_=0)
+    discarded_case = case((Response.status == ResponseStatus.discarded, 1), else_=0)
+
+    submitted_clause = func.sum(submitted_case) > 0, func.sum(discarded_case) == 0
+    discarded_clause = func.sum(discarded_case) > 0, func.sum(submitted_case) == 0
+    conflicting_clause = func.sum(submitted_case) > 0, func.sum(discarded_case) > 0
+
+    query = select(Record.id).join(Response).filter(Record.dataset_id == dataset_id).group_by(Response.record_id)
+
+    total, submitted, discarded, conflicting = await asyncio.gather(
+        count_records_by_dataset_id(db, dataset_id),
+        db.execute(select(func.count("*")).select_from(query.having(*submitted_clause))),
+        db.execute(select(func.count("*")).select_from(query.having(*discarded_clause))),
+        db.execute(select(func.count("*")).select_from(query.having(*conflicting_clause))),
+    )
+
+    submitted = submitted.scalar_one()
+    discarded = discarded.scalar_one()
+    conflicting = conflicting.scalar_one()
+    pending = total - submitted - discarded - conflicting
+
+    return DatasetProgress(
+        total=total,
+        submitted=submitted,
+        discarded=discarded,
+        conflicting=conflicting,
+        pending=pending,
+    )
 
 
 _EXTRA_METADATA_FLAG = "extra"
