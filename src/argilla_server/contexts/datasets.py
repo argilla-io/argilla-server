@@ -447,61 +447,21 @@ async def count_records_by_dataset_id(db: "AsyncSession", dataset_id: UUID) -> i
     return (await db.execute(select(func.count(Record.id)).filter_by(dataset_id=dataset_id))).scalar_one()
 
 
-async def get_dataset_progress_with_group_by(db: "AsyncSession", dataset_id: UUID) -> DatasetProgress:
-
+async def get_dataset_progress(db: "AsyncSession", dataset_id: UUID) -> DatasetProgress:
     submitted_case = case((Response.status == ResponseStatus.submitted, 1), else_=0)
     discarded_case = case((Response.status == ResponseStatus.discarded, 1), else_=0)
-
-    query = (
-        select(Record.id)
-        .filter(Record.dataset_id == dataset_id)
-        .join(Response, Response.record_id == Record.id)
-        .group_by(Response.record_id)
-    )
 
     submitted_clause = func.sum(submitted_case) > 0, func.sum(discarded_case) == 0
     discarded_clause = func.sum(discarded_case) > 0, func.sum(submitted_case) == 0
     conflicting_clause = func.sum(submitted_case) > 0, func.sum(discarded_case) > 0
+
+    query = select(Record.id).join(Response).filter(Record.dataset_id == dataset_id).group_by(Response.record_id)
 
     total, submitted, discarded, conflicting = await asyncio.gather(
         count_records_by_dataset_id(db, dataset_id),
         db.execute(select(func.count("*")).select_from(query.having(*submitted_clause))),
         db.execute(select(func.count("*")).select_from(query.having(*discarded_clause))),
         db.execute(select(func.count("*")).select_from(query.having(*conflicting_clause))),
-    )
-
-    submitted = submitted.scalar_one_or_none() or 0
-    discarded = discarded.scalar_one_or_none() or 0
-    conflicting = conflicting.scalar_one_or_none() or 0
-    pending = total - submitted - discarded - conflicting
-
-    return DatasetProgress(
-        total=total,
-        submitted=submitted,
-        discarded=discarded,
-        conflicting=conflicting,
-        pending=pending,
-    )
-
-
-async def get_dataset_progress(db: "AsyncSession", dataset_id: UUID) -> DatasetProgress:
-    submitted_query = (
-        select(Record.id)
-        .join(Response, and_(Response.record_id == Record.id, Response.status == ResponseStatus.submitted))
-        .filter(Record.dataset_id == dataset_id)
-    )
-
-    discarded_query = (
-        select(Record.id)
-        .join(Response, and_(Response.record_id == Record.id, Response.status == ResponseStatus.discarded))
-        .filter(Record.dataset_id == dataset_id)
-    )
-
-    total, submitted, discarded, conflicting = await asyncio.gather(
-        count_records_by_dataset_id(db, dataset_id),
-        db.execute(select(func.count("*")).select_from(submitted_query.except_(discarded_query))),
-        db.execute(select(func.count("*")).select_from(discarded_query.except_(submitted_query))),
-        db.execute(select(func.count("*")).select_from(submitted_query.intersect(discarded_query))),
     )
 
     submitted = submitted.scalar_one()
