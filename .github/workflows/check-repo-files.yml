@@ -34,6 +34,7 @@ jobs:
               - 'setup.py'
             buildChanges:
               - 'src/**'
+              - 'argilla'
               - 'argilla/frontend/**'
               - 'pyproject.toml'
               - 'setup.py'
