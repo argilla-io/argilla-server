@@ -32,6 +32,7 @@ AGENT_REGEX = r"^(?=.*[a-zA-Z0-9])[a-zA-Z0-9-_:\.\/\s]+$"
 AGENT_MIN_LENGTH = 1
 AGENT_MAX_LENGTH = 200
 
+SCORE_MIN_ITEMS = 1
 SCORE_GREATER_THAN_OR_EQUAL = 0
 SCORE_LESS_THAN_OR_EQUAL = 1
 
@@ -61,7 +62,7 @@ class BaseSuggestion(BaseModel):
     type: Optional[SuggestionType]
     value: Any
     agent: Optional[str]
-    score: Optional[float]
+    score: Optional[Union[float, List[float]]]
 
 
 class Suggestion(BaseSuggestion):
@@ -78,8 +79,9 @@ class Suggestions(BaseModel):
 
 
 SuggestionScoreField = Annotated[
-    Optional[float],
+    Optional[Union[float, List[float]]],
     Field(
+        min_items=SCORE_MIN_ITEMS,
         ge=SCORE_GREATER_THAN_OR_EQUAL,
         le=SCORE_LESS_THAN_OR_EQUAL,
         description="The score assigned to the suggestion",
@@ -112,3 +114,15 @@ class SuggestionCreate(BaseSuggestion):
         description="Agent used to generate the suggestion",
     )
     score: SuggestionScoreField
+
+    @root_validator(skip_on_failure=True)
+    def check_value_and_score_length(cls, values: dict) -> dict:
+        value, score = values.get("value"), values.get("score")
+
+        if not isinstance(value, list) or not isinstance(score, list):
+            return values
+
+        if len(value) != len(score):
+            raise ValueError("number of items on value and score attributes doesn't match")
+
+        return values

@@ -13,7 +13,7 @@
 #  limitations under the License.
 
 from datetime import datetime
-from typing import Any
+from typing import Any, List
 from uuid import UUID, uuid4
 
 import pytest
@@ -53,6 +53,27 @@ class TestUpsertSuggestion:
         )
 
         assert response.status_code == 201
+
+    @pytest.mark.parametrize("score", [[1.0], [1.0, 0.5], [1.0, 0.5, 0.9, 0.3]])
+    async def test_upsert_suggestion_with_list_of_scores(
+        self, async_client: AsyncClient, owner_auth_header: dict, score: List[float]
+    ):
+        record = await RecordFactory.create()
+        question = await TextQuestionFactory.create(dataset=record.dataset)
+
+        response = await async_client.put(
+            self.url(record.id),
+            headers=owner_auth_header,
+            json={
+                "question_id": str(question.id),
+                "type": SuggestionType.model,
+                "value": "value",
+                "score": score,
+            },
+        )
+
+        assert response.status_code == 201
+        assert response.json()["score"] == score
 
     @pytest.mark.parametrize("agent", ["", " ", "  ", "-", "_", ":", ".", "/", ","])
     async def test_upsert_suggestion_with_invalid_agent(
@@ -131,6 +152,101 @@ class TestUpsertSuggestion:
                 "value": "value",
                 "agent": "agent",
                 "score": 1.1,
+            },
+        )
+
+        assert response.status_code == 422
+
+    async def test_upsert_suggestion_with_list_of_scores_including_invalid_lower_score(
+        self, async_client: AsyncClient, owner_auth_header: dict
+    ):
+        response = await async_client.put(
+            self.url(uuid4()),
+            headers=owner_auth_header,
+            json={
+                "question_id": str(uuid4()),
+                "type": SuggestionType.model,
+                "value": "value",
+                "agent": "agent",
+                "score": [1.0, 0.5, -0.1],
+            },
+        )
+
+        assert response.status_code == 422
+
+    async def test_upsert_suggestion_with_list_of_scores_including_invalid_upper_score(
+        self, async_client: AsyncClient, owner_auth_header: dict
+    ):
+        response = await async_client.put(
+            self.url(uuid4()),
+            headers=owner_auth_header,
+            json={
+                "question_id": str(uuid4()),
+                "type": SuggestionType.model,
+                "value": "value",
+                "agent": "agent",
+                "score": [1.0, 0.5, 1.1],
+            },
+        )
+
+        assert response.status_code == 422
+
+    async def test_upsert_suggestion_with_list_of_scores_including_none_values(
+        self, async_client: AsyncClient, owner_auth_header: dict
+    ):
+        response = await async_client.put(
+            self.url(uuid4()),
+            headers=owner_auth_header,
+            json={
+                "question_id": str(uuid4()),
+                "type": SuggestionType.model,
+                "value": "value",
+                "agent": "agent",
+                "score": [1.0, 0.5, None],
+            },
+        )
+
+        assert response.status_code == 422
+
+    async def test_upsert_suggestion_with_empty_list_of_scores(
+        self, async_client: AsyncClient, owner_auth_header: dict
+    ):
+        response = await async_client.put(
+            self.url(uuid4()),
+            headers=owner_auth_header,
+            json={
+                "question_id": str(uuid4()),
+                "type": SuggestionType.model,
+                "value": "value",
+                "agent": "agent",
+                "score": [],
+            },
+        )
+
+        assert response.status_code == 422
+
+    @pytest.mark.parametrize("score", [[1.0], [1.0, 0.5], [1.0, 0.5, 0.9, 0.3]])
+    async def test_upsert_suggestion_with_list_of_scores_not_matching_values_length(
+        self, async_client: AsyncClient, owner_auth_header: dict, score: List[float]
+    ):
+        dataset = await DatasetFactory.create()
+
+        question = await SpanQuestionFactory.create(name="span-question", dataset=dataset)
+
+        record = await RecordFactory.create(fields={"field-a": "Hello"}, dataset=dataset)
+
+        response = await async_client.put(
+            self.url(record.id),
+            headers=owner_auth_header,
+            json={
+                "question_id": str(question.id),
+                "type": SuggestionType.model,
+                "value": [
+                    {"label": "label-a", "start": 0, "end": 1},
+                    {"label": "label-b", "start": 2, "end": 3},
+                    {"label": "label-c", "start": 4, "end": 5},
+                ],
+                "score": score,
             },
         )
 
