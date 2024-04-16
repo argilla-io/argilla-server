@@ -23,7 +23,6 @@ import argilla_server.errors.future as errors
 from argilla_server.models import Dataset, Question, User
 from argilla_server.policies import QuestionPolicyV1, authorize
 from argilla_server.schemas.v1.questions import (
-
     QuestionCreate,
     QuestionUpdate,
 )
