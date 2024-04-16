@@ -18,7 +18,11 @@ These are the section headers that we use:
 
 ### Added
 
-- Add support to specify a list of score values for suggestions `score` attribute. ([#98](https://github.com/argilla-io/argilla-server/pull/98))
+- Added `allow_overlapping` field for creation and update of span question settings. ([#89](https://github.com/argilla-io/argilla-server/pull/89))
+- Added `ARGILLA_LABEL_SELECTION_OPTIONS_MAX_ITEMS` environment variable to set the number of maximum items to be used by label and multi label questions. By default this value is set to `500`. ([#85](https://github.com/argilla-io/argilla-server/pull/85))
+- Added `ARGILLA_SPAN_OPTIONS_MAX_ITEMS` environment variable to set the number of maximum items to be used by span questions. By default this value is set to `500`. ([#85](https://github.com/argilla-io/argilla-server/pull/85))
+- Added `GET /api/v1/datasets/:dataset_id/progress` endpoint to return progress metrics related with one specific dataset. ([#90](https://github.com/argilla-io/argilla-server/pull/90))
+- (THIS ONE SHOULD BE MOVED TO RELEASE 1.28 ONCE IT'S DONE) Added support to specify a list of score values for suggestions `score` attribute. ([#98](https://github.com/argilla-io/argilla-server/pull/98))
 
 ## [1.26.1](https://github.com/argilla-io/argilla-server/compare/v1.26.0...v1.26.1)
 
