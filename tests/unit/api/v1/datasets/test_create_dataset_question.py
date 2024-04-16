@@ -13,6 +13,7 @@
 #  limitations under the License.
 
 from datetime import datetime
+from typing import Union
 from uuid import UUID
 
 import pytest
@@ -30,30 +31,38 @@ class TestCreateDatasetQuestion:
     def url(self, dataset_id: UUID) -> str:
         return f"/api/v1/datasets/{dataset_id}/questions"
 
+    @pytest.mark.parametrize(
+        "allow_overlapping,expected_allow_overlapping", [(None, False), (False, False), (True, True)]
+    )
     async def test_create_dataset_span_question(
-        self, async_client: AsyncClient, db: AsyncSession, owner_auth_header: dict
+        self,
+        async_client: AsyncClient,
+        db: AsyncSession,
+        owner_auth_header: dict,
+        allow_overlapping: Union[bool, None],
+        expected_allow_overlapping: bool,
     ):
         dataset = await DatasetFactory.create()
         await TextFieldFactory.create(name="field-a", dataset=dataset)
 
+        settings = {
+            "type": QuestionType.span,
+            "field": "field-a",
+            "visible_options": 3,
+            "options": [
+                {"value": "label-a", "text": "Label A", "description": "Label A description"},
+                {"value": "label-b", "text": "Label B", "description": "Label B description"},
+                {"value": "label-c", "text": "Label C", "description": "Label C description"},
+            ],
+        }
+
+        if allow_overlapping is not None:
+            settings["allow_overlapping"] = allow_overlapping
+
         response = await async_client.post(
             self.url(dataset.id),
             headers=owner_auth_header,
-            json={
-                "name": "name",
-                "title": "Title",
-                "description": "Description",
-                "settings": {
-                    "type": QuestionType.span,
-                    "field": "field-a",
-                    "visible_options": 3,
-                    "options": [
-                        {"value": "label-a", "text": "Label A", "description": "Label A description"},
-                        {"value": "label-b", "text": "Label B", "description": "Label B description"},
-                        {"value": "label-c", "text": "Label C", "description": "Label C description"},
-                    ],
-                },
-            },
+            json={"name": "name", "title": "Title", "description": "Description", "settings": settings},
         )
 
         assert response.status_code == 201
@@ -75,7 +84,7 @@ class TestCreateDatasetQuestion:
                     {"value": "label-b", "text": "Label B", "description": "Label B description"},
                     {"value": "label-c", "text": "Label C", "description": "Label C description"},
                 ],
-                "allow_overlapping": False,
+                "allow_overlapping": expected_allow_overlapping,
                 "allow_character_annotation": True,
             },
             "dataset_id": str(dataset.id),
@@ -147,7 +156,7 @@ class TestCreateDatasetQuestion:
         "visible_options,error_msg",
         [
             (1, "ensure this value is greater than or equal to 3"),
-            (4, "The value for 'visible_options' must be less or equal to the number of items in 'options' (3)"),
+            (4, "the value for 'visible_options' must be less or equal to the number of items in 'options' (3)"),
         ],
     )
     async def test_create_question_with_wrong_visible_options(

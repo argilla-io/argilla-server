@@ -18,10 +18,32 @@ These are the section headers that we use:
 
 ### Added
 
-- Add support for creating and listing questions with `SpanQuestionSettings`. ([#24](https://github.com/argilla-io/argilla-server/pull/24))
-- Add support for creating and updating responses for questions of type `span`. ([#54](https://github.com/argilla-io/argilla-server/pull/54))
-- Add support for upserting suggestions for questions of type `span`. ([#54](https://github.com/argilla-io/argilla-server/pull/54))
+- Added `allow_overlapping` field for creation and update of span question settings. ([#89](https://github.com/argilla-io/argilla-server/pull/89))
+- Added `ARGILLA_LABEL_SELECTION_OPTIONS_MAX_ITEMS` environment variable to set the number of maximum items to be used by label and multi label questions. By default this value is set to `500`. ([#85](https://github.com/argilla-io/argilla-server/pull/85))
+- Added `ARGILLA_SPAN_OPTIONS_MAX_ITEMS` environment variable to set the number of maximum items to be used by span questions. By default this value is set to `500`. ([#85](https://github.com/argilla-io/argilla-server/pull/85))
+- Added `GET /api/v1/datasets/:dataset_id/progress` endpoint to return progress metrics related with one specific dataset. ([#90](https://github.com/argilla-io/argilla-server/pull/90))
+
+## [1.26.1](https://github.com/argilla-io/argilla-server/compare/v1.26.0...v1.26.1)
+
+> [!NOTE]
+> This patch version only includes changes in the argilla frontend to support RTL languages.
+> No changes where made on `argilla-server` repository for this patch version.
+
+### Added
+
+- Added latests changes from argilla to support for automatic detection of RTL languages. ([#4686](https://github.com/argilla-io/argilla/pull/4686))
+
+## [1.26.0](https://github.com/argilla-io/argilla-server/compare/v1.25.0...v1.26.0)
+
+### Added
+
+- Add support for new `span` questions. ([#54](https://github.com/argilla-io/argilla-server/pull/54))
 - Add `inserted_at` and `updated_at` missing fields to API v1 `Suggestion` schema. ([#52](https://github.com/argilla-io/argilla-server/pull/52))
+- Add validation for `visible_options` attribute when updating a a question. ([#76](https://github.com/argilla-io/argilla-server/pull/76))
+
+### Removed
+
+- Removed unused `GET /api/workspaces` endpoint. ([#83](https://github.com/argilla-io/argilla-server/pull/83))
 
 ### Fixed
 

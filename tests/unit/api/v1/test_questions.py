@@ -536,7 +536,7 @@ async def test_delete_question_belonging_to_published_dataset(
     response = await async_client.delete(f"/api/v1/questions/{question.id}", headers=owner_auth_header)
 
     assert response.status_code == 422
-    assert response.json() == {"detail": "Questions cannot be deleted for a published dataset"}
+    assert response.json() == {"detail": "questions cannot be deleted for a published dataset"}
     assert (await db.execute(select(func.count(Question.id)))).scalar() == 1
 
 

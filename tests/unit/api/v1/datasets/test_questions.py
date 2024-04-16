@@ -26,11 +26,11 @@ from argilla_server.schemas.v1.questions import (
     RANKING_OPTIONS_MAX_ITEMS,
     RATING_OPTIONS_MAX_ITEMS,
     RATING_OPTIONS_MIN_ITEMS,
-    SPAN_OPTIONS_MAX_ITEMS,
     VALUE_TEXT_OPTION_DESCRIPTION_MAX_LENGTH,
     VALUE_TEXT_OPTION_TEXT_MAX_LENGTH,
     VALUE_TEXT_OPTION_VALUE_MAX_LENGTH,
 )
+from argilla_server.settings import settings
 from httpx import AsyncClient
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -431,7 +431,7 @@ class TestDatasetQuestions:
         )
 
         assert response.status_code == 422
-        assert response.json() == {"detail": "Question cannot be created for a published dataset"}
+        assert response.json() == {"detail": "questions cannot be created for a published dataset"}
         assert (await db.execute(select(func.count(Question.id)))).scalar() == 0
 
     async def test_create_dataset_question_with_nonexistent_dataset_id(
@@ -584,7 +584,7 @@ class TestDatasetQuestions:
             {"type": "span", "options": []},
             {
                 "type": "span",
-                "options": [{"value": value, "text": value} for value in range(0, SPAN_OPTIONS_MAX_ITEMS + 1)],
+                "options": [{"value": value, "text": value} for value in range(0, settings.span_options_max_items + 1)],
             },
         ],
     )

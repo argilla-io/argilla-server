@@ -12,23 +12,13 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-API_KEY_HEADER_NAME = "X-Argilla-Api-Key"
-WORKSPACE_HEADER_NAME = "X-Argilla-Workspace"
+from typing import TYPE_CHECKING
 
-DEFAULT_USERNAME = "argilla"
-DEFAULT_PASSWORD = "1234"
-DEFAULT_API_KEY = "argilla.apikey"
+import pytest
+from pytest_mock import MockerFixture
+from sqlalchemy.ext.asyncio import AsyncSession
 
-DEFAULT_MAX_KEYWORD_LENGTH = 128
-DEFAULT_TELEMETRY_KEY = "C6FkcaoCbt78rACAgvyBxGBcMB3dM3nn"
 
-# Questions settings defaults
-DEFAULT_LABEL_SELECTION_OPTIONS_MAX_ITEMS = 500
-DEFAULT_SPAN_OPTIONS_MAX_ITEMS = 500
-
-# The metadata field name prefix defined for protected (non-searchable) values
-PROTECTED_METADATA_FIELD_PREFIX = "_"
-
-ES_INDEX_REGEX_PATTERN = r"^(?!-|_)[a-z0-9-_]+$"
-
-JS_MAX_SAFE_INTEGER = 9007199254740991
+@pytest.fixture(autouse=True)
+def mock_session_local(mocker: MockerFixture, async_db_proxy: AsyncSession) -> None:
+    mocker.patch("argilla_server.cli.search_engine.reindex.AsyncSessionLocal", return_value=async_db_proxy)
