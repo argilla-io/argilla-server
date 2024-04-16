@@ -84,5 +84,5 @@ class RecordUpsert(RecordCreate):
 
 class RecordsBulkUpsert(RecordsBulkCreate):
     items: List[RecordUpsert] = Field(
-        ..., min_items=RECORDS_BULK_CREATE_MIN_ITEMS, max_items=RECORDS_BULK_CREATE_MAX_ITEMS
+        ..., min_items=RECORDS_BULK_UPSERT_MIN_ITEMS, max_items=RECORDS_BULK_UPSERT_MAX_ITEMS
     )
