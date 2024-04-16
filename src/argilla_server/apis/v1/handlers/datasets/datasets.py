@@ -20,14 +20,15 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from argilla_server.contexts import accounts, datasets
 from argilla_server.database import get_async_db
-from argilla_server.enums import ResponseStatusFilter
+from argilla_server.enums import ResponseStatus
 from argilla_server.models import Dataset as DatasetModel
-from argilla_server.models import ResponseStatus, User
+from argilla_server.models import User
 from argilla_server.policies import DatasetPolicyV1, MetadataPropertyPolicyV1, authorize, is_authorized
 from argilla_server.schemas.v1.datasets import (
     Dataset,
     DatasetCreate,
     DatasetMetrics,
+    DatasetProgress,
     Datasets,
     DatasetUpdate,
 )
@@ -133,7 +134,10 @@ async def get_dataset(
 
 @router.get("/me/datasets/{dataset_id}/metrics", response_model=DatasetMetrics)
 async def get_current_user_dataset_metrics(
-    *, db: AsyncSession = Depends(get_async_db), dataset_id: UUID, current_user: User = Security(auth.get_current_user)
+    *,
+    db: AsyncSession = Depends(get_async_db),
+    dataset_id: UUID,
+    current_user: User = Security(auth.get_current_user),
 ):
     dataset = await _get_dataset_or_raise(db, dataset_id)
 
@@ -146,16 +150,30 @@ async def get_current_user_dataset_metrics(
         "responses": {
             "count": await datasets.count_responses_by_dataset_id_and_user_id(db, dataset_id, current_user.id),
             "submitted": await datasets.count_responses_by_dataset_id_and_user_id(
-                db, dataset_id, current_user.id, ResponseStatus(ResponseStatusFilter.submitted)
+                db, dataset_id, current_user.id, ResponseStatus.submitted
             ),
             "discarded": await datasets.count_responses_by_dataset_id_and_user_id(
-                db, dataset_id, current_user.id, ResponseStatus(ResponseStatusFilter.discarded)
+                db, dataset_id, current_user.id, ResponseStatus.discarded
             ),
             "draft": await datasets.count_responses_by_dataset_id_and_user_id(
-                db, dataset_id, current_user.id, ResponseStatus(ResponseStatusFilter.draft)
+                db, dataset_id, current_user.id, ResponseStatus.draft
             ),
         },
     }
+
+
+@router.get("/datasets/{dataset_id}/progress", response_model=DatasetProgress)
+async def get_dataset_progress(
+    *,
+    db: AsyncSession = Depends(get_async_db),
+    dataset_id: UUID,
+    current_user: User = Security(auth.get_current_user),
+):
+    dataset = await _get_dataset_or_raise(db, dataset_id)
+
+    await authorize(current_user, DatasetPolicyV1.get(dataset))
+
+    return await datasets.get_dataset_progress(db, dataset_id)
 
 
 @router.post("/datasets", status_code=status.HTTP_201_CREATED, response_model=Dataset)

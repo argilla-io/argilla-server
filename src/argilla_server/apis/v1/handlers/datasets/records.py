@@ -27,7 +27,7 @@ from argilla_server.apis.v1.handlers.datasets.records_search import (
     _get_search_responses,
     parse_record_include_param,
 )
-from argilla_server.contexts import datasets
+from argilla_server.contexts import datasets, records
 from argilla_server.contexts.bulk.records.records_create_bulk import RecordsCreateBulk
 from argilla_server.contexts.bulk.records.records_update_bulk import RecordsUpdateBulk
 from argilla_server.database import get_async_db
@@ -41,6 +41,8 @@ from argilla_server.schemas.v1.records import (
     Record,
     RecordIncludeParam,
     Records,
+    RecordsBulk,
+    RecordsBulkUpsert,
     RecordsCreate,
     RecordsUpdate,
 )
@@ -175,6 +177,35 @@ async def update_dataset_records(
         telemetry_client.track_data(action="DatasetRecordsUpdated", data={"records": len(records_update.items)})
     except ValueError as err:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(err))
+
+
+@router.post(
+    "/datasets/{dataset_id}/records/bulk",
+    response_model=RecordsBulk,
+    status_code=status.HTTP_200_OK,
+    response_model_exclude_unset=True,
+)
+async def create_dataset_records_bulk(
+    *,
+    dataset_id: UUID,
+    records_bulk_upsert: RecordsBulkUpsert,
+    db: AsyncSession = Depends(get_async_db),
+    search_engine: SearchEngine = Depends(get_search_engine),
+    current_user: User = Security(auth.get_current_user),
+):
+    dataset = await _get_dataset_or_raise(
+        db,
+        dataset_id,
+        with_fields=True,
+        with_questions=True,
+        with_metadata_properties=True,
+        with_vectors_settings=True,
+    )
+
+    await authorize(current_user, DatasetPolicyV1.create_records(dataset))
+
+    created_records = await records.upsert_dataset_records(db, search_engine, dataset, records_bulk_upsert.items)
+    return RecordsBulk(items=created_records)
 
 
 @router.delete("/datasets/{dataset_id}/records", status_code=status.HTTP_204_NO_CONTENT)

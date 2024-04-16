@@ -15,22 +15,17 @@
 from typing import Union
 from uuid import UUID
 
-from sqlalchemy import func, select
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 import argilla_server.errors.future as errors
-from argilla_server.enums import QuestionType
 from argilla_server.models import Dataset, Question, User
 from argilla_server.policies import QuestionPolicyV1, authorize
 from argilla_server.schemas.v1.questions import (
-    LabelSelectionQuestionSettings,
-    LabelSelectionSettingsUpdate,
+
     QuestionCreate,
-    QuestionSettings,
-    QuestionSettingsUpdate,
     QuestionUpdate,
-    SpanQuestionSettingsCreate,
 )
 from argilla_server.validators.questions import (
     QuestionCreateValidator,
