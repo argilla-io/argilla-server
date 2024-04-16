@@ -18,11 +18,15 @@ These are the section headers that we use:
 
 ### Added
 
-- Add support to specify a list of score values for suggestions `score` attribute. ([#98](https://github.com/argilla-io/argilla-server/pull/98))
+- Added `allow_overlapping` field for creation and update of span question settings. ([#89](https://github.com/argilla-io/argilla-server/pull/89))
+- Added `ARGILLA_LABEL_SELECTION_OPTIONS_MAX_ITEMS` environment variable to set the number of maximum items to be used by label and multi label questions. By default this value is set to `500`. ([#85](https://github.com/argilla-io/argilla-server/pull/85))
+- Added `ARGILLA_SPAN_OPTIONS_MAX_ITEMS` environment variable to set the number of maximum items to be used by span questions. By default this value is set to `500`. ([#85](https://github.com/argilla-io/argilla-server/pull/85))
+- Added `GET /api/v1/datasets/:dataset_id/progress` endpoint to return progress metrics related with one specific dataset. ([#90](https://github.com/argilla-io/argilla-server/pull/90))
+- (THIS LINE SHOULD BE MOVED TO UNRELEASED ONCE RELEASE 1.27 IT'S DONE) Added support to specify a list of score values for suggestions `score` attribute. ([#98](https://github.com/argilla-io/argilla-server/pull/98))
 
 ### Removed
 
-- Removed support for specifying `score` attributes for individual value items when creating suggestions associated with span questions. ([#101](https://github.com/argilla-io/argilla-server/pull/101))
+- (THIS LINE SHOULD BE MOVED TO UNRELEASED ONCE RELEASE 1.27 IT'S DONE) Removed support for specifying `score` attributes for individual value items when creating suggestions associated with span questions. ([#101](https://github.com/argilla-io/argilla-server/pull/101))
 
 ## [1.26.1](https://github.com/argilla-io/argilla-server/compare/v1.26.0...v1.26.1)
 

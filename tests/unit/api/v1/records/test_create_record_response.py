@@ -418,7 +418,39 @@ class TestCreateRecordResponse:
 
         assert response.status_code == 422
         assert response.json() == {
-            "detail": "undefined label 'label-non-existent' for span question.\nValid labels are: ['label-a', 'label-b', 'label-c']"
+            "detail": "undefined label 'label-non-existent' for span question.\n"
+            "Valid labels are: ['label-a', 'label-b', 'label-c']"
         }
+
+        assert (await db.execute(select(func.count(Response.id)))).scalar() == 0
+
+    async def test_create_record_response_for_span_question_with_overlapped_values(
+        self, async_client: AsyncClient, db: AsyncSession, owner: User, owner_auth_header: dict
+    ):
+        dataset = await DatasetFactory.create()
+
+        await SpanQuestionFactory.create(name="span-question", dataset=dataset)
+
+        record = await RecordFactory.create(fields={"field-a": "Hello, this is a text field"}, dataset=dataset)
+
+        response = await async_client.post(
+            self.url(record.id),
+            headers=owner_auth_header,
+            json={
+                "values": {
+                    "span-question": {
+                        "value": [
+                            {"label": "label-a", "start": 0, "end": 3},
+                            {"label": "label-a", "start": 6, "end": 8},
+                            {"label": "label-b", "start": 2, "end": 5},
+                        ],
+                    },
+                },
+                "status": ResponseStatusFilter.submitted,
+            },
+        )
+
+        assert response.status_code == 422
+        assert response.json() == {"detail": "overlapping values found between spans at index idx=0 and idx=2"}
 
         assert (await db.execute(select(func.count(Response.id)))).scalar() == 0
