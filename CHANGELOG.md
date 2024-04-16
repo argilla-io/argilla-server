@@ -16,6 +16,23 @@ These are the section headers that we use:
 
 ## [Unreleased]()
 
+### Added
+
+- Added `allow_overlapping` field for creation and update of span question settings. ([#89](https://github.com/argilla-io/argilla-server/pull/89))
+- Added `ARGILLA_LABEL_SELECTION_OPTIONS_MAX_ITEMS` environment variable to set the number of maximum items to be used by label and multi label questions. By default this value is set to `500`. ([#85](https://github.com/argilla-io/argilla-server/pull/85))
+- Added `ARGILLA_SPAN_OPTIONS_MAX_ITEMS` environment variable to set the number of maximum items to be used by span questions. By default this value is set to `500`. ([#85](https://github.com/argilla-io/argilla-server/pull/85))
+- Added `GET /api/v1/datasets/:dataset_id/progress` endpoint to return progress metrics related with one specific dataset. ([#90](https://github.com/argilla-io/argilla-server/pull/90))
+
+## [1.26.1](https://github.com/argilla-io/argilla-server/compare/v1.26.0...v1.26.1)
+
+> [!NOTE]
+> This patch version only includes changes in the argilla frontend to support RTL languages.
+> No changes where made on `argilla-server` repository for this patch version.
+
+### Added
+
+- Added latests changes from argilla to support for automatic detection of RTL languages. ([#4686](https://github.com/argilla-io/argilla/pull/4686))
+
 ## [1.26.0](https://github.com/argilla-io/argilla-server/compare/v1.25.0...v1.26.0)
 
 ### Added
