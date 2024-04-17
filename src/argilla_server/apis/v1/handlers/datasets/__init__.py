@@ -17,10 +17,13 @@ from fastapi import APIRouter
 from argilla_server.apis.v1.handlers.datasets.datasets import router as datasets_router
 from argilla_server.apis.v1.handlers.datasets.questions import router as questions_router
 from argilla_server.apis.v1.handlers.datasets.records import router as records_router
+from argilla_server.apis.v1.handlers.datasets.records_bulk import router as records_bulk_router
 from argilla_server.apis.v1.handlers.datasets.records_search import router as records_search_router
 
 router = APIRouter(tags=["datasets"])
+
 router.include_router(datasets_router)
 router.include_router(questions_router)
 router.include_router(records_router)
+router.include_router(records_bulk_router)
 router.include_router(records_search_router)

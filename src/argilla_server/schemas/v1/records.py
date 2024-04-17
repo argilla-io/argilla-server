@@ -34,9 +34,6 @@ RECORDS_CREATE_MAX_ITEMS = 1000
 RECORDS_UPDATE_MIN_ITEMS = 1
 RECORDS_UPDATE_MAX_ITEMS = 1000
 
-RECORDS_BULK_UPSERT_MIN_ITEMS = 1
-RECORDS_BULK_UPSERT_MAX_ITEMS = 1000
-
 FILTERS_AND_MIN_ITEMS = 1
 FILTERS_AND_MAX_ITEMS = 50
 
@@ -151,6 +148,11 @@ class RecordUpdateWithId(RecordUpdate):
     id: UUID
 
 
+class RecordUpsert(RecordCreate):
+    id: Optional[UUID]
+    fields: Optional[Dict[str, Union[StrictStr, None]]]
+
+
 class RecordIncludeParam(BaseModel):
     relationships: Optional[List[RecordInclude]] = Field(None, alias="keys")
     vectors: Optional[List[str]] = Field(None, alias="vectors")
@@ -210,25 +212,6 @@ class RecordsCreate(BaseModel):
 class RecordsUpdate(BaseModel):
     # TODO: review this definition and align to create model
     items: List[RecordUpdateWithId] = Field(..., min_items=RECORDS_UPDATE_MIN_ITEMS, max_items=RECORDS_UPDATE_MAX_ITEMS)
-
-
-class RecordUpsert(BaseModel):
-    id: Optional[UUID]
-    fields: Optional[Dict[str, Union[StrictStr, None]]]
-    metadata: Optional[Dict[str, Any]]
-    external_id: Optional[str]
-
-
-class RecordsBulkUpsert(BaseModel):
-    items: List[RecordUpsert] = Field(
-        ...,
-        min_items=RECORDS_BULK_UPSERT_MIN_ITEMS,
-        max_items=RECORDS_BULK_UPSERT_MAX_ITEMS,
-    )
-
-
-class RecordsBulk(BaseModel):
-    items: List[Record]
 
 
 class MetadataParsedQueryParam:

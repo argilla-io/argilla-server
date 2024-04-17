@@ -12,7 +12,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 import secrets
-from typing import TYPE_CHECKING, Iterable, List, Sequence, Union
+from typing import TYPE_CHECKING, Dict, Iterable, List, Sequence, Union
 from uuid import UUID
 
 from passlib.context import CryptContext
@@ -188,3 +188,8 @@ def verify_password(password: str, password_hash: str) -> bool:
 
 def _generate_random_password() -> str:
     return secrets.token_urlsafe()
+
+
+async def fetch_users_by_ids_as_dict(db: "AsyncSession", user_ids: List[UUID]) -> Dict[UUID, User]:
+    users = await list_users_by_ids(db, set(user_ids))
+    return {user.id: user for user in users}

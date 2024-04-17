@@ -30,7 +30,7 @@ from tests.factories import (
 
 
 @pytest.mark.asyncio
-class TestCreateDatasetRecordsBulk:
+class TestDatasetRecordsBulk:
 
     def url(self, dataset_id: UUID) -> str:
         return f"/api/v1/datasets/{dataset_id}/records/bulk"
@@ -51,14 +51,14 @@ class TestCreateDatasetRecordsBulk:
                     "prompt": "Does exercise help reduce stress?",
                     "response": "Exercise can definitely help reduce stress.",
                 },
-                "metadata": {"terms_metadata": ["A", "B", "C"]},
+                "metadata": {"terms_metadata": ["a", "b", "c"]},
             },
             {
                 "fields": {
                     "prompt": "Does exercise help reduce stress?",
                     "response": "Exercise can definitely help reduce stress.",
                 },
-                "metadata": {"terms_metadata": "A"},
+                "metadata": {"terms_metadata": "a"},
                 "external_id": "external-id-1",
             },
             {
@@ -70,7 +70,7 @@ class TestCreateDatasetRecordsBulk:
             },
         ],
     )
-    async def test_create_dataset_records(
+    async def test_create_dataset_records_bulk(
         self, async_client: AsyncClient, db: AsyncSession, owner_auth_header: dict, record_create: dict
     ):
         dataset = await self.test_dataset()
@@ -79,7 +79,7 @@ class TestCreateDatasetRecordsBulk:
             self.url(dataset.id), headers=owner_auth_header, json={"items": [record_create]}
         )
 
-        assert response.status_code == 200
+        assert response.status_code == 201, response.json()
         assert (await db.execute(select(func.count(Record.id)))).scalar_one() == 1
         record = (await db.execute(select(Record))).scalar_one()
 
@@ -94,6 +94,9 @@ class TestCreateDatasetRecordsBulk:
                     "metadata": record.metadata_,
                     "inserted_at": record.inserted_at.isoformat(),
                     "updated_at": record.updated_at.isoformat(),
+                    "vectors": {},
+                    "responses": [],
+                    "suggestions": [],
                 }
             ]
         }
@@ -105,7 +108,7 @@ class TestCreateDatasetRecordsBulk:
         dataset = await self.test_dataset()
         records = await RecordFactory.create_batch(dataset=dataset, size=100)
 
-        response = await async_client.post(
+        response = await async_client.put(
             self.url(dataset.id),
             headers=owner_auth_header,
             json={"items": [{"id": str(record.id), "metadata": metadata} for record in records]},
@@ -124,7 +127,7 @@ class TestCreateDatasetRecordsBulk:
         dataset = await self.test_dataset()
         records = await RecordFactory.create_batch(dataset=dataset, size=100)
 
-        response = await async_client.post(
+        response = await async_client.put(
             self.url(dataset.id),
             headers=owner_auth_header,
             json={
@@ -132,7 +135,7 @@ class TestCreateDatasetRecordsBulk:
             },
         )
 
-        assert response.status_code == 200
+        assert response.status_code == 200, response.json()
         assert (await db.execute(select(func.count(Record.id)))).scalar_one() == len(records)
         updated_records = (await db.execute(select(Record))).scalars().all()
         for record in updated_records:
