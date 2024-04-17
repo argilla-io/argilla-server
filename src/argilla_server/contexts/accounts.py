@@ -190,6 +190,6 @@ def _generate_random_password() -> str:
     return secrets.token_urlsafe()
 
 
-async def fetch_users_by_ids_as_dict(db: AsyncSession, user_ids: List[UUID]) -> Dict[UUID, User]:
-    users = await accounts.list_users_by_ids(db, set(user_ids))
+async def fetch_users_by_ids_as_dict(db: "AsyncSession", user_ids: List[UUID]) -> Dict[UUID, User]:
+    users = await list_users_by_ids(db, set(user_ids))
     return {user.id: user for user in users}
