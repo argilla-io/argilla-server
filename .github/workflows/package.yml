@@ -62,7 +62,7 @@ jobs:
           - searchEngineDockerImage: docker.elastic.co/elasticsearch/elasticsearch:8.8.2
             searchEngineDockerEnv: '{"discovery.type": "single-node", "xpack.security.enabled": "false"}'
             postgresDockerImage: postgres:14
-            coverageReport: coverage-postgres-14
+            coverageReport: coverage-elasticsearch-8.8.2-postgres-14
             runsOn: ubuntu-latest
           - searchEngineDockerImage: opensearchproject/opensearch:2.4.1
             searchEngineDockerEnv: '{"discovery.type": "single-node", "plugins.security.disabled": "true"}'
