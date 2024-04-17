@@ -75,6 +75,7 @@ jobs:
     with:
       searchEngineDockerImage: ${{ matrix.searchEngineDockerImage }}
       searchEngineDockerEnv: ${{ matrix.searchEngineDockerEnv }}
+      postgresDockerImage: ${{ matrix.postgresDockerImage }}
       coverageReport: coverage
       runsOn: ${{ matrix.runsOn }}
       pytestArgs: tests/unit
