@@ -69,7 +69,6 @@ async def create_dataset_records_bulk(
 @router.put(
     "/datasets/{dataset_id}/records/bulk",
     response_model=RecordsBulk,
-    status_code=status.HTTP_200_OK,
     response_model_exclude_unset=True,
 )
 async def upsert_dataset_records_bulk(
