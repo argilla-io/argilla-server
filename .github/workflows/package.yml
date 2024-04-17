@@ -71,7 +71,7 @@ jobs:
             searchEngineDockerEnv: '{"discovery.type": "single-node", "plugins.security.disabled": "true"}'
             coverageReport: coverage-opensearch-2.4.1
             runsOn: ubuntu-latest
-    name: Run unit tests ({{ matrix.name }})
+    name: Run unit tests (${{ matrix.name }})
     uses: ./.github/workflows/run-python-tests.yml
     needs: check_repo_files
     if: needs.check_repo_files.outputs.pythonChanges == 'true'
