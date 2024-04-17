@@ -452,7 +452,7 @@ async def get_dataset_progress(db: AsyncSession, dataset_id: UUID) -> DatasetPro
     discarded_clause = func.sum(discarded_case) > 0, func.sum(submitted_case) == 0
     conflicting_clause = func.sum(submitted_case) > 0, func.sum(discarded_case) > 0
 
-    query = select(Record.id).join(Response).filter(Record.dataset_id == dataset_id).group_by(Record.id)
+    query = select(Record.id).join(Response).filter(Record.dataset_id == dataset_id).group_by(Response.record_id)
 
     total, submitted, discarded, conflicting = await asyncio.gather(
         count_records_by_dataset_id(db, dataset_id),
