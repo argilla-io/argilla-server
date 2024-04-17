@@ -14,7 +14,7 @@
 
 import copy
 from abc import ABC, abstractmethod
-from typing import Dict, Union, List
+from typing import Dict, List, Union
 from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -159,6 +159,7 @@ class RecordsBulkUpsertValidator:
                     RecordCreateValidator(record_upsert).validate_for(dataset)
             except ValueError as ex:
                 raise ValueError(f"record at position {idx} is not valid because {ex}") from ex
+
 
 # class RecordsBulkUpdateValidator:
 #     def __init__(self, records_update: RecordsBulkUpdate, db: AsyncSession):
