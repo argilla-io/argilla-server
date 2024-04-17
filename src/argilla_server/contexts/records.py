@@ -12,7 +12,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from typing import List, Optional, Sequence, Union, Iterable, Dict
+from typing import Dict, Iterable, List, Optional, Sequence, Union
 from uuid import UUID
 
 from sqlalchemy import select, sql
@@ -145,7 +145,9 @@ async def delete_suggestions_by_record_ids(db: AsyncSession, record_ids: Iterabl
     await db.execute(sql.delete(Suggestion).filter(Suggestion.record_id.in_(record_ids)))
 
 
-async def fetch_records_by_ids_as_dict(db: AsyncSession, dataset: Dataset, record_ids: Sequence[UUID]) -> Dict[UUID, Record]:
+async def fetch_records_by_ids_as_dict(
+    db: AsyncSession, dataset: Dataset, record_ids: Sequence[UUID]
+) -> Dict[UUID, Record]:
     records_by_ids = await list_dataset_records_by_ids(db, dataset.id, record_ids)
     return {record.id: record for record in records_by_ids}
 

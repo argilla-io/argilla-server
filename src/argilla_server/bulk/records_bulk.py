@@ -14,7 +14,7 @@
 
 import asyncio
 from datetime import datetime
-from typing import Dict, List, Union, Sequence, Tuple
+from typing import Dict, List, Sequence, Tuple, Union
 from uuid import UUID
 
 from sqlalchemy import select
@@ -24,10 +24,10 @@ from sqlalchemy.orm import selectinload
 from argilla_server.contexts.accounts import fetch_users_by_ids_as_dict
 from argilla_server.contexts.records import (
     delete_suggestions_by_record_ids,
-    fetch_records_by_ids_as_dict,
     fetch_records_by_external_ids_as_dict,
+    fetch_records_by_ids_as_dict,
 )
-from argilla_server.models import Dataset, Record, Response, Suggestion, Vector, Question, VectorSettings
+from argilla_server.models import Dataset, Question, Record, Response, Suggestion, Vector, VectorSettings
 from argilla_server.schemas.v1.records import RecordCreate
 from argilla_server.schemas.v1.records_bulk import (
     RecordsBulk,
