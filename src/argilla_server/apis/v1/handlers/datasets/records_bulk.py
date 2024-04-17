@@ -34,7 +34,6 @@ router = APIRouter()
 @router.post(
     "/datasets/{dataset_id}/records/bulk",
     response_model=RecordsBulk,
-    response_model_exclude_unset=True,
     status_code=status.HTTP_201_CREATED,
 )
 async def create_dataset_records_bulk(
@@ -66,11 +65,7 @@ async def create_dataset_records_bulk(
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(err))
 
 
-@router.put(
-    "/datasets/{dataset_id}/records/bulk",
-    response_model=RecordsBulk,
-    response_model_exclude_unset=True,
-)
+@router.put("/datasets/{dataset_id}/records/bulk", response_model=RecordsBulk)
 async def upsert_dataset_records_bulk(
     *,
     dataset_id: UUID,
