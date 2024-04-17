@@ -12,13 +12,11 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from typing import Dict, List, Optional, Union
+from typing import List
 from uuid import UUID
 
-from pydantic import StrictStr
-
 from argilla_server.pydantic_v1 import BaseModel, Field, validator
-from argilla_server.schemas.v1.records import Record, RecordCreate
+from argilla_server.schemas.v1.records import Record, RecordCreate, RecordUpsert
 
 RECORDS_BULK_CREATE_MIN_ITEMS = 1
 RECORDS_BULK_CREATE_MAX_ITEMS = 500
@@ -75,11 +73,6 @@ class RecordsBulkCreate(BaseModel):
 #     items: List[RecordUpdate] = Field(
 #         ..., min_items=RECORDS_BULK_UPDATE_MIN_ITEMS, max_items=RECORDS_BULK_UPDATE_MAX_ITEMS
 #     )
-
-
-class RecordUpsert(RecordCreate):
-    id: Optional[UUID]
-    fields: Optional[Dict[str, Union[StrictStr, None]]]
 
 
 class RecordsBulkUpsert(RecordsBulkCreate):
