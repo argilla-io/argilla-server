@@ -89,8 +89,7 @@ async def upsert_dataset_records_bulk(
         with_vectors_settings=True,
     )
 
-    await authorize(current_user, DatasetPolicyV1.create_records(dataset))
-    await authorize(current_user, DatasetPolicyV1.update_records(dataset))
+    await authorize(current_user, DatasetPolicyV1.upsert_records(dataset))
 
     try:
         records_bulk = await UpsertRecordsBulk(db, search_engine).upsert_records_bulk(dataset, records_bulk_create)
