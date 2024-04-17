@@ -27,7 +27,6 @@ on:
         type: string
       postgresDockerImage:
         description: "The name of the Docker image of PostgreSQL"
-        default: postgres:14
         required: false
         type: string
 
@@ -85,6 +84,7 @@ jobs:
           echo "ARGILLA_SEARCH_ENGINE=opensearch" >> "$GITHUB_ENV"
           echo "Configure opensearch engine"
       - name: Set Argilla PostgreSQL database env variable
+        if: inputs.postgresDockerImage != ''
         run: |
           echo "ARGILLA_DATABASE_URL=postgresql://postgres:postgres@localhost:5432/argilla" >> "$GITHUB_ENV"
           echo "Configure PostgreSQL database"
