@@ -46,7 +46,12 @@ COPY config/elasticsearch.yml /etc/elasticsearch/elasticsearch.yml
 
 USER argilla
 
+# NOTE: We have not found documentation about ELASTIC_CONTAINER environment variable but it could be
+# used to indicate that Elasticsearch is running in a container.
+# It is used in official Elastic Dockerfiles so we are not removing it for now:
+# https://github.com/search?q=repo%3Aelastic%2Fdockerfiles%20ELASTIC_CONTAINER&type=code
 ENV ELASTIC_CONTAINER=true
+ENV ES_JAVA_OPTS="-Xms1g -Xmx1g"
 
 ENV OWNER_USERNAME=owner
 ENV OWNER_PASSWORD=12345678
@@ -65,8 +70,5 @@ ENV ARGILLA_WORKSPACE=$ADMIN_USERNAME
 ENV UVICORN_PORT=6900
 
 ENV REINDEX_DATASETS=0
-
-# TODO: Increase by default to 1GB
-ENV ES_JAVA_OPTS=-'Xms512m -Xmx512m'
 
 CMD ["/bin/bash", "start_quickstart_argilla.sh"]
