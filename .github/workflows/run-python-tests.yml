@@ -46,6 +46,8 @@ jobs:
         ports:
           - 9200:9200
         env: ${{ fromJson(inputs.searchEngineDockerEnv) }}
+      # NOTE: postgres service will not be executed by default.
+      # It will only be executed if the postgresDockerImage input is provided.
       postgres:
         image: ${{ inputs.postgresDockerImage }}
         env:
