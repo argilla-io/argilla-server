@@ -72,6 +72,7 @@ These are the section headers that we use:
 - Removed `ARGILLA_LOCAL_AUTH_TOKEN_EXPIRATION_IN_MINUTES` environment variable. ([#38](https://github.com/argilla-io/argilla-server/pull/38))
 - Removed `ARGILLA_LOCAL_AUTH_ALGORITHM` environment variable. ([#38](https://github.com/argilla-io/argilla-server/pull/38))
 - Removed `ARGILLA_LOCAL_AUTH_SECRET_KEY` environment variable. ([#38](https://github.com/argilla-io/argilla-server/pull/38))
+- Removed data loading for docker quickstart image. ([#108](https://github.com/argilla-io/argilla-server/pull/108))
 
 ### Fixed
 
