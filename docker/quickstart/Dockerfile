@@ -18,7 +18,6 @@ RUN echo "deb [signed-by=/usr/share/keyrings/elasticsearch-keyring.gpg] https://
 # Copy Argilla distribution files
 COPY scripts/start_quickstart_argilla.sh /home/argilla
 COPY scripts/start_argilla_server.sh /home/argilla
-COPY scripts/load_data.py /home/argilla
 COPY Procfile /home/argilla
 COPY requirements.txt /packages/requirements.txt
 
@@ -62,11 +61,12 @@ ENV ANNOTATOR_PASSWORD=12345678
 
 ENV ARGILLA_HOME_PATH=/data/argilla
 ENV ARGILLA_WORKSPACE=$ADMIN_USERNAME
-ENV LOAD_DATASETS=full
+
 ENV UVICORN_PORT=6900
 
 ENV REINDEX_DATASETS=0
 
+# TODO: Increase by default to 1GB
 ENV ES_JAVA_OPTS=-'Xms512m -Xmx512m'
 
 CMD ["/bin/bash", "start_quickstart_argilla.sh"]
