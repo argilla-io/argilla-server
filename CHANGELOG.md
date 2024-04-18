@@ -23,6 +23,10 @@ These are the section headers that we use:
 - Added `ARGILLA_SPAN_OPTIONS_MAX_ITEMS` environment variable to set the number of maximum items to be used by span questions. By default this value is set to `500`. ([#85](https://github.com/argilla-io/argilla-server/pull/85))
 - Added `GET /api/v1/datasets/:dataset_id/progress` endpoint to return progress metrics related with one specific dataset. ([#90](https://github.com/argilla-io/argilla-server/pull/90))
 
+### Changed
+
+- Changed ElasticSearch JVM heap size from `512m` to `1g` for quickstart Dockerfile. ([#109](https://github.com/argilla-io/argilla-server/pull/109))
+
 ## [1.26.1](https://github.com/argilla-io/argilla-server/compare/v1.26.0...v1.26.1)
 
 > [!NOTE]
