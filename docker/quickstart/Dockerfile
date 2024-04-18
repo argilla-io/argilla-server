@@ -47,6 +47,7 @@ COPY config/elasticsearch.yml /etc/elasticsearch/elasticsearch.yml
 USER argilla
 
 ENV ELASTIC_CONTAINER=true
+ENV ES_JAVA_OPTS="-Xms1g -Xmx1g"
 
 ENV OWNER_USERNAME=owner
 ENV OWNER_PASSWORD=12345678
@@ -65,8 +66,5 @@ ENV ARGILLA_WORKSPACE=$ADMIN_USERNAME
 ENV UVICORN_PORT=6900
 
 ENV REINDEX_DATASETS=0
-
-# TODO: Increase by default to 1GB
-ENV ES_JAVA_OPTS=-'Xms512m -Xmx512m'
 
 CMD ["/bin/bash", "start_quickstart_argilla.sh"]
