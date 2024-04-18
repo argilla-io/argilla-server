@@ -16,6 +16,8 @@ These are the section headers that we use:
 
 ## [Unreleased]()
 
+## [1.27.0](https://github.com/argilla-io/argilla-server/compare/v1.26.1...v1.27.0)
+
 ### Added
 
 - Added `allow_overlapping` field for creation and update of span question settings. ([#89](https://github.com/argilla-io/argilla-server/pull/89))
