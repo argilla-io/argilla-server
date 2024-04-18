@@ -46,7 +46,7 @@ COPY config/elasticsearch.yml /etc/elasticsearch/elasticsearch.yml
 
 USER argilla
 
-# NOTE: We didn't found documentation about ELASTIC_CONTAINER environment variable but it could be
+# NOTE: We have not found documentation about ELASTIC_CONTAINER environment variable but it could be
 # used to indicate that Elasticsearch is running in a container.
 # It is used in official Elastic Dockerfiles so we are not removing it for now:
 # https://github.com/search?q=repo%3Aelastic%2Fdockerfiles%20ELASTIC_CONTAINER&type=code
