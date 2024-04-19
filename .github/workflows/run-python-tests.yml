@@ -25,6 +25,10 @@ on:
         default: '{"discovery.type": "single-node", "xpack.security.enabled": "false"}'
         required: false
         type: string
+      postgresDockerImage:
+        description: "The name of the Docker image of PostgreSQL"
+        required: false
+        type: string
 
 env:
   # Increase this value to reset cache if etc/example-environment.yml has not changed
@@ -42,6 +46,22 @@ jobs:
         ports:
           - 9200:9200
         env: ${{ fromJson(inputs.searchEngineDockerEnv) }}
+      # NOTE: postgres service will not be executed by default.
+      # It will only be executed if the postgresDockerImage input is provided.
+      postgres:
+        image: ${{ inputs.postgresDockerImage }}
+        env:
+          POSTGRES_HOST: localhost
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: argilla
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
     defaults:
       run:
         shell: bash -l {0}
@@ -65,6 +85,11 @@ jobs:
         run: |
           echo "ARGILLA_SEARCH_ENGINE=opensearch" >> "$GITHUB_ENV"
           echo "Configure opensearch engine"
+      - name: Set Argilla PostgreSQL database env variable
+        if: inputs.postgresDockerImage != ''
+        run: |
+          echo "ARGILLA_DATABASE_URL=postgresql://postgres:postgres@localhost:5432/argilla" >> "$GITHUB_ENV"
+          echo "Configure PostgreSQL database"
       - name: Setup PDM
         uses: pdm-project/setup-pdm@v4
         with:

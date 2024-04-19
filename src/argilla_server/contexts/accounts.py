@@ -12,11 +12,12 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 import secrets
-from typing import TYPE_CHECKING, Dict, Iterable, List, Sequence, Union
+from typing import  Dict, Iterable, List, Sequence, Union
 from uuid import UUID
 
 from passlib.context import CryptContext
 from sqlalchemy import exists, select
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session, selectinload
 
 from argilla_server.enums import UserRole
@@ -24,20 +25,17 @@ from argilla_server.models import User, Workspace, WorkspaceUser
 from argilla_server.schemas.v0.users import UserCreate
 from argilla_server.schemas.v0.workspaces import WorkspaceCreate, WorkspaceUserCreate
 
-if TYPE_CHECKING:
-    from sqlalchemy.ext.asyncio import AsyncSession
-
 _CRYPT_CONTEXT = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 async def get_workspace_user_by_workspace_id_and_user_id(
-    db: "AsyncSession", workspace_id: UUID, user_id: UUID
+    db: AsyncSession, workspace_id: UUID, user_id: UUID
 ) -> Union[WorkspaceUser, None]:
     result = await db.execute(select(WorkspaceUser).filter_by(workspace_id=workspace_id, user_id=user_id))
     return result.scalar_one_or_none()
 
 
-async def create_workspace_user(db: "AsyncSession", workspace_user_create: WorkspaceUserCreate) -> WorkspaceUser:
+async def create_workspace_user(db: AsyncSession, workspace_user_create: WorkspaceUserCreate) -> WorkspaceUser:
     workspace_user = await WorkspaceUser.create(
         db,
         workspace_id=workspace_user_create.workspace_id,
@@ -47,25 +45,25 @@ async def create_workspace_user(db: "AsyncSession", workspace_user_create: Works
     return workspace_user
 
 
-async def delete_workspace_user(db: "AsyncSession", workspace_user: WorkspaceUser) -> WorkspaceUser:
+async def delete_workspace_user(db: AsyncSession, workspace_user: WorkspaceUser) -> WorkspaceUser:
     return await workspace_user.delete(db)
 
 
-async def get_workspace_by_id(db: "AsyncSession", workspace_id: UUID) -> Workspace:
+async def get_workspace_by_id(db: AsyncSession, workspace_id: UUID) -> Workspace:
     return await Workspace.read(db, id=workspace_id)
 
 
-async def get_workspace_by_name(db: "AsyncSession", workspace_name: str) -> Union[Workspace, None]:
+async def get_workspace_by_name(db: AsyncSession, workspace_name: str) -> Union[Workspace, None]:
     result = await db.execute(select(Workspace).filter_by(name=workspace_name))
     return result.scalar_one_or_none()
 
 
-async def list_workspaces(db: "AsyncSession") -> List[Workspace]:
+async def list_workspaces(db: AsyncSession) -> List[Workspace]:
     result = await db.execute(select(Workspace).order_by(Workspace.inserted_at.asc()))
     return result.scalars().all()
 
 
-async def list_workspaces_by_user_id(db: "AsyncSession", user_id: UUID) -> List[Workspace]:
+async def list_workspaces_by_user_id(db: AsyncSession, user_id: UUID) -> List[Workspace]:
     result = await db.execute(
         select(Workspace)
         .join(WorkspaceUser)
@@ -75,19 +73,19 @@ async def list_workspaces_by_user_id(db: "AsyncSession", user_id: UUID) -> List[
     return result.scalars().all()
 
 
-async def create_workspace(db: "AsyncSession", workspace_create: WorkspaceCreate) -> Workspace:
+async def create_workspace(db: AsyncSession, workspace_create: WorkspaceCreate) -> Workspace:
     return await Workspace.create(db, schema=workspace_create)
 
 
-async def delete_workspace(db: "AsyncSession", workspace: Workspace):
+async def delete_workspace(db: AsyncSession, workspace: Workspace):
     return await workspace.delete(db)
 
 
-async def get_user_by_id(db: "AsyncSession", user_id: UUID) -> Union[User, None]:
+async def get_user_by_id(db: AsyncSession, user_id: UUID) -> Union[User, None]:
     return await User.read(db, id=user_id)
 
 
-async def user_exists(db: "AsyncSession", user_id: UUID) -> bool:
+async def user_exists(db: AsyncSession, user_id: UUID) -> bool:
     return await db.scalar(select(exists().where(User.id == user_id)))
 
 
@@ -95,7 +93,7 @@ def get_user_by_username_sync(db: Session, username: str) -> Union[User, None]:
     return db.query(User).filter_by(username=username).first()
 
 
-async def get_user_by_username(db: "AsyncSession", username: str) -> Union[User, None]:
+async def get_user_by_username(db: AsyncSession, username: str) -> Union[User, None]:
     result = await db.execute(select(User).filter_by(username=username).options(selectinload(User.workspaces)))
     return result.scalar_one_or_none()
 
@@ -104,7 +102,7 @@ def get_user_by_api_key_sync(db: Session, api_key: str) -> Union[User, None]:
     return db.query(User).filter_by(api_key=api_key).first()
 
 
-async def get_user_by_api_key(db: "AsyncSession", api_key: str) -> Union[User, None]:
+async def get_user_by_api_key(db: AsyncSession, api_key: str) -> Union[User, None]:
     result = await db.execute(select(User).where(User.api_key == api_key).options(selectinload(User.workspaces)))
     return result.scalar_one_or_none()
 
@@ -114,7 +112,7 @@ async def list_users(db: "AsyncSession") -> Sequence[User]:
     return result.scalars().all()
 
 
-async def list_users_by_ids(db: "AsyncSession", ids: Iterable[UUID]) -> Sequence[User]:
+async def list_users_by_ids(db: AsyncSession, ids: Iterable[UUID]) -> Sequence[User]:
     result = await db.execute(select(User).filter(User.id.in_(ids)))
     return result.scalars().all()
 
@@ -163,11 +161,11 @@ async def create_user_with_random_password(
     return await create_user(db, user_create)
 
 
-async def delete_user(db: "AsyncSession", user: User) -> User:
+async def delete_user(db: AsyncSession, user: User) -> User:
     return await user.delete(db)
 
 
-async def authenticate_user(db: "AsyncSession", username: str, password: str):
+async def authenticate_user(db: AsyncSession, username: str, password: str):
     user = await get_user_by_username(db, username)
 
     if user and verify_password(password, user.password_hash):
