@@ -284,7 +284,7 @@ class TestUpsertSuggestion:
 
         assert response.status_code == 422
         assert response.json() == {
-            "detail": "multiple score values are not allowed for a suggestion with a single value"
+            "detail": "a list of score values is not allowed for a suggestion with a single value"
         }
 
     @pytest.mark.parametrize("score", [[1.0], [1.0, 0.5], [1.0, 0.5, 0.9, 0.3]])
