@@ -18,7 +18,6 @@ RUN echo "deb [signed-by=/usr/share/keyrings/elasticsearch-keyring.gpg] https://
 # Copy Argilla distribution files
 COPY scripts/start_quickstart_argilla.sh /home/argilla
 COPY scripts/start_argilla_server.sh /home/argilla
-COPY scripts/load_data.py /home/argilla
 COPY Procfile /home/argilla
 COPY requirements.txt /packages/requirements.txt
 
@@ -47,7 +46,12 @@ COPY config/elasticsearch.yml /etc/elasticsearch/elasticsearch.yml
 
 USER argilla
 
+# NOTE: We have not found documentation about ELASTIC_CONTAINER environment variable but it could be
+# used to indicate that Elasticsearch is running in a container.
+# It is used in official Elastic Dockerfiles so we are not removing it for now:
+# https://github.com/search?q=repo%3Aelastic%2Fdockerfiles%20ELASTIC_CONTAINER&type=code
 ENV ELASTIC_CONTAINER=true
+ENV ES_JAVA_OPTS="-Xms1g -Xmx1g"
 
 ENV OWNER_USERNAME=owner
 ENV OWNER_PASSWORD=12345678
@@ -62,11 +66,9 @@ ENV ANNOTATOR_PASSWORD=12345678
 
 ENV ARGILLA_HOME_PATH=/data/argilla
 ENV ARGILLA_WORKSPACE=$ADMIN_USERNAME
-ENV LOAD_DATASETS=full
+
 ENV UVICORN_PORT=6900
 
 ENV REINDEX_DATASETS=0
-
-ENV ES_JAVA_OPTS=-'Xms512m -Xmx512m'
 
 CMD ["/bin/bash", "start_quickstart_argilla.sh"]

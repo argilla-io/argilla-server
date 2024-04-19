@@ -16,6 +16,8 @@ These are the section headers that we use:
 
 ## [Unreleased]()
 
+## [1.27.0](https://github.com/argilla-io/argilla-server/compare/v1.26.1...v1.27.0)
+
 ### Added
 
 - Added `allow_overlapping` field for creation and update of span question settings. ([#89](https://github.com/argilla-io/argilla-server/pull/89))
@@ -23,6 +25,10 @@ These are the section headers that we use:
 - Added `ARGILLA_SPAN_OPTIONS_MAX_ITEMS` environment variable to set the number of maximum items to be used by span questions. By default this value is set to `500`. ([#85](https://github.com/argilla-io/argilla-server/pull/85))
 - Added `GET /api/v1/datasets/:dataset_id/progress` endpoint to return progress metrics related with one specific dataset. ([#90](https://github.com/argilla-io/argilla-server/pull/90))
 - (THIS ONE SHOULD BE MOVED TO RELEASE 1.28 ONCE IT'S DONE) Added support to specify a list of score values for suggestions `score` attribute. ([#98](https://github.com/argilla-io/argilla-server/pull/98))
+
+### Changed
+
+- Changed ElasticSearch JVM heap size from `512m` to `1g` for quickstart Dockerfile. ([#109](https://github.com/argilla-io/argilla-server/pull/109))
 
 ## [1.26.1](https://github.com/argilla-io/argilla-server/compare/v1.26.0...v1.26.1)
 
@@ -73,6 +79,7 @@ These are the section headers that we use:
 - Removed `ARGILLA_LOCAL_AUTH_TOKEN_EXPIRATION_IN_MINUTES` environment variable. ([#38](https://github.com/argilla-io/argilla-server/pull/38))
 - Removed `ARGILLA_LOCAL_AUTH_ALGORITHM` environment variable. ([#38](https://github.com/argilla-io/argilla-server/pull/38))
 - Removed `ARGILLA_LOCAL_AUTH_SECRET_KEY` environment variable. ([#38](https://github.com/argilla-io/argilla-server/pull/38))
+- Removed data loading for docker quickstart image. ([#108](https://github.com/argilla-io/argilla-server/pull/108))
 
 ### Fixed
 
