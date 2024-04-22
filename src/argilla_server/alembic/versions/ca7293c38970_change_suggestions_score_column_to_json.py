@@ -35,5 +35,30 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    # TODO: We should check what to do here.
-    pass
+    op.add_column("suggestions", sa.Column("score_float", sa.Float(), nullable=True))
+    op.execute(_score_float_update_statement())
+    op.drop_column("suggestions", "score")
+    op.alter_column("suggestions", "score_float", new_column_name="score")
+
+
+def _score_float_update_statement() -> str:
+    if op.get_context().dialect.name == "sqlite":
+        return """
+            UPDATE suggestions
+            SET score_float =
+                CASE
+                    WHEN json_type(score) = 'real' THEN CAST(score AS FLOAT)
+                    ELSE NULL
+                END
+        """
+    elif op.get_context().dialect.name == "postgresql":
+        return """
+            UPDATE suggestions
+            SET score_float =
+                CASE
+                    WHEN json_typeof(score) = 'number' THEN score::text::float
+                    ELSE NULL
+                END
+        """
+    else:
+        raise NotImplementedError(f"Unsupported database: {op.get_context().dialect.name}")
