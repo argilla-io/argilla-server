@@ -19,6 +19,8 @@ from unittest.mock import ANY, MagicMock
 from uuid import UUID, uuid4
 
 import pytest
+from sqlalchemy import func, inspect, select
+
 from argilla_server.apis.v1.handlers.datasets.records import LIST_DATASET_RECORDS_LIMIT_DEFAULT
 from argilla_server.constants import API_KEY_HEADER_NAME
 from argilla_server.enums import (
@@ -68,8 +70,6 @@ from argilla_server.search_engine import (
     TextQuery,
     UserResponseStatusFilter,
 )
-from sqlalchemy import func, inspect, select
-
 from tests.factories import (
     AdminFactory,
     AnnotatorFactory,
@@ -1961,7 +1961,18 @@ class TestSuiteDatasets:
 
         assert response.status_code == 422
         assert response.json() == {
-            "detail": "Record at position 0 is not valid because wrong value found for field 'output'. Expected 'str', found 'int'"
+            "detail": {
+                "code": "argilla.api.errors::ValidationError",
+                "params": {
+                    "errors": [
+                        {
+                            "loc": ["body", "items", 0, "fields", "output"],
+                            "msg": "str type expected",
+                            "type": "type_error.str",
+                        }
+                    ]
+                },
+            }
         }
         assert (await db.execute(select(func.count(Record.id)))).scalar() == 0
 
@@ -2040,7 +2051,18 @@ class TestSuiteDatasets:
         )
         assert response.status_code == 422
         assert response.json() == {
-            "detail": "Record at position 0 is not valid because wrong value found for field 'output'. Expected 'str', found 'int'"
+            "detail": {
+                "code": "argilla.api.errors::ValidationError",
+                "params": {
+                    "errors": [
+                        {
+                            "loc": ["body", "items", 0, "fields", "output"],
+                            "msg": "str type expected",
+                            "type": "type_error.str",
+                        }
+                    ]
+                },
+            }
         }
         assert (await db.execute(select(func.count(Record.id)))).scalar() == 0
 
