@@ -79,21 +79,16 @@ class CreateRecordsBulk:
         records_and_suggestions = list(zip(records, [r.suggestions for r in records_create]))
         records_and_responses = list(zip(records, [r.responses for r in records_create]))
         records_and_vectors = list(zip(records, [r.vectors for r in records_create]))
+        # The asyncio.gather version is replaced by the following three await calls to avoid the following error:
+        # https://github.com/sqlalchemy/sqlalchemy/discussions/9312
 
-        await asyncio.gather(
-            self._upsert_records_suggestions(records_and_suggestions),
-            self._upsert_records_responses(records_and_responses),
-            self._upsert_records_vectors(records_and_vectors),
-        )
+        await self._upsert_records_suggestions(records_and_suggestions)
+        await self._upsert_records_responses(records_and_responses)
+        await self._upsert_records_vectors(records_and_vectors)
 
     async def _upsert_records_suggestions(
         self, records_and_suggestions: List[Tuple[Record, List[SuggestionCreate]]]
     ) -> List[Suggestion]:
-
-        # TODO: This should be removed and aligned to the rest of the the upsert relationships
-        await delete_suggestions_by_record_ids(
-            self._db, set([record.id for record, suggestions in records_and_suggestions if suggestions is not None])
-        )
 
         upsert_many_suggestions = []
         for idx, (record, suggestions) in enumerate(records_and_suggestions):
@@ -204,19 +199,17 @@ class UpsertRecordsBulk(CreateRecordsBulk):
             for record_upsert in bulk_upsert.items:
                 record = found_records.get(record_upsert.external_id or record_upsert.id)
                 if not record:
-                    records.append(
-                        Record(
+                    record = Record(
                             fields=record_upsert.fields,
                             metadata_=record_upsert.metadata,
                             external_id=record_upsert.external_id,
                             dataset_id=dataset.id,
                         )
-                    )
                 elif self._metadata_is_set(record_upsert):
                     record.metadata_ = record_upsert.metadata
                     record.updated_at = datetime.utcnow()
 
-                    records.append(record)
+                records.append(record)
 
             self._db.add_all(records)
             await self._db.flush(records)
