@@ -177,10 +177,9 @@ class TestDatasetRecordsBulkWithSuggestions:
         self, async_client: AsyncClient, db: AsyncSession, owner_auth_header: dict
     ):
         dataset = await self.test_dataset()
-        label_question = dataset.question_by_name("label")
-        rating_question = dataset.question_by_name("rating")
+        question = dataset.question_by_name("label")
         record = await RecordFactory.create(dataset=dataset, fields={"prompt": "Does exercise help reduce stress?"})
-        suggestion = await SuggestionFactory.create(record=record, question=label_question, value="label-a")
+        await SuggestionFactory.create(record=record, question=question, value="label-a")
 
         response = await async_client.put(
             self.url(dataset.id),
@@ -190,8 +189,52 @@ class TestDatasetRecordsBulkWithSuggestions:
                     {
                         "id": str(record.id),
                         "suggestions": [
-                            {"question_id": str(label_question.id), "value": "label-b"},
-                            {"question_id": str(rating_question.id), "value": 5, "agent": "test-agent", "score": 0.5},
+                            {"question_id": str(question.id), "value": "label-b"},
+                        ],
+                    },
+                ]
+            },
+        )
+
+        assert response.status_code == 200, response.json()
+        assert (await db.execute(select(func.count(Suggestion.id)))).scalar_one() == 1
+        suggestion = (await db.execute(select(Suggestion))).scalar_one()
+
+        records = response.json()["items"]
+        assert len(records) == 1
+        for record in records:
+            assert record["suggestions"] == [
+                {
+                    "id": str(suggestion.id),
+                    "question_id": str(question.id),
+                    "value": "label-b",
+                    "score": suggestion.score,
+                    "type": suggestion.type,
+                    "agent": suggestion.agent,
+                    "inserted_at": suggestion.inserted_at.isoformat(),
+                    "updated_at": suggestion.updated_at.isoformat(),
+                },
+            ]
+        assert suggestion.value == "label-b"
+
+    async def test_update_record_with_suggestions_with_new_suggestions_in_bulk(
+        self, async_client: AsyncClient, db: AsyncSession, owner_auth_header: dict
+    ):
+        dataset = await self.test_dataset()
+        question = dataset.question_by_name("label")
+        other_question = dataset.question_by_name("rating")
+        record = await RecordFactory.create(dataset=dataset, fields={"prompt": "Does exercise help reduce stress?"})
+        suggestion = await SuggestionFactory.create(record=record, question=question, value="label-a")
+
+        response = await async_client.put(
+            self.url(dataset.id),
+            headers=owner_auth_header,
+            json={
+                "items": [
+                    {
+                        "id": str(record.id),
+                        "suggestions": [
+                            {"question_id": str(other_question.id), "value": 5, "agent": "test-agent", "score": 0.5},
                         ],
                     },
                 ]
@@ -200,8 +243,8 @@ class TestDatasetRecordsBulkWithSuggestions:
 
         assert response.status_code == 200, response.json()
         assert (await db.execute(select(func.count(Suggestion.id)))).scalar_one() == 2
-        rating_suggestion = (
-            await db.execute(select(Suggestion).filter(Suggestion.question_id == rating_question.id))
+        other_suggestion = (
+            await db.execute(select(Suggestion).filter(Suggestion.question_id == other_question.id))
         ).scalar_one()
 
         records = response.json()["items"]
@@ -210,8 +253,8 @@ class TestDatasetRecordsBulkWithSuggestions:
             assert record["suggestions"] == [
                 {
                     "id": str(suggestion.id),
-                    "question_id": str(label_question.id),
-                    "value": "label-b",
+                    "question_id": str(question.id),
+                    "value": suggestion.value,
                     "score": suggestion.score,
                     "type": suggestion.type,
                     "agent": suggestion.agent,
@@ -219,14 +262,14 @@ class TestDatasetRecordsBulkWithSuggestions:
                     "updated_at": suggestion.updated_at.isoformat(),
                 },
                 {
-                    "id": str(rating_suggestion.id),
-                    "question_id": str(rating_question.id),
+                    "id": str(other_suggestion.id),
+                    "question_id": str(other_question.id),
                     "value": 5,
-                    "score": rating_suggestion.score,
-                    "type": rating_suggestion.type,
-                    "agent": rating_suggestion.agent,
-                    "inserted_at": rating_suggestion.inserted_at.isoformat(),
-                    "updated_at": rating_suggestion.updated_at.isoformat(),
+                    "score": other_suggestion.score,
+                    "type": other_suggestion.type,
+                    "agent": other_suggestion.agent,
+                    "inserted_at": other_suggestion.inserted_at.isoformat(),
+                    "updated_at": other_suggestion.updated_at.isoformat(),
                 },
             ]
 
