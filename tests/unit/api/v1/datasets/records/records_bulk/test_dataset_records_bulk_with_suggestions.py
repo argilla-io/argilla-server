@@ -11,16 +11,15 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-
 from uuid import UUID
 
 import pytest
-from argilla_server.enums import DatasetStatus, QuestionType
-from argilla_server.models import Dataset, Suggestion
 from httpx import AsyncClient
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from argilla_server.enums import DatasetStatus, QuestionType
+from argilla_server.models import Dataset, Suggestion
 from tests.factories import (
     DatasetFactory,
     LabelSelectionQuestionFactory,
@@ -28,6 +27,7 @@ from tests.factories import (
     SuggestionFactory,
     TextFieldFactory,
     TextQuestionFactory,
+    RatingQuestionFactory,
 )
 
 
@@ -49,7 +49,7 @@ class TestDatasetRecordsBulkWithSuggestions:
         self, async_client: AsyncClient, db: AsyncSession, owner_auth_header: dict
     ):
         dataset = await self.test_dataset()
-        question_id = str(dataset.question_by_name("label").id)
+        label_question = dataset.question_by_name("label")
 
         response = await async_client.post(
             self.url(dataset.id),
@@ -62,7 +62,7 @@ class TestDatasetRecordsBulkWithSuggestions:
                             "response": "Exercise can definitely help reduce stress.",
                         },
                         "suggestions": [
-                            {"question_id": question_id, "value": "label-a"},
+                            {"question_id": str(label_question.id), "value": "label-a"},
                         ],
                     },
                 ]
@@ -74,21 +74,21 @@ class TestDatasetRecordsBulkWithSuggestions:
         suggestion = (await db.execute(select(Suggestion))).scalar_one()
 
         response_json = response.json()
-        suggestions = [suggestion for item in response_json["items"] for suggestion in item["suggestions"]]
-        assert suggestions == [
-            {
-                "id": str(suggestion.id),
-                "question_id": question_id,
-                "value": "label-a",
-                "score": suggestion.score,
-                "type": suggestion.type,
-                "agent": suggestion.agent,
-                "inserted_at": suggestion.inserted_at.isoformat(),
-                "updated_at": suggestion.updated_at.isoformat(),
-            },
-        ]
+        for record in response_json["items"]:
+            assert record["suggestions"] == [
+                {
+                    "id": str(suggestion.id),
+                    "question_id": str(label_question.id),
+                    "value": "label-a",
+                    "score": suggestion.score,
+                    "type": suggestion.type,
+                    "agent": suggestion.agent,
+                    "inserted_at": suggestion.inserted_at.isoformat(),
+                    "updated_at": suggestion.updated_at.isoformat(),
+                },
+            ]
 
-    async def test_create_suggestions_with_record_update_in_bulk(
+    async def test_update_records_with_new_suggestions_in_bulk(
         self, async_client: AsyncClient, db: AsyncSession, owner_auth_header: dict
     ):
         dataset = await self.test_dataset()
@@ -115,21 +115,22 @@ class TestDatasetRecordsBulkWithSuggestions:
         suggestion = (await db.execute(select(Suggestion))).scalar_one()
 
         response_json = response.json()
-        suggestions = [suggestion for item in response_json["items"] for suggestion in item["suggestions"]]
-        assert suggestions == [
-            {
-                "id": str(suggestion.id),
-                "question_id": question_id,
-                "value": "label-a",
-                "score": suggestion.score,
-                "type": suggestion.type,
-                "agent": suggestion.agent,
-                "inserted_at": suggestion.inserted_at.isoformat(),
-                "updated_at": suggestion.updated_at.isoformat(),
-            },
-        ]
+        records = response_json["items"]
+        for record in records:
+            assert record["suggestions"] == [
+                {
+                    "id": str(suggestion.id),
+                    "question_id": question_id,
+                    "value": "label-a",
+                    "score": suggestion.score,
+                    "type": suggestion.type,
+                    "agent": suggestion.agent,
+                    "inserted_at": suggestion.inserted_at.isoformat(),
+                    "updated_at": suggestion.updated_at.isoformat(),
+                },
+            ]
 
-    async def test_upsert_record_with_suggestions_in_bulk(
+    async def test_create_records_with_suggestions_in_bulk_upsert(
         self, async_client: AsyncClient, db: AsyncSession, owner_auth_header: dict
     ):
         dataset = await self.test_dataset()
@@ -158,27 +159,28 @@ class TestDatasetRecordsBulkWithSuggestions:
         suggestion = (await db.execute(select(Suggestion))).scalar_one()
 
         response_json = response.json()
-        suggestions = [suggestion for item in response_json["items"] for suggestion in item["suggestions"]]
-        assert suggestions == [
-            {
-                "id": str(suggestion.id),
-                "question_id": question_id,
-                "value": "label-a",
-                "score": suggestion.score,
-                "type": suggestion.type,
-                "agent": suggestion.agent,
-                "inserted_at": suggestion.inserted_at.isoformat(),
-                "updated_at": suggestion.updated_at.isoformat(),
-            },
-        ]
+        for record in response_json["items"]:
+            assert record["suggestions"] == [
+                {
+                    "id": str(suggestion.id),
+                    "question_id": question_id,
+                    "value": "label-a",
+                    "score": suggestion.score,
+                    "type": suggestion.type,
+                    "agent": suggestion.agent,
+                    "inserted_at": suggestion.inserted_at.isoformat(),
+                    "updated_at": suggestion.updated_at.isoformat(),
+                },
+            ]
 
     async def test_update_record_suggestions_in_bulk(
         self, async_client: AsyncClient, db: AsyncSession, owner_auth_header: dict
     ):
         dataset = await self.test_dataset()
-        question = dataset.question_by_name("label")
+        label_question = dataset.question_by_name("label")
+        rating_question = dataset.question_by_name("rating")
         record = await RecordFactory.create(dataset=dataset, fields={"prompt": "Does exercise help reduce stress?"})
-        suggestion = await SuggestionFactory.create(record=record, question=question, value="label-a")
+        suggestion = await SuggestionFactory.create(record=record, question=label_question, value="label-a")
 
         response = await async_client.put(
             self.url(dataset.id),
@@ -188,7 +190,8 @@ class TestDatasetRecordsBulkWithSuggestions:
                     {
                         "id": str(record.id),
                         "suggestions": [
-                            {"question_id": str(question.id), "value": "label-b"},
+                            {"question_id": str(label_question.id), "value": "label-b"},
+                            {"question_id": str(rating_question.id), "value": 5, "agent": "test-agent", "score": 0.5},
                         ],
                     },
                 ]
@@ -196,26 +199,38 @@ class TestDatasetRecordsBulkWithSuggestions:
         )
 
         assert response.status_code == 200, response.json()
-        assert (await db.execute(select(func.count(Suggestion.id)))).scalar_one() == 1
+        assert (await db.execute(select(func.count(Suggestion.id)))).scalar_one() == 2
+        rating_suggestion = (
+            await db.execute(select(Suggestion).filter(Suggestion.question_id == rating_question.id))
+        ).scalar_one()
 
-        response_suggestions = response.json()["items"][0]["suggestions"]
-        assert response_suggestions == [
-            {
-                "id": str(suggestion.id),
-                "question_id": str(question.id),
-                "value": "label-b",
-                "score": suggestion.score,
-                "type": suggestion.type,
-                "agent": suggestion.agent,
-                "inserted_at": suggestion.inserted_at.isoformat(),
-                "updated_at": suggestion.updated_at.isoformat(),
-            },
-        ]
+        records = response.json()["items"]
+        assert len(records) == 1
+        for record in records:
+            assert record["suggestions"] == [
+                {
+                    "id": str(suggestion.id),
+                    "question_id": str(label_question.id),
+                    "value": "label-b",
+                    "score": suggestion.score,
+                    "type": suggestion.type,
+                    "agent": suggestion.agent,
+                    "inserted_at": suggestion.inserted_at.isoformat(),
+                    "updated_at": suggestion.updated_at.isoformat(),
+                },
+                {
+                    "id": str(rating_suggestion.id),
+                    "question_id": str(rating_question.id),
+                    "value": 5,
+                    "score": rating_suggestion.score,
+                    "type": rating_suggestion.type,
+                    "agent": rating_suggestion.agent,
+                    "inserted_at": rating_suggestion.inserted_at.isoformat(),
+                    "updated_at": rating_suggestion.updated_at.isoformat(),
+                },
+            ]
 
-        suggestion = (await db.execute(select(Suggestion))).scalar_one()
-        assert suggestion.value == "label-b"
-
-    async def test_create_record_with_suggestions_in_bulk_with_wrong_question(
+    async def test_create_record_with_wrong_suggestion_question_id_in_bulk(
         self, async_client: AsyncClient, owner_auth_header: dict
     ):
         dataset = await self.test_dataset()
@@ -245,7 +260,7 @@ class TestDatasetRecordsBulkWithSuggestions:
             f"is not valid: question_id={other_question.id} does not exist"
         }
 
-    async def test_create_record_with_suggestions_in_bulk_with_wrong_value(
+    async def test_create_record_with_wrong_suggestion_value_in_bulk(
         self, async_client: AsyncClient, owner_auth_header: dict
     ):
         dataset = await self.test_dataset()
@@ -276,6 +291,66 @@ class TestDatasetRecordsBulkWithSuggestions:
             "Valid labels are: ['label-a', 'label-b']"
         }
 
+    async def test_update_record_with_wrong_suggestion_question_id_in_bulk(
+        self, async_client: AsyncClient, db: AsyncSession, owner_auth_header: dict
+    ):
+        dataset = await self.test_dataset()
+        question = dataset.question_by_name("label")
+        record = await RecordFactory.create(dataset=dataset, fields={"prompt": "Does exercise help reduce stress?"})
+        suggestion = await SuggestionFactory.create(record=record, question=question, value="label-a")
+        other_question = await TextQuestionFactory.create(name="other-question")
+
+        response = await async_client.put(
+            self.url(dataset.id),
+            headers=owner_auth_header,
+            json={
+                "items": [
+                    {
+                        "id": str(record.id),
+                        "suggestions": [
+                            {"question_id": str(other_question.id), "value": "label-c"},
+                        ],
+                    },
+                ]
+            },
+        )
+
+        assert response.status_code == 422, response.json()
+        assert response.json() == {
+            "detail": f"Record at position 0 is not valid because suggestion for question_id={other_question.id} "
+            f"is not valid: question_id={other_question.id} does not exist"
+        }
+
+    async def test_update_record_with_wrong_suggestion_value_in_bulk(
+        self, async_client: AsyncClient, db: AsyncSession, owner_auth_header: dict
+    ):
+        dataset = await self.test_dataset()
+        question = dataset.question_by_name("label")
+        record = await RecordFactory.create(dataset=dataset, fields={"prompt": "Does exercise help reduce stress?"})
+        suggestion = await SuggestionFactory.create(record=record, question=question, value="label-a")
+
+        response = await async_client.put(
+            self.url(dataset.id),
+            headers=owner_auth_header,
+            json={
+                "items": [
+                    {
+                        "id": str(record.id),
+                        "suggestions": [
+                            {"question_id": str(question.id), "value": "wrong-label"},
+                        ],
+                    },
+                ]
+            },
+        )
+
+        assert response.status_code == 422, response.json()
+        assert response.json() == {
+            "detail": f"Record at position 0 is not valid because suggestion for question_id={question.id} "
+            f"is not valid: 'wrong-label' is not a valid label for label selection question.\n"
+            "Valid labels are: ['label-a', 'label-b']"
+        }
+
     async def _configure_dataset_fields(self, dataset: Dataset):
         await TextFieldFactory.create(name="prompt", dataset=dataset)
         await TextFieldFactory.create(name="response", dataset=dataset)
@@ -294,5 +369,7 @@ class TestDatasetRecordsBulkWithSuggestions:
                 ],
             },
         )
+
+        await RatingQuestionFactory.create(dataset=dataset, name="rating")
 
         await dataset.awaitable_attrs.questions
