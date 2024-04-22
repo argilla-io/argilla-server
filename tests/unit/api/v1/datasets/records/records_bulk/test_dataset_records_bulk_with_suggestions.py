@@ -15,12 +15,12 @@
 from uuid import UUID
 
 import pytest
-from argilla_server.enums import DatasetStatus, QuestionType
-from argilla_server.models import Dataset, Suggestion
 from httpx import AsyncClient
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from argilla_server.enums import DatasetStatus, QuestionType
+from argilla_server.models import Dataset, Suggestion
 from tests.factories import (
     DatasetFactory,
     LabelSelectionQuestionFactory,
@@ -44,12 +44,6 @@ class TestDatasetRecordsBulkWithSuggestions:
         await self._configure_dataset_questions(dataset)
 
         return dataset
-
-    async def _configure_dataset_fields(self, dataset: Dataset):
-        await TextFieldFactory.create(name="prompt", dataset=dataset)
-        await TextFieldFactory.create(name="response", dataset=dataset)
-
-        await dataset.awaitable_attrs.fields
 
     async def test_create_record_with_suggestions_in_bulk(
         self, async_client: AsyncClient, db: AsyncSession, owner_auth_header: dict
@@ -281,6 +275,12 @@ class TestDatasetRecordsBulkWithSuggestions:
             f"is not valid: 'wrong-label' is not a valid label for label selection question.\n"
             "Valid labels are: ['label-a', 'label-b']"
         }
+
+    async def _configure_dataset_fields(self, dataset: Dataset):
+        await TextFieldFactory.create(name="prompt", dataset=dataset)
+        await TextFieldFactory.create(name="response", dataset=dataset)
+
+        await dataset.awaitable_attrs.fields
 
     async def _configure_dataset_questions(self, dataset: Dataset):
         await LabelSelectionQuestionFactory.create(
