@@ -1944,10 +1944,10 @@ class TestSuiteDatasets:
         records_json = {
             "items": [
                 {
-                    "fields": {"input": "Say Hello", "output": "Hi"},
+                    "fields": {"input": "Say Hello", "output": 33},
                 },
                 {
-                    "fields": {"input": "Say Hello", "output": 33},
+                    "fields": {"input": "Say Hello", "output": "Hi"},
                 },
                 {
                     "fields": {"input": "Say Pello", "output": "Hello World"},
@@ -1961,18 +1961,7 @@ class TestSuiteDatasets:
 
         assert response.status_code == 422
         assert response.json() == {
-            "detail": {
-                "code": "argilla.api.errors::ValidationError",
-                "params": {
-                    "errors": [
-                        {
-                            "loc": ["body", "items", 1, "fields", "output"],
-                            "msg": "str type expected",
-                            "type": "type_error.str",
-                        }
-                    ]
-                },
-            }
+            "detail": "Record at position 0 is not valid because wrong value found for field 'output'. Expected 'str', found 'int'"
         }
         assert (await db.execute(select(func.count(Record.id)))).scalar() == 0
 
@@ -2051,18 +2040,7 @@ class TestSuiteDatasets:
         )
         assert response.status_code == 422
         assert response.json() == {
-            "detail": {
-                "code": "argilla.api.errors::ValidationError",
-                "params": {
-                    "errors": [
-                        {
-                            "loc": ["body", "items", 0, "fields", "output"],
-                            "msg": "str type expected",
-                            "type": "type_error.str",
-                        }
-                    ]
-                },
-            }
+            "detail": "Record at position 0 is not valid because wrong value found for field 'output'. Expected 'str', found 'int'"
         }
         assert (await db.execute(select(func.count(Record.id)))).scalar() == 0
 
@@ -2958,7 +2936,7 @@ class TestSuiteDatasets:
         }
 
         # it should be called only with the first three records (metadata was updated for them)
-        mock_search_engine.index_records.assert_called_once_with(dataset, records[:4])
+        mock_search_engine.index_records.assert_called_once_with(dataset, records[:3])
 
     async def test_update_dataset_records_with_suggestions(
         self, async_client: "AsyncClient", mock_search_engine: "SearchEngine", owner_auth_header: dict
@@ -3065,7 +3043,7 @@ class TestSuiteDatasets:
         assert records[3].suggestions[1].value == "suggestion updated 3 2"
         assert records[3].suggestions[2].value == "suggestion updated 3 3"
 
-        mock_search_engine.index_records.assert_called_once_with(dataset, records[:4])
+        mock_search_engine.index_records.assert_not_called()
 
     async def test_update_dataset_records_with_empty_list_of_suggestions(
         self, async_client: "AsyncClient", owner_auth_header: dict
