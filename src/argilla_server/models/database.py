@@ -17,8 +17,8 @@ from datetime import datetime
 from typing import Any, List, Optional, Union
 from uuid import UUID
 
-from sqlalchemy import JSON, ForeignKey, String, Text, UniqueConstraint, and_, sql
 from sqlalchemy import Enum as SAEnum
+from sqlalchemy import JSON, ForeignKey, String, Text, UniqueConstraint, and_, sql
 from sqlalchemy.engine.default import DefaultExecutionContext
 from sqlalchemy.ext.mutable import MutableDict, MutableList
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -357,6 +357,11 @@ class Dataset(DatabaseModel):
             if metadata_property.name == name:
                 return metadata_property
 
+    def question_by_name(self, name: str) -> Union["Question", None]:
+        for question in self.questions:
+            if question.name == name:
+                return question
+
     def __repr__(self):
         return (
             f"Dataset(id={str(self.id)!r}, name={self.name!r}, guidelines={self.guidelines!r}, "
@@ -364,6 +369,7 @@ class Dataset(DatabaseModel):
             f"last_activity_at={str(self.last_activity_at)!r}, "
             f"inserted_at={str(self.inserted_at)!r}, updated_at={str(self.updated_at)!r})"
         )
+
 
 
 class WorkspaceUser(DatabaseModel):
