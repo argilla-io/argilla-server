@@ -200,11 +200,11 @@ class UpsertRecordsBulk(CreateRecordsBulk):
                 record = found_records.get(record_upsert.external_id or record_upsert.id)
                 if not record:
                     record = Record(
-                            fields=record_upsert.fields,
-                            metadata_=record_upsert.metadata,
-                            external_id=record_upsert.external_id,
-                            dataset_id=dataset.id,
-                        )
+                        fields=record_upsert.fields,
+                        metadata_=record_upsert.metadata,
+                        external_id=record_upsert.external_id,
+                        dataset_id=dataset.id,
+                    )
                 elif self._metadata_is_set(record_upsert):
                     record.metadata_ = record_upsert.metadata
                     record.updated_at = datetime.utcnow()

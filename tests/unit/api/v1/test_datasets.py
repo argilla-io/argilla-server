@@ -19,8 +19,6 @@ from unittest.mock import ANY, MagicMock
 from uuid import UUID, uuid4
 
 import pytest
-from sqlalchemy import func, inspect, select
-
 from argilla_server.apis.v1.handlers.datasets.records import LIST_DATASET_RECORDS_LIMIT_DEFAULT
 from argilla_server.constants import API_KEY_HEADER_NAME
 from argilla_server.enums import (
@@ -70,6 +68,8 @@ from argilla_server.search_engine import (
     TextQuery,
     UserResponseStatusFilter,
 )
+from sqlalchemy import func, inspect, select
+
 from tests.factories import (
     AdminFactory,
     AnnotatorFactory,

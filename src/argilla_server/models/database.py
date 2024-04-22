@@ -17,8 +17,8 @@ from datetime import datetime
 from typing import Any, List, Optional, Union
 from uuid import UUID
 
-from sqlalchemy import Enum as SAEnum
 from sqlalchemy import JSON, ForeignKey, String, Text, UniqueConstraint, and_, sql
+from sqlalchemy import Enum as SAEnum
 from sqlalchemy.engine.default import DefaultExecutionContext
 from sqlalchemy.ext.mutable import MutableDict, MutableList
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -369,7 +369,6 @@ class Dataset(DatabaseModel):
             f"last_activity_at={str(self.last_activity_at)!r}, "
             f"inserted_at={str(self.inserted_at)!r}, updated_at={str(self.updated_at)!r})"
         )
-
 
 
 class WorkspaceUser(DatabaseModel):
