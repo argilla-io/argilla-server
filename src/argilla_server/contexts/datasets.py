@@ -12,6 +12,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 import asyncio
+import copy
 from datetime import datetime
 from typing import (
     TYPE_CHECKING,
@@ -80,7 +81,6 @@ from argilla_server.schemas.v1.vector_settings import (
 )
 from argilla_server.schemas.v1.vectors import Vector as VectorSchema
 from argilla_server.search_engine import SearchEngine
-from argilla_server.validators.records import RecordCreateValidator, RecordUpdateValidator
 from argilla_server.validators.responses import (
     ResponseCreateValidator,
     ResponseUpdateValidator,
@@ -141,12 +141,12 @@ async def get_dataset_by_name_and_workspace_id(db: AsyncSession, name: str, work
     return result.scalar_one_or_none()
 
 
-async def list_datasets(db: "AsyncSession") -> Sequence[Dataset]:
+async def list_datasets(db: AsyncSession) -> Sequence[Dataset]:
     result = await db.execute(select(Dataset).order_by(Dataset.inserted_at.asc()))
     return result.scalars().all()
 
 
-async def list_datasets_by_workspace_id(db: "AsyncSession", workspace_id: UUID) -> Sequence[Dataset]:
+async def list_datasets_by_workspace_id(db: AsyncSession, workspace_id: UUID) -> Sequence[Dataset]:
     result = await db.execute(
         select(Dataset).where(Dataset.workspace_id == workspace_id).order_by(Dataset.inserted_at.asc())
     )
@@ -558,7 +558,8 @@ async def _validate_vector(
 async def _build_record(
     db: AsyncSession, dataset: Dataset, record_create: RecordCreate, caches: Dict[str, Any]
 ) -> Record:
-    RecordCreateValidator(record_create).validate_for(dataset)
+    _validate_record_fields(dataset, fields=record_create.fields)
+    await _validate_record_metadata(db, dataset, record_create.metadata, caches["metadata_properties_cache"])
 
     return Record(
         fields=record_create.fields,
@@ -631,6 +632,23 @@ async def _load_users_from_responses(responses: Union[Response, Iterable[Respons
 async def _load_users_from_record_responses(records: Iterable[Record]) -> None:
     for record in records:
         await _load_users_from_responses(record.responses)
+
+
+async def _validate_record_metadata(
+    db: AsyncSession,
+    dataset: Dataset,
+    metadata: Optional[Dict[str, Any]] = None,
+    cache: Dict[str, Union[MetadataProperty, Literal["extra"]]] = {},
+) -> Dict[str, Union[MetadataProperty, Literal["extra"]]]:
+    """Validate metadata for a record."""
+    if not metadata:
+        return cache
+
+    try:
+        cache = await _validate_metadata(db, dataset=dataset, metadata=metadata, metadata_properties=cache)
+        return cache
+    except ValueError as e:
+        raise ValueError(f"metadata is not valid: {e}") from e
 
 
 async def _build_record_responses(
@@ -740,9 +758,6 @@ async def _exists_records_with_ids(db: AsyncSession, dataset_id: UUID, records_i
 async def _build_record_update(
     db: AsyncSession, record: Record, record_update: "RecordUpdateWithId", caches: Optional[Dict[str, Any]] = None
 ) -> Tuple[Dict[str, Any], Union[List[Suggestion], None], List[VectorSchema], bool, Dict[str, Any]]:
-
-    RecordUpdateValidator(record_update).validate_for(record.dataset)
-
     if caches is None:
         caches = {
             "metadata_properties": {},
@@ -756,7 +771,12 @@ async def _build_record_update(
     vectors = []
 
     if "metadata_" in params:
+        metadata = params["metadata_"]
         needs_search_engine_update = True
+        if metadata is not None:
+            caches["metadata_properties"] = await _validate_record_metadata(
+                db, record.dataset, metadata, caches["metadata_properties"]
+            )
 
     if record_update.suggestions is not None:
         params.pop("suggestions")
@@ -1063,6 +1083,22 @@ async def delete_response(db: AsyncSession, search_engine: SearchEngine, respons
     await db.commit()
 
     return response
+
+
+def _validate_record_fields(dataset: Dataset, fields: Dict[str, Any]):
+    fields_copy = copy.copy(fields or {})
+    for field in dataset.fields:
+        if field.required and not (field.name in fields_copy and fields_copy.get(field.name) is not None):
+            raise ValueError(f"missing required value for field: {field.name!r}")
+
+        value = fields_copy.pop(field.name, None)
+        if value and not isinstance(value, str):
+            raise ValueError(
+                f"wrong value found for field {field.name!r}. Expected {str.__name__!r}, found {type(value).__name__!r}"
+            )
+
+    if fields_copy:
+        raise ValueError(f"found fields values for non configured fields: {list(fields_copy.keys())!r}")
 
 
 async def get_suggestion_by_record_id_and_question_id(
