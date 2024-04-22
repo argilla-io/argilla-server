@@ -154,9 +154,9 @@ class RecordsBulkUpsertValidator:
                     record_upsert.external_id or record_upsert.id
                 )
                 if record:
-                    RecordUpdateValidator(record_upsert).validate_for(dataset)
+                    RecordUpdateValidator(RecordUpdate.parse_obj(record_upsert)).validate_for(dataset)
                 else:
-                    RecordCreateValidator(record_upsert).validate_for(dataset)
+                    RecordCreateValidator(RecordCreate.parse_obj(record_upsert)).validate_for(dataset)
             except ValueError as ex:
                 raise ValueError(f"record at position {idx} is not valid because {ex}") from ex
 
