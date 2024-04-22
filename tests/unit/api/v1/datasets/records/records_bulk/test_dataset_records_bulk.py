@@ -141,7 +141,9 @@ class TestDatasetRecordsBulk:
         for record in updated_records:
             assert record.metadata_ == metadata
 
-    async def test_update_record_for_other_dataset(self, async_client: AsyncClient, db: AsyncSession, owner_auth_header: dict):
+    async def test_update_record_for_other_dataset(
+        self, async_client: AsyncClient, db: AsyncSession, owner_auth_header: dict
+    ):
         dataset = await self.test_dataset()
         other_dataset = await self.test_dataset()
 
