@@ -52,7 +52,7 @@ def size(bytes):
 
 
 class ArgillaInfo(BaseModel):
-    show_huggingface_space_persistant_store_warning: bool
+    show_huggingface_space_persistant_store_warning: Optional[bool]
 
 
 class HuggingfaceInfo(BaseSettings):
@@ -121,9 +121,14 @@ class ApiInfoService:
         )
 
     def _argilla_info(self) -> ArgillaInfo:
-        return ArgillaInfo(
-            show_huggingface_space_persistant_store_warning=settings.show_huggingface_space_persistant_store_warning,
-        )
+        argilla_info = ArgillaInfo()
+
+        if _huggingface_info.is_running_on_huggingface:
+            argilla_info.show_huggingface_space_persistant_store_warning = (
+                settings.show_huggingface_space_persistant_store_warning
+            )
+
+        return argilla_info
 
     def _elasticsearch_info(self) -> Dict[str, Any]:
         """Returns the elasticsearch cluster info"""
