@@ -15,20 +15,20 @@
 from uuid import UUID
 
 import pytest
+from argilla_server.enums import DatasetStatus, QuestionType
+from argilla_server.models import Dataset, Response
 from httpx import AsyncClient
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from argilla_server.enums import DatasetStatus, QuestionType
-from argilla_server.models import Dataset, Response
 from tests.factories import (
     DatasetFactory,
     LabelSelectionQuestionFactory,
+    OwnerFactory,
     RecordFactory,
+    ResponseFactory,
     TextFieldFactory,
     TextQuestionFactory,
-    OwnerFactory,
-    ResponseFactory,
 )
 
 
@@ -233,7 +233,9 @@ class TestDatasetRecordsBulkWithResponses:
         response = (await db.execute(select(Response))).scalar_one()
         assert response.status == "draft"
 
-    async def test_update_record_with_responses_with_new_responses_in_bulk(self, async_client: AsyncClient, owner_auth_header: dict):
+    async def test_update_record_with_responses_with_new_responses_in_bulk(
+        self, async_client: AsyncClient, owner_auth_header: dict
+    ):
         dataset = await self.test_dataset()
         user = await OwnerFactory.create()
         other_user = await OwnerFactory.create()
@@ -320,9 +322,7 @@ class TestDatasetRecordsBulkWithResponses:
             "with name='other-question'"
         }
 
-    async def test_update_record_with_wrong_responses_values(
-        self, async_client: AsyncClient, owner_auth_header: dict
-    ):
+    async def test_update_record_with_wrong_responses_values(self, async_client: AsyncClient, owner_auth_header: dict):
         dataset = await self.test_dataset()
         user = await OwnerFactory.create()
         response = await async_client.post(
