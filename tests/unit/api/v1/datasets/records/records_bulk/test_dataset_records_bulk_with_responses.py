@@ -233,7 +233,9 @@ class TestDatasetRecordsBulkWithResponses:
         response = (await db.execute(select(Response))).scalar_one()
         assert response.status == "draft"
 
-    async def test_update_record_with_responses_with_new_responses_in_bulk(self, async_client: AsyncClient, owner_auth_header: dict):
+    async def test_update_record_with_responses_with_new_responses_in_bulk(
+        self, async_client: AsyncClient, owner_auth_header: dict
+    ):
         dataset = await self.test_dataset()
         user = await OwnerFactory.create()
         other_user = await OwnerFactory.create()
@@ -316,13 +318,11 @@ class TestDatasetRecordsBulkWithResponses:
 
         assert response.status_code == 422, response.json()
         assert response.json() == {
-            "detail": f"Record at position 0 is not valid because found response value for non configured question "
-            "with name='other-question'"
+            "detail": f"Record at position 0 does not have valid responses because "
+            "found response value for non configured question with name='other-question'"
         }
 
-    async def test_update_record_with_wrong_responses_values(
-        self, async_client: AsyncClient, owner_auth_header: dict
-    ):
+    async def test_update_record_with_wrong_responses_values(self, async_client: AsyncClient, owner_auth_header: dict):
         dataset = await self.test_dataset()
         user = await OwnerFactory.create()
         response = await async_client.post(
@@ -349,7 +349,7 @@ class TestDatasetRecordsBulkWithResponses:
 
         assert response.status_code == 422, response.json()
         assert response.json() == {
-            "detail": f"Record at position 0 is not valid because 'wrong-label' "
+            "detail": f"Record at position 0 does not have valid responses because 'wrong-label' "
             "is not a valid label for label selection question.\n"
             "Valid labels are: ['label-a', 'label-b']"
         }
