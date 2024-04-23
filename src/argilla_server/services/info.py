@@ -52,7 +52,7 @@ def size(bytes):
 
 
 class ArgillaInfo(BaseModel):
-    show_huggingface_space_persistant_store_warning: Optional[bool]
+    show_huggingface_space_persistant_storage_warning: Optional[bool]
 
 
 class HuggingfaceInfo(BaseSettings):
@@ -124,8 +124,8 @@ class ApiInfoService:
         argilla_info = ArgillaInfo()
 
         if _huggingface_info.is_running_on_huggingface:
-            argilla_info.show_huggingface_space_persistant_store_warning = (
-                settings.show_huggingface_space_persistant_store_warning
+            argilla_info.show_huggingface_space_persistant_storage_warning = (
+                settings.show_huggingface_space_persistant_storage_warning
             )
 
         return argilla_info

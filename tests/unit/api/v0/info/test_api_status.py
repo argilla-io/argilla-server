@@ -33,26 +33,26 @@ class TestApiStatus:
 
             assert response.status_code == 200
             assert response.json()["argilla"] == {
-                "show_huggingface_space_persistant_store_warning": True,
+                "show_huggingface_space_persistant_storage_warning": True,
             }
 
-    async def test_api_status_with_argilla_info_and_show_huggingface_space_persistant_store_warning_disabled(
+    async def test_api_status_with_argilla_info_and_show_huggingface_space_persistant_storage_warning_disabled(
         self, async_client: AsyncClient
     ):
         with mock.patch.object(_huggingface_info, "space_id", "space-id"):
-            with mock.patch.object(settings, "show_huggingface_space_persistant_store_warning", False):
+            with mock.patch.object(settings, "show_huggingface_space_persistant_storage_warning", False):
                 response = await async_client.get(self.url())
 
                 assert response.status_code == 200
                 assert response.json()["argilla"] == {
-                    "show_huggingface_space_persistant_store_warning": False,
+                    "show_huggingface_space_persistant_storage_warning": False,
                 }
 
     async def test_api_status_with_argilla_info_and_not_running_on_huggingface(self, async_client: AsyncClient):
         response = await async_client.get(self.url())
 
         assert response.status_code == 200
-        assert "show_huggingface_space_persistant_store_warning" not in response.json()["argilla"]
+        assert "show_huggingface_space_persistant_storage_warning" not in response.json()["argilla"]
 
     async def test_api_status_with_huggingface_info(self, async_client: AsyncClient):
         huggingface_os_environ = {
