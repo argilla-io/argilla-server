@@ -12,7 +12,6 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-import asyncio
 from datetime import datetime
 from typing import Dict, List, Sequence, Tuple, Union
 from uuid import UUID
@@ -23,11 +22,10 @@ from sqlalchemy.orm import selectinload
 
 from argilla_server.contexts.accounts import fetch_users_by_ids_as_dict
 from argilla_server.contexts.records import (
-    delete_suggestions_by_record_ids,
     fetch_records_by_external_ids_as_dict,
     fetch_records_by_ids_as_dict,
 )
-from argilla_server.models import Dataset, Question, Record, Response, Suggestion, Vector, VectorSettings
+from argilla_server.models import Dataset, Record, Response, Suggestion, Vector, VectorSettings
 from argilla_server.schemas.v1.records import RecordCreate, RecordUpsert
 from argilla_server.schemas.v1.records_bulk import (
     RecordsBulk,
@@ -94,19 +92,18 @@ class CreateRecordsBulk:
         for idx, (record, suggestions) in enumerate(records_and_suggestions):
             try:
                 for suggestion_create in suggestions or []:
-                    try:
-                        question = _get_question_by_id(record.dataset, suggestion_create.question_id)
-                        if question is None:
-                            raise ValueError(f"question_id={suggestion_create.question_id} does not exist")
+                    question = record.dataset.question_by_id(suggestion_create.question_id)
+                    if question is None:
+                        raise ValueError(f"question with question_id={suggestion_create.question_id} does not exist")
 
+                    try:
                         SuggestionCreateValidator(suggestion_create).validate_for(question.parsed_settings, record)
                         upsert_many_suggestions.append(dict(**suggestion_create.dict(), record_id=record.id))
                     except ValueError as ex:
-                        raise ValueError(
-                            f"suggestion for question_id={suggestion_create.question_id} is not valid: {ex}"
-                        )
+                        raise ValueError(f"suggestion for question name={question.name} is not valid: {ex}")
+
             except ValueError as ex:
-                raise ValueError(f"Record at position {idx} is not valid because {ex}") from ex
+                raise ValueError(f"Record at position {idx} does not have valid suggestions because {ex}") from ex
 
         if not upsert_many_suggestions:
             return []
@@ -135,7 +132,7 @@ class CreateRecordsBulk:
                     ResponseCreateValidator(response_create).validate_for(record)
                     upsert_many_responses.append(dict(**response_create.dict(), record_id=record.id))
             except ValueError as ex:
-                raise ValueError(f"Record at position {idx} is not valid because {ex}") from ex
+                raise ValueError(f"Record at position {idx} does not have valid responses because {ex}") from ex
 
         if not upsert_many_responses:
             return []
@@ -155,21 +152,14 @@ class CreateRecordsBulk:
         for idx, (record, vectors) in enumerate(records_and_vectors):
             try:
                 for name, value in (vectors or {}).items():
-                    try:
-                        settings = _get_vector_settings_by_name(record.dataset, name)
-                        if not settings:
-                            raise ValueError(
-                                f"vector with name={name} does not exist for dataset_id={record.dataset.id}"
-                            )
+                    settings = _get_vector_settings_by_name(record.dataset, name)
+                    if not settings:
+                        raise ValueError(f"vector with name={name} does not exist for dataset_id={record.dataset.id}")
 
-                        VectorValidator(value).validate_for(settings)
-                        upsert_many_vectors.append(
-                            dict(value=value, record_id=record.id, vector_settings_id=settings.id)
-                        )
-                    except ValueError as ex:
-                        raise ValueError(f"vector with name={name} is not valid: {ex}") from ex
+                    VectorValidator(value).validate_for(settings)
+                    upsert_many_vectors.append(dict(value=value, record_id=record.id, vector_settings_id=settings.id))
             except ValueError as ex:
-                raise ValueError(f"Record at position {idx} is not valid because {ex}") from ex
+                raise ValueError(f"Record at position {idx} does not have valid vectors because {ex}") from ex
 
         if not upsert_many_vectors:
             return []
@@ -251,12 +241,6 @@ async def _preload_records_relationships_before_index(db: "AsyncSession", record
             selectinload(Record.vectors),
         )
     )
-
-
-def _get_question_by_id(dataset: Dataset, question_id: UUID) -> Union[Question, None]:
-    for question in dataset.questions:
-        if question.id == question_id:
-            return question
 
 
 def _get_vector_settings_by_name(dataset: Dataset, name: str) -> Union[VectorSettings, None]:

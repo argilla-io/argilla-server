@@ -14,12 +14,12 @@
 from uuid import UUID
 
 import pytest
-from argilla_server.enums import DatasetStatus, QuestionType
-from argilla_server.models import Dataset, Suggestion
 from httpx import AsyncClient
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from argilla_server.enums import DatasetStatus, QuestionType
+from argilla_server.models import Dataset, Suggestion
 from tests.factories import (
     DatasetFactory,
     LabelSelectionQuestionFactory,
@@ -299,8 +299,8 @@ class TestDatasetRecordsBulkWithSuggestions:
 
         assert response.status_code == 422, response.json()
         assert response.json() == {
-            "detail": f"Record at position 0 is not valid because suggestion for question_id={other_question.id} "
-            f"is not valid: question_id={other_question.id} does not exist"
+            "detail": "Record at position 0 does not have valid suggestions because "
+            f"question with question_id={other_question.id} does not exist"
         }
 
     async def test_create_record_with_wrong_suggestion_value_in_bulk(
@@ -329,7 +329,7 @@ class TestDatasetRecordsBulkWithSuggestions:
 
         assert response.status_code == 422, response.json()
         assert response.json() == {
-            "detail": f"Record at position 0 is not valid because suggestion for question_id={question_id} "
+            "detail": f"Record at position 0 does not have valid suggestions because suggestion for question name=label "
             f"is not valid: 'wrong-label' is not a valid label for label selection question.\n"
             "Valid labels are: ['label-a', 'label-b']"
         }
@@ -360,8 +360,8 @@ class TestDatasetRecordsBulkWithSuggestions:
 
         assert response.status_code == 422, response.json()
         assert response.json() == {
-            "detail": f"Record at position 0 is not valid because suggestion for question_id={other_question.id} "
-            f"is not valid: question_id={other_question.id} does not exist"
+            "detail": f"Record at position 0 does not have valid suggestions because "
+            f"question with question_id={other_question.id} does not exist"
         }
 
     async def test_update_record_with_wrong_suggestion_value_in_bulk(
@@ -389,7 +389,7 @@ class TestDatasetRecordsBulkWithSuggestions:
 
         assert response.status_code == 422, response.json()
         assert response.json() == {
-            "detail": f"Record at position 0 is not valid because suggestion for question_id={question.id} "
+            "detail": f"Record at position 0 does not have valid suggestions because suggestion for question name=label "
             f"is not valid: 'wrong-label' is not a valid label for label selection question.\n"
             "Valid labels are: ['label-a', 'label-b']"
         }
