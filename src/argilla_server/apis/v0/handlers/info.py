@@ -20,7 +20,7 @@ from argilla_server.services.info import ApiInfo, ApiInfoService, ApiStatus
 router = APIRouter(tags=["status"])
 
 
-@router.get("/_status", operation_id="api_status", response_model=ApiStatus)
+@router.get("/_status", operation_id="api_status", response_model=ApiStatus, response_model_exclude_none=True)
 async def api_status(service: ApiInfoService = Depends(ApiInfoService.get_instance)) -> ApiStatus:
     return service.api_status()
 
