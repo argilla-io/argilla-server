@@ -23,4 +23,7 @@ class VectorValidator:
 
     def validate_for(self, vector_settings: VectorSettings):
         if len(self._value) != vector_settings.dimensions:
-            raise ValueError(f"vector must have {vector_settings.dimensions} elements, got {len(self._value)} elements")
+            raise ValueError(
+                f"vector value for vector name={vector_settings.name} must have {vector_settings.dimensions} elements, "
+                f"got {len(self._value)} elements"
+            )
