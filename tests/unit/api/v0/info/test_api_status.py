@@ -80,7 +80,7 @@ class TestApiStatus:
                     "space_persistant_storage_enabled": True,
                 }
 
-    async def test_api_status_not_running_on_huggingface(self, async_client: AsyncClient):
+    async def test_api_status_with_huggingface_info_and_not_running_on_huggingface(self, async_client: AsyncClient):
         response = await async_client.get(self.url())
 
         assert response.status_code == 200
