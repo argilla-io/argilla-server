@@ -18,6 +18,7 @@ from unittest import mock
 import pytest
 from argilla_server.services import info
 from argilla_server.services.info import HuggingfaceInfo
+from argilla_server.settings import settings
 from httpx import AsyncClient
 
 
@@ -25,6 +26,25 @@ from httpx import AsyncClient
 class TestApiStatus:
     def url(self) -> str:
         return "/api/_status"
+
+    async def test_api_status_with_argilla_info(self, async_client: AsyncClient):
+        response = await async_client.get(self.url())
+
+        assert response.status_code == 200
+        assert response.json()["argilla"] == {
+            "show_huggingface_space_persistant_store_warning": True,
+        }
+
+    async def test_api_status_with_argilla_info_and_show_huggingface_space_persistant_store_warning_disabled(
+        self, async_client: AsyncClient
+    ):
+        with mock.patch.object(settings, "show_huggingface_space_persistant_store_warning", False):
+            response = await async_client.get(self.url())
+
+            assert response.status_code == 200
+            assert response.json()["argilla"] == {
+                "show_huggingface_space_persistant_store_warning": False,
+            }
 
     async def test_api_status_with_huggingface_info(self, async_client: AsyncClient):
         huggingface_os_environ = {
