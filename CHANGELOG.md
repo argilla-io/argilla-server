@@ -16,6 +16,10 @@ These are the section headers that we use:
 
 ## [Unreleased]()
 
+### Added
+
+- Added `huggingface` attribute to `GET /api/_status` endpoint exposing Hugging Face Spaces environment variables. ([#121](https://github.com/argilla-io/argilla-server/pull/121))
+
 ## [1.27.0](https://github.com/argilla-io/argilla-server/compare/v1.26.1...v1.27.0)
 
 ### Added

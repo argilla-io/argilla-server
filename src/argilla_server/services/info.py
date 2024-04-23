@@ -14,14 +14,14 @@
 #  limitations under the License.
 
 import os
-from typing import Any, Dict
+from typing import Any, Dict, Optional, Union
 
 import psutil
 from fastapi import Depends
 
 from argilla_server._version import __version__ as version
 from argilla_server.daos.backend import GenericElasticEngineBackend
-from argilla_server.pydantic_v1 import BaseModel
+from argilla_server.pydantic_v1 import BaseModel, BaseSettings, Field
 
 
 def size(bytes):
@@ -46,7 +46,21 @@ def size(bytes):
             suffix = singular
         else:
             suffix = multiple
+
     return str(amount) + suffix
+
+
+class HuggingfaceInfo(BaseSettings):
+    space_id: str = Field(None, env="SPACE_ID")
+    space_title: str = Field(None, env="SPACE_TITLE")
+    space_subdomain: str = Field(None, env="SPACE_SUBDOMAIN")
+    space_host: str = Field(None, env="SPACE_HOST")
+    space_repo_name: str = Field(None, env="SPACE_REPO_NAME")
+    space_author_name: str = Field(None, env="SPACE_AUTHOR_NAME")
+    space_persistant_storage_enabled: bool = Field(False, env="PERSISTANT_STORAGE_ENABLED")
+
+
+_huggingface_info = HuggingfaceInfo()
 
 
 class ApiInfo(BaseModel):
@@ -59,6 +73,7 @@ class ApiStatus(ApiInfo):
     """The argilla api status model"""
 
     elasticsearch: Dict[str, Any]
+    huggingface: Optional[HuggingfaceInfo]
     mem_info: Dict[str, Any]
 
 
@@ -90,12 +105,19 @@ class ApiInfoService:
         return ApiStatus(
             version=str(version),
             elasticsearch=self._elasticsearch_info(),
+            huggingface=self._huggingface_info(),
             mem_info=self._api_memory_info(),
         )
 
     def _elasticsearch_info(self) -> Dict[str, Any]:
         """Returns the elasticsearch cluster info"""
         return self.__es__.client.get_cluster_info()
+
+    def _huggingface_info(self) -> Union[HuggingfaceInfo, None]:
+        if not _huggingface_info.space_id:
+            return
+
+        return _huggingface_info
 
     @staticmethod
     def _api_memory_info() -> Dict[str, Any]:
