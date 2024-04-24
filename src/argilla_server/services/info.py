@@ -114,16 +114,16 @@ class ApiInfoService:
         """Returns the current api status"""
         return ApiStatus(
             version=str(version),
-            argilla=self._argilla_info(),
+            argilla=self._argilla_info(_huggingface_info),
             elasticsearch=self._elasticsearch_info(),
-            huggingface=self._huggingface_info(),
+            huggingface=self._huggingface_info(_huggingface_info),
             mem_info=self._api_memory_info(),
         )
 
-    def _argilla_info(self) -> ArgillaInfo:
+    def _argilla_info(self, huggingface_info: HuggingfaceInfo) -> ArgillaInfo:
         argilla_info = ArgillaInfo()
 
-        if _huggingface_info.is_running_on_huggingface:
+        if huggingface_info.is_running_on_huggingface:
             argilla_info.show_huggingface_space_persistant_storage_warning = (
                 settings.show_huggingface_space_persistant_storage_warning
             )
@@ -134,9 +134,9 @@ class ApiInfoService:
         """Returns the elasticsearch cluster info"""
         return self.__es__.client.get_cluster_info()
 
-    def _huggingface_info(self) -> Union[HuggingfaceInfo, None]:
-        if _huggingface_info.is_running_on_huggingface:
-            return _huggingface_info
+    def _huggingface_info(self, huggingface_info: HuggingfaceInfo) -> Union[HuggingfaceInfo, None]:
+        if huggingface_info.is_running_on_huggingface:
+            return huggingface_info
 
     @staticmethod
     def _api_memory_info() -> Dict[str, Any]:
