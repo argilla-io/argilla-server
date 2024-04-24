@@ -22,6 +22,7 @@ from fastapi import Depends
 from argilla_server._version import __version__ as version
 from argilla_server.daos.backend import GenericElasticEngineBackend
 from argilla_server.pydantic_v1 import BaseModel, BaseSettings, Field
+from argilla_server.settings import settings
 
 
 def size(bytes):
@@ -50,6 +51,10 @@ def size(bytes):
     return str(amount) + suffix
 
 
+class ArgillaInfo(BaseModel):
+    show_huggingface_space_persistant_storage_warning: Optional[bool]
+
+
 class HuggingfaceInfo(BaseSettings):
     space_id: str = Field(None, env="SPACE_ID")
     space_title: str = Field(None, env="SPACE_TITLE")
@@ -58,6 +63,10 @@ class HuggingfaceInfo(BaseSettings):
     space_repo_name: str = Field(None, env="SPACE_REPO_NAME")
     space_author_name: str = Field(None, env="SPACE_AUTHOR_NAME")
     space_persistant_storage_enabled: bool = Field(False, env="PERSISTANT_STORAGE_ENABLED")
+
+    @property
+    def is_running_on_huggingface(self) -> bool:
+        return bool(self.space_id)
 
 
 _huggingface_info = HuggingfaceInfo()
@@ -72,6 +81,7 @@ class ApiInfo(BaseModel):
 class ApiStatus(ApiInfo):
     """The argilla api status model"""
 
+    argilla: ArgillaInfo
     elasticsearch: Dict[str, Any]
     huggingface: Optional[HuggingfaceInfo]
     mem_info: Dict[str, Any]
@@ -104,20 +114,29 @@ class ApiInfoService:
         """Returns the current api status"""
         return ApiStatus(
             version=str(version),
+            argilla=self._argilla_info(_huggingface_info),
             elasticsearch=self._elasticsearch_info(),
-            huggingface=self._huggingface_info(),
+            huggingface=self._huggingface_info(_huggingface_info),
             mem_info=self._api_memory_info(),
         )
+
+    def _argilla_info(self, huggingface_info: HuggingfaceInfo) -> ArgillaInfo:
+        argilla_info = ArgillaInfo()
+
+        if huggingface_info.is_running_on_huggingface:
+            argilla_info.show_huggingface_space_persistant_storage_warning = (
+                settings.show_huggingface_space_persistant_storage_warning
+            )
+
+        return argilla_info
 
     def _elasticsearch_info(self) -> Dict[str, Any]:
         """Returns the elasticsearch cluster info"""
         return self.__es__.client.get_cluster_info()
 
-    def _huggingface_info(self) -> Union[HuggingfaceInfo, None]:
-        if not _huggingface_info.space_id:
-            return
-
-        return _huggingface_info
+    def _huggingface_info(self, huggingface_info: HuggingfaceInfo) -> Union[HuggingfaceInfo, None]:
+        if huggingface_info.is_running_on_huggingface:
+            return huggingface_info
 
     @staticmethod
     def _api_memory_info() -> Dict[str, Any]:

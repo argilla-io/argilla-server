@@ -123,7 +123,14 @@ class Settings(BaseSettings):
     )
 
     span_options_max_items: int = Field(
-        default=DEFAULT_SPAN_OPTIONS_MAX_ITEMS, description="Max number of label options for questions of type `span`"
+        default=DEFAULT_SPAN_OPTIONS_MAX_ITEMS,
+        description="Max number of label options for questions of type `span`",
+    )
+
+    # Hugging Face settings
+    show_huggingface_space_persistant_storage_warning: bool = Field(
+        default=True,
+        description="If True, show a warning when Hugging Face space persistant storage is disabled",
     )
 
     # See also the telemetry.py module
