@@ -141,6 +141,24 @@ class TestDatasetRecordsBulk:
         for record in updated_records:
             assert record.metadata_ == metadata
 
+    async def test_update_record_for_other_dataset(
+        self, async_client: AsyncClient, db: AsyncSession, owner_auth_header: dict
+    ):
+        dataset = await self.test_dataset()
+        other_dataset = await self.test_dataset()
+
+        record = await RecordFactory.create(dataset=dataset)
+
+        response = await async_client.put(
+            self.url(other_dataset.id),
+            headers=owner_auth_header,
+            json={"items": [{"id": str(record.id), "metadata": {"terms_metadata": "b"}}]},
+        )
+
+        assert response.status_code == 422, response.json()
+        assert (await db.execute(select(func.count(Record.id)))).scalar_one() == 1
+        assert (await db.execute(select(Record))).scalar_one().metadata_ is None
+
     async def _configure_dataset_metadata_properties(self, dataset):
         await TermsMetadataPropertyFactory.create(name="terms_metadata", dataset=dataset)
 
