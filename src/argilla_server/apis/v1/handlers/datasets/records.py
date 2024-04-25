@@ -462,7 +462,12 @@ async def list_dataset_records(
     return Records(items=records, total=total)
 
 
-@router.post("/datasets/{dataset_id}/records", status_code=status.HTTP_204_NO_CONTENT)
+@router.post(
+    "/datasets/{dataset_id}/records",
+    status_code=status.HTTP_204_NO_CONTENT,
+    deprecated=True,
+    description="Deprecated in favor of POST /datasets/{dataset_id}/records/bulk",
+)
 async def create_dataset_records(
     *,
     db: AsyncSession = Depends(get_async_db),
@@ -487,7 +492,12 @@ async def create_dataset_records(
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(err))
 
 
-@router.patch("/datasets/{dataset_id}/records", status_code=status.HTTP_204_NO_CONTENT)
+@router.patch(
+    "/datasets/{dataset_id}/records",
+    status_code=status.HTTP_204_NO_CONTENT,
+    deprecated=True,
+    description="Deprecated in favor of PUT /datasets/{dataset_id}/records/bulk",
+)
 async def update_dataset_records(
     *,
     db: AsyncSession = Depends(get_async_db),
