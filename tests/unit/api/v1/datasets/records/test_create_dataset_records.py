@@ -196,9 +196,10 @@ class TestCreateDatasetRecords:
                             },
                             {
                                 "type": SuggestionType.model,
+                                "score": [0.5, 0.9],
                                 "value": [
-                                    {"label": "thing", "start": 0, "end": 5, "score": 0.5},
-                                    {"label": "place", "start": 6, "end": 8, "score": 0.9},
+                                    {"label": "thing", "start": 0, "end": 5},
+                                    {"label": "place", "start": 6, "end": 8},
                                 ],
                                 "question_id": str(span_question.id),
                             },
