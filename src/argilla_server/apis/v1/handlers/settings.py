@@ -1,4 +1,3 @@
-#  coding=utf-8
 #  Copyright 2021-present, the Recognai S.L. team.
 #
 #  Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,18 +12,14 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter
 
-from argilla_server.services.info import ApiInfo, ApiInfoService, ApiStatus
+from argilla_server.contexts import settings
+from argilla_server.schemas.v1.settings import Settings
 
-router = APIRouter(tags=["status"])
-
-
-@router.get("/_status", operation_id="api_status", response_model=ApiStatus)
-async def api_status(service: ApiInfoService = Depends(ApiInfoService.get_instance)) -> ApiStatus:
-    return service.api_status()
+router = APIRouter(tags=["settings"])
 
 
-@router.get("/_info", operation_id="api_info", response_model=ApiInfo)
-async def api_info(service: ApiInfoService = Depends(ApiInfoService.get_instance)) -> ApiInfo:
-    return ApiInfo.parse_obj(service.api_status())
+@router.get("/settings", response_model=Settings, response_model_exclude_none=True)
+async def get_settings():
+    return settings.get_settings()

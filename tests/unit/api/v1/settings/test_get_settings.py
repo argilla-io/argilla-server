@@ -16,19 +16,20 @@ import os
 from unittest import mock
 
 import pytest
-from argilla_server.services import info
-from argilla_server.services.info import HuggingfaceInfo, _huggingface_info
-from argilla_server.settings import settings
+from argilla_server.contexts import settings as settings_context
+from argilla_server.contexts.settings import HUGGINGFACE_SETTINGS
+from argilla_server.schemas.v1.settings import HuggingfaceSettings
+from argilla_server.settings import settings as argilla_server_settings
 from httpx import AsyncClient
 
 
 @pytest.mark.asyncio
-class TestApiStatus:
+class TestGetSettings:
     def url(self) -> str:
-        return "/api/_status"
+        return "/api/v1/settings"
 
-    async def test_api_status_with_argilla_info(self, async_client: AsyncClient):
-        with mock.patch.object(_huggingface_info, "space_id", "space-id"):
+    async def test_get_settings_for_argilla_settings_running_on_huggingface(self, async_client: AsyncClient):
+        with mock.patch.object(HUGGINGFACE_SETTINGS, "space_id", "space-id"):
             response = await async_client.get(self.url())
 
             assert response.status_code == 200
@@ -36,11 +37,11 @@ class TestApiStatus:
                 "show_huggingface_space_persistant_storage_warning": True,
             }
 
-    async def test_api_status_with_argilla_info_and_show_huggingface_space_persistant_storage_warning_disabled(
+    async def test_get_settings_for_argilla_settings_running_on_huggingface_with_disabled_storage_warning(
         self, async_client: AsyncClient
     ):
-        with mock.patch.object(_huggingface_info, "space_id", "space-id"):
-            with mock.patch.object(settings, "show_huggingface_space_persistant_storage_warning", False):
+        with mock.patch.object(HUGGINGFACE_SETTINGS, "space_id", "space-id"):
+            with mock.patch.object(argilla_server_settings, "show_huggingface_space_persistant_storage_warning", False):
                 response = await async_client.get(self.url())
 
                 assert response.status_code == 200
@@ -48,13 +49,13 @@ class TestApiStatus:
                     "show_huggingface_space_persistant_storage_warning": False,
                 }
 
-    async def test_api_status_with_argilla_info_and_not_running_on_huggingface(self, async_client: AsyncClient):
+    async def test_get_settings_for_argilla_settings_not_running_on_huggingface(self, async_client: AsyncClient):
         response = await async_client.get(self.url())
 
         assert response.status_code == 200
         assert "show_huggingface_space_persistant_storage_warning" not in response.json()["argilla"]
 
-    async def test_api_status_with_huggingface_info(self, async_client: AsyncClient):
+    async def test_get_settings_for_huggingface_settings_running_on_huggingface(self, async_client: AsyncClient):
         huggingface_os_environ = {
             "SPACE_ID": "space-id",
             "SPACE_TITLE": "space-title",
@@ -66,7 +67,7 @@ class TestApiStatus:
         }
 
         with mock.patch.dict(os.environ, huggingface_os_environ):
-            with mock.patch.object(info, "_huggingface_info", HuggingfaceInfo()):
+            with mock.patch.object(settings_context, "HUGGINGFACE_SETTINGS", HuggingfaceSettings()):
                 response = await async_client.get(self.url())
 
                 assert response.status_code == 200
@@ -80,7 +81,7 @@ class TestApiStatus:
                     "space_persistant_storage_enabled": True,
                 }
 
-    async def test_api_status_with_huggingface_info_and_not_running_on_huggingface(self, async_client: AsyncClient):
+    async def test_get_settings_for_huggingface_settings_not_running_on_huggingface(self, async_client: AsyncClient):
         response = await async_client.get(self.url())
 
         assert response.status_code == 200
