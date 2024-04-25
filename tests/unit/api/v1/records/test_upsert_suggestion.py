@@ -264,7 +264,7 @@ class TestUpsertSuggestion:
 
         assert response.status_code == 422
 
-    async def test_upsert_suggestion_with_list_of_scores_not_matching_values_cardinality(
+    async def test_upsert_suggestion_with_single_value_and_multiple_scores(
         self, async_client: AsyncClient, owner_auth_header: dict
     ):
         record = await RecordFactory.create()
@@ -285,6 +285,35 @@ class TestUpsertSuggestion:
         assert response.status_code == 422
         assert response.json() == {
             "detail": "a list of score values is not allowed for a suggestion with a single value"
+        }
+
+    async def test_upsert_suggestion_with_multiple_values_and_single_score(
+        self, async_client: AsyncClient, owner_auth_header: dict
+    ):
+        dataset = await DatasetFactory.create()
+
+        question = await SpanQuestionFactory.create(name="span-question", dataset=dataset)
+
+        record = await RecordFactory.create(fields={"field-a": "Hello"}, dataset=dataset)
+
+        response = await async_client.put(
+            self.url(record.id),
+            headers=owner_auth_header,
+            json={
+                "question_id": str(question.id),
+                "type": SuggestionType.model,
+                "value": [
+                    {"label": "label-a", "start": 0, "end": 1},
+                    {"label": "label-b", "start": 2, "end": 3},
+                    {"label": "label-c", "start": 4, "end": 5},
+                ],
+                "score": 0.5,
+            },
+        )
+
+        assert response.status_code == 422
+        assert response.json() == {
+            "detail": "a single score value is not allowed for a suggestion with a multiple items value"
         }
 
     @pytest.mark.parametrize("score", [[1.0], [1.0, 0.5], [1.0, 0.5, 0.9, 0.3]])

@@ -37,6 +37,13 @@ class SuggestionCreateValidator:
         if not isinstance(self._suggestion_create.value, list) and isinstance(self._suggestion_create.score, list):
             raise ValueError("a list of score values is not allowed for a suggestion with a single value")
 
+        if (
+            isinstance(self._suggestion_create.value, list)
+            and self._suggestion_create.score is not None
+            and not isinstance(self._suggestion_create.score, list)
+        ):
+            raise ValueError("a single score value is not allowed for a suggestion with a multiple items value")
+
     def _validate_value_and_score_have_same_length(self) -> None:
         if not isinstance(self._suggestion_create.value, list) or not isinstance(self._suggestion_create.score, list):
             return
