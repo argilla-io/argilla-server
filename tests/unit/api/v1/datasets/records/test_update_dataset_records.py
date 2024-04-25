@@ -143,7 +143,7 @@ class TestUpdateDatasetRecords:
                             },
                             {
                                 "type": SuggestionType.model,
-                                "score": 1.0,
+                                "score": [1.0, 0.1],
                                 "value": [
                                     "label-a",
                                     "label-b",
@@ -158,7 +158,7 @@ class TestUpdateDatasetRecords:
                             },
                             {
                                 "type": SuggestionType.model,
-                                "score": 0.5,
+                                "score": [0.2, 0.5],
                                 "value": [
                                     {"value": "ranking-a", "rank": 1},
                                     {"value": "ranking-b", "rank": 2},

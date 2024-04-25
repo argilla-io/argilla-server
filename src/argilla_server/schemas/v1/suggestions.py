@@ -17,7 +17,7 @@ from typing import Annotated, Any, Dict, List, Literal, Optional, Union
 from uuid import UUID
 
 from argilla_server.models import SuggestionType
-from argilla_server.pydantic_v1 import BaseModel, Field, root_validator
+from argilla_server.pydantic_v1 import BaseModel, Field
 from argilla_server.schemas.v1.questions import QuestionName
 from argilla_server.schemas.v1.responses import (
     MultiLabelSelectionQuestionResponseValue,
@@ -99,15 +99,3 @@ class SuggestionCreate(BaseSuggestion):
         le=SCORE_LESS_THAN_OR_EQUAL,
         description="The score assigned to the suggestion",
     )
-
-    @root_validator(skip_on_failure=True)
-    def check_value_and_score_length(cls, values: dict) -> dict:
-        value, score = values.get("value"), values.get("score")
-
-        if not isinstance(value, list) or not isinstance(score, list):
-            return values
-
-        if len(value) != len(score):
-            raise ValueError("number of items on value and score attributes doesn't match")
-
-        return values
