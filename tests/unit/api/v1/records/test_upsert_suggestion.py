@@ -13,17 +13,17 @@
 #  limitations under the License.
 
 from datetime import datetime
-from typing import Any
+from typing import Any, List
 from uuid import UUID, uuid4
 
 import pytest
-from argilla_server.enums import SuggestionType
+from argilla_server.enums import QuestionType, SuggestionType
 from argilla_server.models import Suggestion
 from httpx import AsyncClient
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from tests.factories import DatasetFactory, RecordFactory, SpanQuestionFactory, TextQuestionFactory
+from tests.factories import DatasetFactory, QuestionFactory, RecordFactory, SpanQuestionFactory, TextQuestionFactory
 
 
 @pytest.mark.asyncio
@@ -53,6 +53,66 @@ class TestUpsertSuggestion:
         )
 
         assert response.status_code == 201
+
+    async def test_upsert_suggestion_with_single_value_score_list(
+        self, async_client: AsyncClient, owner_auth_header: dict
+    ):
+        record = await RecordFactory.create()
+        question = await QuestionFactory.create(
+            dataset=record.dataset,
+            settings={
+                "type": QuestionType.multi_label_selection,
+                "options": [
+                    {"value": "label-1", "text": "Label 1"},
+                    {"value": "label-2", "text": "Label 2"},
+                ],
+            },
+        )
+
+        response = await async_client.put(
+            self.url(record.id),
+            headers=owner_auth_header,
+            json={
+                "question_id": str(question.id),
+                "type": SuggestionType.model,
+                "value": ["label-1"],
+                "score": [1.0],
+            },
+        )
+
+        assert response.status_code == 201
+        assert response.json()["score"] == [1.0]
+
+    async def test_upsert_suggestion_with_multiple_values_score_list(
+        self, async_client: AsyncClient, owner_auth_header: dict
+    ):
+        record = await RecordFactory.create()
+        question = await QuestionFactory.create(
+            dataset=record.dataset,
+            settings={
+                "type": QuestionType.multi_label_selection,
+                "options": [
+                    {"value": "label-1", "text": "Label 1"},
+                    {"value": "label-2", "text": "Label 2"},
+                    {"value": "label-3", "text": "Label 3"},
+                    {"value": "label-4", "text": "Label 3"},
+                ],
+            },
+        )
+
+        response = await async_client.put(
+            self.url(record.id),
+            headers=owner_auth_header,
+            json={
+                "question_id": str(question.id),
+                "type": SuggestionType.model,
+                "value": ["label-1", "label-2", "label-3", "label-4"],
+                "score": [1.0, 0.5, 0.9, 0.3],
+            },
+        )
+
+        assert response.status_code == 201
+        assert response.json()["score"] == [1.0, 0.5, 0.9, 0.3]
 
     @pytest.mark.parametrize("agent", ["", " ", "  ", "-", "_", ":", ".", "/", ","])
     async def test_upsert_suggestion_with_invalid_agent(
@@ -136,6 +196,154 @@ class TestUpsertSuggestion:
 
         assert response.status_code == 422
 
+    async def test_upsert_suggestion_with_list_of_scores_including_invalid_lower_score(
+        self, async_client: AsyncClient, owner_auth_header: dict
+    ):
+        response = await async_client.put(
+            self.url(uuid4()),
+            headers=owner_auth_header,
+            json={
+                "question_id": str(uuid4()),
+                "type": SuggestionType.model,
+                "value": "value",
+                "agent": "agent",
+                "score": [1.0, 0.5, -0.1],
+            },
+        )
+
+        assert response.status_code == 422
+
+    async def test_upsert_suggestion_with_list_of_scores_including_invalid_upper_score(
+        self, async_client: AsyncClient, owner_auth_header: dict
+    ):
+        response = await async_client.put(
+            self.url(uuid4()),
+            headers=owner_auth_header,
+            json={
+                "question_id": str(uuid4()),
+                "type": SuggestionType.model,
+                "value": "value",
+                "agent": "agent",
+                "score": [1.0, 0.5, 1.1],
+            },
+        )
+
+        assert response.status_code == 422
+
+    async def test_upsert_suggestion_with_list_of_scores_including_none_values(
+        self, async_client: AsyncClient, owner_auth_header: dict
+    ):
+        response = await async_client.put(
+            self.url(uuid4()),
+            headers=owner_auth_header,
+            json={
+                "question_id": str(uuid4()),
+                "type": SuggestionType.model,
+                "value": "value",
+                "agent": "agent",
+                "score": [1.0, 0.5, None],
+            },
+        )
+
+        assert response.status_code == 422
+
+    async def test_upsert_suggestion_with_empty_list_of_scores(
+        self, async_client: AsyncClient, owner_auth_header: dict
+    ):
+        response = await async_client.put(
+            self.url(uuid4()),
+            headers=owner_auth_header,
+            json={
+                "question_id": str(uuid4()),
+                "type": SuggestionType.model,
+                "value": "value",
+                "agent": "agent",
+                "score": [],
+            },
+        )
+
+        assert response.status_code == 422
+
+    async def test_upsert_suggestion_with_single_value_and_multiple_scores(
+        self, async_client: AsyncClient, owner_auth_header: dict
+    ):
+        record = await RecordFactory.create()
+        question = await TextQuestionFactory.create(dataset=record.dataset)
+
+        response = await async_client.put(
+            self.url(record.id),
+            headers=owner_auth_header,
+            json={
+                "question_id": str(question.id),
+                "type": SuggestionType.model,
+                "value": "value",
+                "agent": "agent",
+                "score": [1.0],
+            },
+        )
+
+        assert response.status_code == 422
+        assert response.json() == {
+            "detail": "a list of score values is not allowed for a suggestion with a single value"
+        }
+
+    async def test_upsert_suggestion_with_multiple_values_and_single_score(
+        self, async_client: AsyncClient, owner_auth_header: dict
+    ):
+        dataset = await DatasetFactory.create()
+
+        question = await SpanQuestionFactory.create(name="span-question", dataset=dataset)
+
+        record = await RecordFactory.create(fields={"field-a": "Hello"}, dataset=dataset)
+
+        response = await async_client.put(
+            self.url(record.id),
+            headers=owner_auth_header,
+            json={
+                "question_id": str(question.id),
+                "type": SuggestionType.model,
+                "value": [
+                    {"label": "label-a", "start": 0, "end": 1},
+                    {"label": "label-b", "start": 2, "end": 3},
+                    {"label": "label-c", "start": 4, "end": 5},
+                ],
+                "score": 0.5,
+            },
+        )
+
+        assert response.status_code == 422
+        assert response.json() == {
+            "detail": "a single score value is not allowed for a suggestion with a multiple items value"
+        }
+
+    @pytest.mark.parametrize("score", [[1.0], [1.0, 0.5], [1.0, 0.5, 0.9, 0.3]])
+    async def test_upsert_suggestion_with_list_of_scores_not_matching_values_length(
+        self, async_client: AsyncClient, owner_auth_header: dict, score: List[float]
+    ):
+        dataset = await DatasetFactory.create()
+
+        question = await SpanQuestionFactory.create(name="span-question", dataset=dataset)
+
+        record = await RecordFactory.create(fields={"field-a": "Hello"}, dataset=dataset)
+
+        response = await async_client.put(
+            self.url(record.id),
+            headers=owner_auth_header,
+            json={
+                "question_id": str(question.id),
+                "type": SuggestionType.model,
+                "value": [
+                    {"label": "label-a", "start": 0, "end": 1},
+                    {"label": "label-b", "start": 2, "end": 3},
+                    {"label": "label-c", "start": 4, "end": 5},
+                ],
+                "score": score,
+            },
+        )
+
+        assert response.status_code == 422
+        assert response.json() == {"detail": "number of items on value and score attributes doesn't match"}
+
     async def test_upsert_suggestion_for_span_question(
         self, async_client: AsyncClient, db: AsyncSession, owner_auth_header: dict
     ):
@@ -152,8 +360,8 @@ class TestUpsertSuggestion:
                 "question_id": str(span_question.id),
                 "type": SuggestionType.model,
                 "value": [
-                    {"label": "label-a", "start": 0, "end": 1, "score": 0.2},
-                    {"label": "label-b", "start": 2, "end": 3, "score": 1},
+                    {"label": "label-a", "start": 0, "end": 1},
+                    {"label": "label-b", "start": 2, "end": 3},
                     {"label": "label-c", "start": 4, "end": 5},
                 ],
             },
@@ -169,9 +377,9 @@ class TestUpsertSuggestion:
             "question_id": str(span_question.id),
             "type": SuggestionType.model,
             "value": [
-                {"label": "label-a", "start": 0, "end": 1, "score": 0.2},
-                {"label": "label-b", "start": 2, "end": 3, "score": 1.0},
-                {"label": "label-c", "start": 4, "end": 5, "score": None},
+                {"label": "label-a", "start": 0, "end": 1},
+                {"label": "label-b", "start": 2, "end": 3},
+                {"label": "label-c", "start": 4, "end": 5},
             ],
             "agent": None,
             "score": None,
@@ -195,8 +403,8 @@ class TestUpsertSuggestion:
                 "question_id": str(span_question.id),
                 "type": SuggestionType.model,
                 "value": [
-                    {"label": "label-a", "start": 0, "end": 1, "score": 0.2, "ignored": "value"},
-                    {"label": "label-b", "start": 2, "end": 3, "score": 1},
+                    {"label": "label-a", "start": 0, "end": 1, "ignored": "value"},
+                    {"label": "label-b", "start": 2, "end": 3},
                     {"label": "label-c", "start": 4, "end": 5, "ignored": "value"},
                 ],
             },
@@ -212,9 +420,9 @@ class TestUpsertSuggestion:
             "question_id": str(span_question.id),
             "type": SuggestionType.model,
             "value": [
-                {"label": "label-a", "start": 0, "end": 1, "score": 0.2},
-                {"label": "label-b", "start": 2, "end": 3, "score": 1.0},
-                {"label": "label-c", "start": 4, "end": 5, "score": None},
+                {"label": "label-a", "start": 0, "end": 1},
+                {"label": "label-b", "start": 2, "end": 3},
+                {"label": "label-c", "start": 4, "end": 5},
             ],
             "agent": None,
             "score": None,
@@ -301,31 +509,6 @@ class TestUpsertSuggestion:
                 "value": [
                     {"label": "label-a", "start": 0, "end": 1},
                     {"invalid": "value"},
-                ],
-            },
-        )
-
-        assert response.status_code == 422
-        assert (await db.execute(select(func.count(Suggestion.id)))).scalar() == 0
-
-    @pytest.mark.parametrize("invalid_score", [-0.1, 1.1, "not-a-number"])
-    async def test_upsert_suggestion_for_span_question_with_invalid_score(
-        self, async_client: AsyncClient, db: AsyncSession, owner_auth_header: dict, invalid_score: Any
-    ):
-        dataset = await DatasetFactory.create()
-
-        span_question = await SpanQuestionFactory.create(name="span-question", dataset=dataset)
-
-        record = await RecordFactory.create(fields={"field-a": "Hello"}, dataset=dataset)
-
-        response = await async_client.put(
-            self.url(record.id),
-            headers=owner_auth_header,
-            json={
-                "question_id": str(span_question.id),
-                "type": SuggestionType.model,
-                "value": [
-                    {"label": "label-a", "start": 0, "end": 1, "score": invalid_score},
                 ],
             },
         )
