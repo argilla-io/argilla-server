@@ -16,7 +16,12 @@ These are the section headers that we use:
 
 ## [Unreleased]()
 
-## Deprecated
+### Added 
+
+- Added `POST /api/v1/datasets/:dataset_id/records/bulk` endpoint. ([#106](https://github.com/argilla-io/argilla-server/pull/106))
+- Added `PUT /api/v1/datasets/:dataset_id/records/bulk` endpoint. ([#106](https://github.com/argilla-io/argilla-server/pull/106))
+
+### Deprecated
 
 - Deprecated `POST /api/v1/datasets/:dataset_id/records` in favour of `POST /api/v1/datasets/:dataset_id/records/bulk`. ([#130](https://github.com/argilla-io/argilla-server/pull/130))
 - Deprecated `PATCH /api/v1/dataset/:dataset_id/records` in favour of `PUT /api/v1/datasets/:dataset_id/records/bulk`. ([#130](https://github.com/argilla-io/argilla-server/pull/130))
