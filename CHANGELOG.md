@@ -16,7 +16,7 @@ These are the section headers that we use:
 
 ## [Unreleased]()
 
-### Added 
+### Added
 
 - Added `POST /api/v1/datasets/:dataset_id/records/bulk` endpoint. ([#106](https://github.com/argilla-io/argilla-server/pull/106))
 - Added `PUT /api/v1/datasets/:dataset_id/records/bulk` endpoint. ([#106](https://github.com/argilla-io/argilla-server/pull/106))
