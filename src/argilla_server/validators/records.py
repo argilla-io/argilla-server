@@ -91,8 +91,6 @@ class RecordUpdateValidator(RecordValidatorBase):
     def _validate_duplicated_suggestions(self):
         if not self._record_change.suggestions:
             return
-        # TODO: This validation should be defined as pydantic model validation
-        #  We keep it here to maintain the generated error message.
         question_ids = [s.question_id for s in self._record_change.suggestions]
         if len(question_ids) != len(set(question_ids)):
             raise ValueError("found duplicate suggestions question IDs")
@@ -131,13 +129,13 @@ class RecordsBulkCreateValidator:
 class RecordsBulkUpsertValidator:
     def __init__(
         self,
-        db: AsyncSession,
         records_upsert: RecordsBulkUpsert,
-        existing_records_by_external_id_or_record_id: Dict[Union[str, UUID], Record],
+        db: AsyncSession,
+        existing_records_by_external_id_or_record_id: Union[Dict[Union[str, UUID], Record], None] = None,
     ):
         self._db = db
         self._records_upsert = records_upsert
-        self._existing_records_by_external_id_or_record_id = existing_records_by_external_id_or_record_id
+        self._existing_records_by_external_id_or_record_id = existing_records_by_external_id_or_record_id or {}
 
     def validate_for(self, dataset: Dataset) -> None:
         self.validate_dataset_is_ready(dataset)
@@ -145,7 +143,7 @@ class RecordsBulkUpsertValidator:
 
     def validate_dataset_is_ready(self, dataset: Dataset) -> None:
         if not dataset.is_ready:
-            raise ValueError("records cannot upserted for a non published dataset")
+            raise ValueError("records cannot be created or updated for a non published dataset")
 
     def _validate_all_bulk_records(self, dataset: Dataset, records_upsert: List[RecordUpsert]):
         for idx, record_upsert in enumerate(records_upsert):
