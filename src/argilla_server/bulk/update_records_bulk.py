@@ -14,17 +14,17 @@
 
 import asyncio
 from datetime import datetime
-from typing import List, Union, Dict
+from typing import Dict, List, Union
 from uuid import UUID
+
+from sqlalchemy.ext.asyncio import AsyncSession
 
 import argilla_server.bulk.records_bulk
 import argilla_server.contexts.records
-from argilla_server.schemas.v1.records_bulk import RecordUpdate, RecordsBulkUpdate, RecordsBulk
-from argilla_server.validators.records_bulk import RecordsBulkUpdateValidator
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from argilla_server.models import Dataset, Record
+from argilla_server.schemas.v1.records_bulk import RecordsBulk, RecordsBulkUpdate, RecordUpdate
 from argilla_server.search_engine import SearchEngine
+from argilla_server.validators.records_bulk import RecordsBulkUpdateValidator
 
 
 class UpdateRecordsBulk:

@@ -15,13 +15,13 @@
 import asyncio
 from typing import List
 
-from argilla_server.validators.records import RecordCreateValidator
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from argilla_server.contexts import records as records_ctx
 from argilla_server.models import Dataset, Record
-from argilla_server.schemas.v1.records import RecordsCreate, RecordCreate
+from argilla_server.schemas.v1.records import RecordCreate, RecordsCreate
 from argilla_server.search_engine import SearchEngine
+from argilla_server.validators.records import RecordCreateValidator
 
 
 class CreateRecords:

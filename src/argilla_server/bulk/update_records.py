@@ -14,20 +14,20 @@
 
 import asyncio
 from datetime import datetime
-from typing import List, Union, Tuple
+from typing import List, Tuple, Union
 
-from argilla_server.validators.records import RecordUpdateValidator
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from argilla_server.contexts import records as records_ctx
 from argilla_server.models import Dataset, Record
 from argilla_server.schemas.v1.records import (
     RecordsUpdate,
-    RecordUpdateWithId,
     RecordUpdate,
+    RecordUpdateWithId,
 )
 from argilla_server.schemas.v1.suggestions import SuggestionCreate
 from argilla_server.search_engine import SearchEngine
+from argilla_server.validators.records import RecordUpdateValidator
 
 
 class UpdateRecords:
