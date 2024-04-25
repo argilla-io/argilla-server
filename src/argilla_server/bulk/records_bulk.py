@@ -182,7 +182,7 @@ class UpsertRecordsBulk(CreateRecordsBulk):
         found_records = await self._fetch_existing_dataset_records(dataset, bulk_upsert.items)
         # found_records is passed to the validator to avoid querying the database again, but ideally, it should be
         # computed inside the validator
-        RecordsBulkUpsertValidator(self._db, bulk_upsert, found_records).validate_for(dataset)
+        RecordsBulkUpsertValidator(bulk_upsert, self._db, found_records).validate_for(dataset)
 
         records = []
         async with self._db.begin_nested():
