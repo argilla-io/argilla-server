@@ -15,10 +15,13 @@ from datetime import datetime
 from uuid import UUID
 
 import pytest
-from argilla_server.enums import QuestionType
+from argilla_server.enums import OptionsOrder, QuestionType
+from argilla_server.models import Question
 from httpx import AsyncClient
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from tests.factories import LabelSelectionQuestionFactory, SpanQuestionFactory, TextQuestionFactory
+from tests.factories import LabelSelectionQuestionFactory, QuestionFactory, SpanQuestionFactory, TextQuestionFactory
 
 
 @pytest.mark.asyncio
@@ -90,6 +93,87 @@ class TestUpdateQuestion:
         assert response.json() == {
             "detail": "the option values cannot be modified. found unexpected option values: ['label-a', 'label-b', 'label-c']"
         }
+
+    async def test_update_multi_label_selection_question_with_options_order(
+        self, db: AsyncSession, async_client: AsyncClient, owner_auth_header: dict
+    ):
+        question = await QuestionFactory.create(
+            settings={
+                "type": QuestionType.multi_label_selection,
+                "options": [
+                    {"value": "label-a", "text": "Label A"},
+                    {"value": "label-b", "text": "Label B"},
+                ],
+                "options_order": OptionsOrder.natural,
+            }
+        )
+
+        response = await async_client.patch(
+            self.url(question.id),
+            headers=owner_auth_header,
+            json={
+                "settings": {
+                    "type": QuestionType.multi_label_selection,
+                    "options_order": OptionsOrder.suggestion,
+                },
+            },
+        )
+
+        assert response.status_code == 200
+        assert response.json()["settings"]["options_order"] == OptionsOrder.suggestion
+        assert question.settings["options_order"] == OptionsOrder.suggestion
+
+    async def test_update_multi_label_selection_question_without_options_order(
+        self, async_client: AsyncClient, owner_auth_header: dict
+    ):
+        question = await QuestionFactory.create(
+            settings={
+                "type": QuestionType.multi_label_selection,
+                "options": [
+                    {"value": "label-a", "text": "Label A"},
+                    {"value": "label-b", "text": "Label B"},
+                ],
+                "options_order": OptionsOrder.suggestion,
+            }
+        )
+
+        response = await async_client.patch(
+            self.url(question.id),
+            headers=owner_auth_header,
+            json={"type": QuestionType.multi_label_selection},
+        )
+
+        assert response.status_code == 200
+        assert response.json()["settings"]["options_order"] == OptionsOrder.suggestion
+        assert question.settings["options_order"] == OptionsOrder.suggestion
+
+    async def test_update_multi_label_selection_question_with_options_order_as_none(
+        self, async_client: AsyncClient, owner_auth_header: dict
+    ):
+        question = await QuestionFactory.create(
+            settings={
+                "type": QuestionType.multi_label_selection,
+                "options": [
+                    {"value": "label-a", "text": "Label A"},
+                    {"value": "label-b", "text": "Label B"},
+                ],
+                "options_order": OptionsOrder.natural,
+            }
+        )
+
+        response = await async_client.patch(
+            self.url(question.id),
+            headers=owner_auth_header,
+            json={
+                "settings": {
+                    "type": QuestionType.multi_label_selection,
+                    "options_order": None,
+                },
+            },
+        )
+
+        assert response.status_code == 422
+        assert question.settings["options_order"] == OptionsOrder.natural
 
     async def test_update_question_with_more_visible_options_than_allowed(
         self, async_client: AsyncClient, owner_auth_header: dict
