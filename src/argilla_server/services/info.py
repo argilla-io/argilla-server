@@ -46,6 +46,7 @@ def size(bytes):
             suffix = singular
         else:
             suffix = multiple
+
     return str(amount) + suffix
 
 
