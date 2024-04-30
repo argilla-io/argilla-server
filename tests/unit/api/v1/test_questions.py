@@ -17,6 +17,7 @@ from uuid import uuid4
 
 import pytest
 from argilla_server.constants import API_KEY_HEADER_NAME
+from argilla_server.enums import OptionsOrder
 from argilla_server.models import DatasetStatus, Question, UserRole
 from argilla_server.schemas.v1.questions import QUESTION_CREATE_DESCRIPTION_MAX_LENGTH, QUESTION_CREATE_TITLE_MAX_LENGTH
 from sqlalchemy import func, select
@@ -96,7 +97,12 @@ if TYPE_CHECKING:
         ),
         (
             MultiLabelSelectionQuestionFactory,
-            {"settings": {"type": "multi_label_selection", "visible_options": 3}},
+            {
+                "settings": {
+                    "type": "multi_label_selection",
+                    "visible_options": 3,
+                },
+            },
             {
                 "type": "multi_label_selection",
                 "options": [
@@ -105,6 +111,7 @@ if TYPE_CHECKING:
                     {"value": "option3", "text": "Option 3", "description": None},
                 ],
                 "visible_options": 3,
+                "options_order": OptionsOrder.natural,
             },
         ),
         (
@@ -112,22 +119,23 @@ if TYPE_CHECKING:
             {
                 "settings": {
                     "type": "multi_label_selection",
-                    "visible_options": None,
                     "options": [
                         {"value": "option3", "text": "Option 3", "description": None},
                         {"value": "option1", "text": "Option 1", "description": None},
                         {"value": "option2", "text": "Option 2", "description": None},
                     ],
+                    "visible_options": None,
                 }
             },
             {
                 "type": "multi_label_selection",
-                "visible_options": None,
                 "options": [
                     {"value": "option3", "text": "Option 3", "description": None},
                     {"value": "option1", "text": "Option 1", "description": None},
                     {"value": "option2", "text": "Option 2", "description": None},
                 ],
+                "visible_options": None,
+                "options_order": OptionsOrder.natural,
             },
         ),
         (

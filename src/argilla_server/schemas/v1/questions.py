@@ -16,6 +16,7 @@ from datetime import datetime
 from typing import Any, Dict, List, Literal, Optional, Union
 from uuid import UUID
 
+from argilla_server.enums import OptionsOrder
 from argilla_server.models import QuestionType
 from argilla_server.pydantic_v1 import BaseModel, Field, conlist, constr, root_validator, validator
 from argilla_server.schemas.base import UpdateSchema
@@ -197,14 +198,19 @@ class LabelSelectionSettingsUpdate(UpdateSchema):
 # Multi-label selection question
 class MultiLabelSelectionQuestionSettings(LabelSelectionQuestionSettings):
     type: Literal[QuestionType.multi_label_selection]
+    options_order: OptionsOrder = OptionsOrder.natural
 
 
 class MultiLabelSelectionQuestionSettingsCreate(LabelSelectionQuestionSettingsCreate):
     type: Literal[QuestionType.multi_label_selection]
+    options_order: OptionsOrder = OptionsOrder.natural
 
 
 class MultiLabelSelectionQuestionSettingsUpdate(LabelSelectionSettingsUpdate):
     type: Literal[QuestionType.multi_label_selection]
+    options_order: Optional[OptionsOrder]
+
+    __non_nullable_fields__ = {"options_order"}
 
 
 # Ranking question

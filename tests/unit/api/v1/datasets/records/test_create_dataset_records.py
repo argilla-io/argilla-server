@@ -172,7 +172,7 @@ class TestCreateDatasetRecords:
                             },
                             {
                                 "type": SuggestionType.model,
-                                "score": 1.0,
+                                "score": [1.0, 0.1],
                                 "value": [
                                     "label-a",
                                     "label-b",
@@ -187,7 +187,7 @@ class TestCreateDatasetRecords:
                             },
                             {
                                 "type": SuggestionType.model,
-                                "score": 0.5,
+                                "score": [0.2, 0.5],
                                 "value": [
                                     {"value": "ranking-a", "rank": 1},
                                     {"value": "ranking-b", "rank": 2},
@@ -196,9 +196,10 @@ class TestCreateDatasetRecords:
                             },
                             {
                                 "type": SuggestionType.model,
+                                "score": [0.5, 0.9],
                                 "value": [
-                                    {"label": "thing", "start": 0, "end": 5, "score": 0.5},
-                                    {"label": "place", "start": 6, "end": 8, "score": 0.9},
+                                    {"label": "thing", "start": 0, "end": 5},
+                                    {"label": "place", "start": 6, "end": 8},
                                 ],
                                 "question_id": str(span_question.id),
                             },

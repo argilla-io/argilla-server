@@ -18,6 +18,10 @@ These are the section headers that we use:
 
 ### Added
 
+- Added support to specify a list of score values for suggestions `score` attribute. ([#98](https://github.com/argilla-io/argilla-server/pull/98))
+- Added `GET /api/v1/settings` new endpoint exposing Argilla and Hugging Face settings when available. ([#127](https://github.com/argilla-io/argilla-server/pull/127))
+- Added `ARGILLA_SHOW_HUGGINGFACE_SPACE_PERSISTANT_STORAGE_WARNING` new environment variable to disable warning message when Hugging Face Spaces persistent storage is disabled. ([#124](https://github.com/argilla-io/argilla-server/pull/124))
+- Added `options_order` new settings attribute to support specify an order for options in multi label selection questions. ([#133](https://github.com/argilla-io/argilla-server/pull/133))
 - Added `POST /api/v1/datasets/:dataset_id/records/bulk` endpoint. ([#106](https://github.com/argilla-io/argilla-server/pull/106))
 - Added `PUT /api/v1/datasets/:dataset_id/records/bulk` endpoint. ([#106](https://github.com/argilla-io/argilla-server/pull/106))
 
@@ -25,6 +29,10 @@ These are the section headers that we use:
 
 - Deprecated `POST /api/v1/datasets/:dataset_id/records` in favour of `POST /api/v1/datasets/:dataset_id/records/bulk`. ([#130](https://github.com/argilla-io/argilla-server/pull/130))
 - Deprecated `PATCH /api/v1/dataset/:dataset_id/records` in favour of `PUT /api/v1/datasets/:dataset_id/records/bulk`. ([#130](https://github.com/argilla-io/argilla-server/pull/130))
+
+### Removed
+
+- Removed support for specifying `score` attributes for individual value items when creating suggestions associated with span questions. ([#101](https://github.com/argilla-io/argilla-server/pull/101))
 
 ## [1.27.0](https://github.com/argilla-io/argilla-server/compare/v1.26.1...v1.27.0)
 

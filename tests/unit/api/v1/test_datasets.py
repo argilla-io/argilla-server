@@ -23,6 +23,7 @@ from argilla_server.apis.v1.handlers.datasets.records import LIST_DATASET_RECORD
 from argilla_server.constants import API_KEY_HEADER_NAME
 from argilla_server.enums import (
     DatasetStatus,
+    OptionsOrder,
     RecordInclude,
     ResponseStatusFilter,
     SimilarityOrder,
@@ -368,6 +369,7 @@ class TestSuiteDatasets:
                         {"value": "b", "text": "b", "description": "b"},
                     ],
                     "visible_options": None,
+                    "options_order": OptionsOrder.natural,
                 },
             ),
         ],

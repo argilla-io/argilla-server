@@ -77,6 +77,7 @@ async def update_question(
     QuestionUpdateValidator(question_update).validate_for(question)
 
     params = question_update.dict(exclude_unset=True)
+
     return await question.update(db, **params)
 
 

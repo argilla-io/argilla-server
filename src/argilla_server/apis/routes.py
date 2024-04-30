@@ -56,6 +56,7 @@ from argilla_server.apis.v1.handlers import (
 from argilla_server.apis.v1.handlers import (
     responses as responses_v1,
 )
+from argilla_server.apis.v1.handlers import settings as settings_v1
 from argilla_server.apis.v1.handlers import (
     suggestions as suggestions_v1,
 )
@@ -123,6 +124,7 @@ def create_api_v1():
         vectors_settings_v1.router,
         workspaces_v1.router,
         oauth2_v1.router,
+        settings_v1.router,
     ]:
         api_v1.include_router(router)
 

@@ -16,7 +16,7 @@ import inspect
 import random
 
 import factory
-from argilla_server.enums import FieldType, MetadataPropertyType
+from argilla_server.enums import FieldType, MetadataPropertyType, OptionsOrder
 from argilla_server.models import (
     Dataset,
     Field,
@@ -353,6 +353,7 @@ class MultiLabelSelectionQuestionFactory(QuestionFactory):
             {"value": "option2", "text": "Option 2", "description": None},
             {"value": "option3", "text": "Option 3", "description": None},
         ],
+        "options_order": OptionsOrder.natural,
     }
 
 
