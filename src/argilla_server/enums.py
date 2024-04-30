@@ -83,3 +83,8 @@ class SortOrder(str, Enum):
 class SimilarityOrder(str, Enum):
     most_similar = "most_similar"
     least_similar = "least_similar"
+
+
+class OptionsOrder(str, Enum):
+    natural = "natural"
+    suggestion = "suggestion"
