@@ -98,38 +98,3 @@ async def upsert_dataset_records_bulk(
         return records_bulk
     except ValueError as err:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(err))
-
-
-# @router.patch(
-#     "/datasets/{dataset_id}/records/bulk",
-#     response_model=RecordsBulk,
-#     status_code=status.HTTP_200_OK,
-#     response_model_exclude_unset=True,
-# )
-# async def update_dataset_records_bulk(
-#     *,
-#     dataset_id: UUID,
-#     records_bulk_update: RecordsBulkUpdate,
-#     db: AsyncSession = Depends(get_async_db),
-#     search_engine: SearchEngine = Depends(get_search_engine),
-#     current_user: User = Security(auth.get_current_user),
-#     telemetry_client: TelemetryClient = Depends(get_telemetry_client),
-# ):
-#     dataset = await _get_dataset_or_raise(
-#         db,
-#         dataset_id,
-#         with_fields=True,
-#         with_questions=True,
-#         with_metadata_properties=True,
-#         with_vectors_settings=True,
-#     )
-#
-#     await authorize(current_user, DatasetPolicyV1.update_records(dataset))
-#
-#     try:
-#         records_bulk = await UpdateRecordsBulk(db, search_engine).update_records_bulk(dataset, records_bulk_update)
-#         telemetry_client.track_data(action="DatasetRecordsUpdated", data={"records": len(records_bulk.items)})
-#
-#         return records_bulk
-#     except ValueError as err:
-#         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(err))

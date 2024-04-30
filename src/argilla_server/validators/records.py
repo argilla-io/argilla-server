@@ -91,8 +91,6 @@ class RecordUpdateValidator(RecordValidatorBase):
     def _validate_duplicated_suggestions(self):
         if not self._record_change.suggestions:
             return
-        # TODO: This validation should be defined as pydantic model validation
-        #  We keep it here to maintain the generated error message.
         question_ids = [s.question_id for s in self._record_change.suggestions]
         if len(question_ids) != len(set(question_ids)):
             raise ValueError("found duplicate suggestions question IDs")
@@ -131,13 +129,13 @@ class RecordsBulkCreateValidator:
 class RecordsBulkUpsertValidator:
     def __init__(
         self,
-        db: AsyncSession,
         records_upsert: RecordsBulkUpsert,
-        existing_records_by_external_id_or_record_id: Dict[Union[str, UUID], Record],
+        db: AsyncSession,
+        existing_records_by_external_id_or_record_id: Union[Dict[Union[str, UUID], Record], None] = None,
     ):
         self._db = db
         self._records_upsert = records_upsert
-        self._existing_records_by_external_id_or_record_id = existing_records_by_external_id_or_record_id
+        self._existing_records_by_external_id_or_record_id = existing_records_by_external_id_or_record_id or {}
 
     def validate_for(self, dataset: Dataset) -> None:
         self.validate_dataset_is_ready(dataset)
@@ -145,7 +143,7 @@ class RecordsBulkUpsertValidator:
 
     def validate_dataset_is_ready(self, dataset: Dataset) -> None:
         if not dataset.is_ready:
-            raise ValueError("records cannot upserted for a non published dataset")
+            raise ValueError("records cannot be created or updated for a non published dataset")
 
     def _validate_all_bulk_records(self, dataset: Dataset, records_upsert: List[RecordUpsert]):
         for idx, record_upsert in enumerate(records_upsert):
@@ -154,47 +152,8 @@ class RecordsBulkUpsertValidator:
                     record_upsert.external_id or record_upsert.id
                 )
                 if record:
-                    RecordUpdateValidator(record_upsert).validate_for(dataset)
+                    RecordUpdateValidator(RecordUpdate.parse_obj(record_upsert)).validate_for(dataset)
                 else:
-                    RecordCreateValidator(record_upsert).validate_for(dataset)
+                    RecordCreateValidator(RecordCreate.parse_obj(record_upsert)).validate_for(dataset)
             except ValueError as ex:
                 raise ValueError(f"record at position {idx} is not valid because {ex}") from ex
-
-
-# class RecordsBulkUpdateValidator:
-#     def __init__(self, records_update: RecordsBulkUpdate, db: AsyncSession):
-#         self._records_update = records_update
-#         self._db = db
-#
-#     async def validate_for(self, dataset: Dataset, found_records: Dict[Union[str, UUID], Record]) -> None:
-#         self.validate_dataset_is_ready(dataset)
-#         await self._validate_record_ids_are_not_present_in_db(dataset)
-#
-#         for idx, record_update in enumerate(self._records_update.items):
-#             try:
-#                 if record_update.external_id is not None:
-#                     key = record_update.external_id
-#                 else:
-#                     key = record_update.id
-#                 record = found_records.get(key)
-#                 if record is None:
-#                     raise ValueError(f"Record not found for {key}")
-#
-#                 RecordUpdateValidator(record_update).validate_for(dataset)
-#             except ValueError as ex:
-#                 raise ValueError(f"Record at position {idx} is not valid because {ex}") from ex
-#
-#     async def _validate_record_ids_are_not_present_in_db(self, dataset):
-#         record_ids = [r.id for r in self._records_update.items if r.id is not None]
-#         if len(record_ids) != len(set(record_ids)):
-#             raise ValueError("Found duplicate records IDs")
-#
-#         records_by_id = await records.fetch_records_by_ids(self._db, dataset, record_ids)
-#         not_found_records = [str(record_id) for record_id in record_ids if record_id not in records_by_id]
-#
-#         if not_found_records:
-#             raise ValueError(f"Found records that do not exist: {', '.join(not_found_records)}")
-#
-#     def validate_dataset_is_ready(self, dataset: Dataset) -> None:
-#         if not dataset.is_ready:
-#             raise ValueError("Records cannot be updated for a non published dataset")
