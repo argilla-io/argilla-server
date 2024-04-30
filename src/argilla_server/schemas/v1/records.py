@@ -13,14 +13,14 @@
 #  limitations under the License.
 
 from datetime import datetime
-from typing import Annotated, Any, Dict, List, Literal, Optional, Union
+from typing import Any, Dict, List, Literal, Optional, Union
 from uuid import UUID
 
 import fastapi
 from typing_extensions import Annotated
 
 from argilla_server.enums import RecordInclude, RecordSortField, SimilarityOrder, SortOrder
-from argilla_server.pydantic_v1 import BaseModel, Field, root_validator, validator
+from argilla_server.pydantic_v1 import BaseModel, Field, StrictStr, root_validator, validator
 from argilla_server.pydantic_v1.utils import GetterDict
 from argilla_server.schemas.base import UpdateSchema
 from argilla_server.schemas.v1.metadata_properties import MetadataPropertyName
@@ -84,7 +84,7 @@ class Record(BaseModel):
 
 
 class RecordCreate(BaseModel):
-    fields: Dict[str, Any]
+    fields: Dict[str, Union[StrictStr, None]]
     metadata: Optional[Dict[str, Any]]
     external_id: Optional[str]
     responses: Optional[List[UserResponseCreate]]
@@ -92,19 +92,22 @@ class RecordCreate(BaseModel):
     vectors: Optional[Dict[str, List[float]]]
 
     @validator("responses")
-    def check_user_id_is_unique(cls, values: Optional[List[UserResponseCreate]]) -> Optional[List[UserResponseCreate]]:
-        if values is None:
-            return values
+    @classmethod
+    def check_user_id_is_unique(
+        cls, responses: Optional[List[UserResponseCreate]]
+    ) -> Optional[List[UserResponseCreate]]:
+        if responses is None:
+            return responses
 
-        user_ids = []
-        for value in values:
-            if value.user_id in user_ids:
+        user_ids = {}
+        for value in responses:
+            if user_ids.get(value.user_id):
                 raise ValueError(f"'responses' contains several responses for the same user_id={str(value.user_id)!r}")
-            user_ids.append(value.user_id)
+            user_ids.setdefault(value.user_id, True)
 
-        return values
+        return responses
 
-    @validator("metadata", pre=True)
+    @validator("metadata")
     @classmethod
     def prevent_nan_values(cls, metadata: Optional[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
         if metadata is None:
@@ -122,7 +125,13 @@ class RecordUpdate(UpdateSchema):
     suggestions: Optional[List[SuggestionCreate]] = None
     vectors: Optional[Dict[str, List[float]]]
 
-    @validator("metadata_", pre=True)
+    @property
+    def metadata(self) -> Optional[Dict[str, Any]]:
+        # Align with the RecordCreate model. Both should have the same name for the metadata field.
+        # TODO(@frascuchon): This will be properly adapted once the bulk records refactor is completed.
+        return self.metadata_
+
+    @validator("metadata_")
     @classmethod
     def prevent_nan_values(cls, metadata: Optional[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
         if metadata is None:
@@ -137,6 +146,11 @@ class RecordUpdate(UpdateSchema):
 
 class RecordUpdateWithId(RecordUpdate):
     id: UUID
+
+
+class RecordUpsert(RecordCreate):
+    id: Optional[UUID]
+    fields: Optional[Dict[str, Union[StrictStr, None]]]
 
 
 class RecordIncludeParam(BaseModel):

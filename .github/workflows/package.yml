@@ -25,6 +25,7 @@ on:
       - "feature/**"
       - "feat/**"
       - "fix/**"
+      - "tests/**"
     types:
       - opened
       - reopened

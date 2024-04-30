@@ -352,6 +352,26 @@ class Dataset(DatabaseModel):
     def is_ready(self):
         return self.status == DatasetStatus.ready
 
+    def metadata_property_by_name(self, name: str) -> Union["MetadataProperty", None]:
+        for metadata_property in self.metadata_properties:
+            if metadata_property.name == name:
+                return metadata_property
+
+    def question_by_id(self, question_id: UUID) -> Union[Question, None]:
+        for question in self.questions:
+            if question.id == question_id:
+                return question
+
+    def question_by_name(self, name: str) -> Union["Question", None]:
+        for question in self.questions:
+            if question.name == name:
+                return question
+
+    def vector_settings_by_name(self, name: str) -> Union["VectorSettings", None]:
+        for vector_settings in self.vectors_settings:
+            if vector_settings.name == name:
+                return vector_settings
+
     def __repr__(self):
         return (
             f"Dataset(id={str(self.id)!r}, name={self.name!r}, guidelines={self.guidelines!r}, "

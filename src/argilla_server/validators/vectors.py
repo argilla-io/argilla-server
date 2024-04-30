@@ -12,16 +12,18 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from fastapi import APIRouter
+from typing import List
 
-from argilla_server.apis.v1.handlers.datasets.datasets import router as datasets_router
-from argilla_server.apis.v1.handlers.datasets.questions import router as questions_router
-from argilla_server.apis.v1.handlers.datasets.records import router as records_router
-from argilla_server.apis.v1.handlers.datasets.records_bulk import router as records_bulk_router
+from argilla_server.models import VectorSettings
 
-router = APIRouter(tags=["datasets"])
 
-router.include_router(datasets_router)
-router.include_router(questions_router)
-router.include_router(records_router)
-router.include_router(records_bulk_router)
+class VectorValidator:
+    def __init__(self, value: List[float]):
+        self._value = value
+
+    def validate_for(self, vector_settings: VectorSettings):
+        if len(self._value) != vector_settings.dimensions:
+            raise ValueError(
+                f"vector value for vector name={vector_settings.name} must have {vector_settings.dimensions} elements, "
+                f"got {len(self._value)} elements"
+            )

@@ -1963,7 +1963,18 @@ class TestSuiteDatasets:
 
         assert response.status_code == 422
         assert response.json() == {
-            "detail": "Record at position 0 is not valid because wrong value found for field 'output'. Expected 'str', found 'int'"
+            "detail": {
+                "code": "argilla.api.errors::ValidationError",
+                "params": {
+                    "errors": [
+                        {
+                            "loc": ["body", "items", 0, "fields", "output"],
+                            "msg": "str type expected",
+                            "type": "type_error.str",
+                        }
+                    ]
+                },
+            }
         }
         assert (await db.execute(select(func.count(Record.id)))).scalar() == 0
 
@@ -2042,7 +2053,18 @@ class TestSuiteDatasets:
         )
         assert response.status_code == 422
         assert response.json() == {
-            "detail": "Record at position 0 is not valid because wrong value found for field 'output'. Expected 'str', found 'int'"
+            "detail": {
+                "code": "argilla.api.errors::ValidationError",
+                "params": {
+                    "errors": [
+                        {
+                            "loc": ["body", "items", 0, "fields", "output"],
+                            "msg": "str type expected",
+                            "type": "type_error.str",
+                        }
+                    ]
+                },
+            }
         }
         assert (await db.execute(select(func.count(Record.id)))).scalar() == 0
 

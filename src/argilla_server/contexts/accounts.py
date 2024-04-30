@@ -12,7 +12,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 import secrets
-from typing import List, Union
+from typing import Dict, Iterable, List, Sequence, Union
 from uuid import UUID
 
 from passlib.context import CryptContext
@@ -107,12 +107,17 @@ async def get_user_by_api_key(db: AsyncSession, api_key: str) -> Union[User, Non
     return result.scalar_one_or_none()
 
 
-async def list_users(db: AsyncSession) -> List[User]:
+async def list_users(db: "AsyncSession") -> Sequence[User]:
     result = await db.execute(select(User).order_by(User.inserted_at.asc()).options(selectinload(User.workspaces)))
     return result.scalars().all()
 
 
-async def create_user(db: AsyncSession, user_create: UserCreate) -> User:
+async def list_users_by_ids(db: AsyncSession, ids: Iterable[UUID]) -> Sequence[User]:
+    result = await db.execute(select(User).filter(User.id.in_(ids)))
+    return result.scalars().all()
+
+
+async def create_user(db: "AsyncSession", user_create: UserCreate) -> User:
     async with db.begin_nested():
         user = await User.create(
             db,
@@ -181,3 +186,8 @@ def verify_password(password: str, password_hash: str) -> bool:
 
 def _generate_random_password() -> str:
     return secrets.token_urlsafe()
+
+
+async def fetch_users_by_ids_as_dict(db: "AsyncSession", user_ids: List[UUID]) -> Dict[UUID, User]:
+    users = await list_users_by_ids(db, set(user_ids))
+    return {user.id: user for user in users}

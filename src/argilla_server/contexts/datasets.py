@@ -141,12 +141,12 @@ async def get_dataset_by_name_and_workspace_id(db: AsyncSession, name: str, work
     return result.scalar_one_or_none()
 
 
-async def list_datasets(db: AsyncSession) -> List[Dataset]:
+async def list_datasets(db: AsyncSession) -> Sequence[Dataset]:
     result = await db.execute(select(Dataset).order_by(Dataset.inserted_at.asc()))
     return result.scalars().all()
 
 
-async def list_datasets_by_workspace_id(db: AsyncSession, workspace_id: UUID) -> List[Dataset]:
+async def list_datasets_by_workspace_id(db: AsyncSession, workspace_id: UUID) -> Sequence[Dataset]:
     result = await db.execute(
         select(Dataset).where(Dataset.workspace_id == workspace_id).order_by(Dataset.inserted_at.asc())
     )
