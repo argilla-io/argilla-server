@@ -28,6 +28,7 @@ from argilla_server.search_engine import (
     TextQuery,
     UserResponseStatusFilter,
 )
+from argilla_server.search_engine.base import QueryStringFilter, FieldFilterScope
 from argilla_server.search_engine.commons import (
     ALL_RESPONSES_STATUSES_FIELD,
     BaseElasticAndOpenSearchEngine,
@@ -276,7 +277,7 @@ def _expected_value_for_question(question: Question) -> Dict[str, Any]:
 
 @pytest.mark.asyncio
 @pytest.mark.skipif(
-    not server_settings.search_engine in ["elasticsearch", "opensearch"],
+    server_settings.search_engine not in ["elasticsearch", "opensearch"],
     reason="Running on elasticsearch/opensearch engine",
 )
 class TestBaseElasticAndOpenSearchEngine:
@@ -673,6 +674,28 @@ class TestBaseElasticAndOpenSearchEngine:
         assert len(result.items) == expected_items
         assert result.total == expected_items
 
+    @pytest.mark.parametrize(
+        "query_filter, expected_results",
+        [
+            (QueryStringFilter(scope=FieldFilterScope(field="text"), query="car* + pay*"), 5),
+            (QueryStringFilter(scope=FieldFilterScope(field="text"), query="-car* + pay*"), 1),
+            (QueryStringFilter(scope=FieldFilterScope(field="text"), query="car* + -pay*"), 0),
+            (QueryStringFilter(scope=FieldFilterScope(field="label"), query="neg*"), 4),
+        ],
+    )
+    async def test_search_with_query_string_filter(
+        self,
+        search_engine: BaseElasticAndOpenSearchEngine,
+        test_banking_sentiment_dataset: Dataset,
+        query_filter: QueryStringFilter,
+        expected_results: int,
+    ):
+        result = await search_engine.search(
+            test_banking_sentiment_dataset,
+            filter=query_filter,
+        )
+        assert result.total == expected_results
+
     async def test_search_with_no_query(
         self,
         search_engine: BaseElasticAndOpenSearchEngine,
@@ -1014,13 +1037,6 @@ class TestBaseElasticAndOpenSearchEngine:
             )["hits"]["hits"]
         ]
         assert len(deleted_docs) == 0
-
-        es_docs = [
-            hit["_source"]
-            for hit in opensearch.search(
-                index=index_name, body={"query": {"ids": {"values": [str(record.id) for record in records_to_keep]}}}
-            )["hits"]["hits"]
-        ]
         assert len(records_to_keep) == 5
 
     async def test_update_record_response(
