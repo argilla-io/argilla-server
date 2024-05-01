@@ -78,6 +78,21 @@ def es_range_query(field_name: str, gte: Optional[float] = None, lte: Optional[f
     return {"range": {field_name: query}}
 
 
+def es_simple_query_string(field_name: str, query: str) -> dict:
+    # See https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-simple-query-string-query.html
+    return {
+        "simple_query_string": {
+            "query": query,
+            "fields": [field_name],
+            "default_operator": "AND",
+            "analyze_wildcard": False,
+            "auto_generate_synonyms_phrase_query": False,
+            "fuzzy_max_expansions": 10,
+            "fuzzy_transpositions": False,
+        }
+    }
+
+
 def es_bool_query(
     *,
     must_not: Optional[List[dict]] = None,
@@ -689,17 +704,7 @@ class BaseElasticAndOpenSearchEngine(SearchEngine):
         if isinstance(text, str):
             text = TextQuery(q=text)
 
-        if not text.field:
-            # See https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-multi-match-query.html
-            field_names = [
-                es_field_for_record_field(field.name)
-                for field in dataset.fields
-                if field.settings.get("type") == FieldType.text
-            ]
-            return {"multi_match": {"query": text.q, "type": "cross_fields", "fields": field_names, "operator": "and"}}
-        else:
-            # See https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-match-query.html
-            return {"match": {es_field_for_record_field(text.field): {"query": text.q, "operator": "and"}}}
+        return es_simple_query_string(es_field_for_record_field(text.field or "*"), query=text.q)
 
     def _mapping_for_fields(self, fields: List[Field]) -> dict:
         mappings = {}
