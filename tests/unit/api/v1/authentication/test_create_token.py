@@ -20,20 +20,47 @@ from tests.factories import UserFactory
 
 
 @pytest.mark.asyncio
-class TestsAuthentication:
-    async def test_authenticate(self, async_client: AsyncClient):
+class TestsCreateToken:
+    def url(self) -> str:
+        return "/api/v1/token"
+
+    async def test_create_token(self, async_client: AsyncClient):
         user = await UserFactory.create()
 
         response = await async_client.post(
-            "/api/security/token",
-            data={"username": user.username, "password": "1234"},
+            self.url(),
+            data={
+                "username": user.username,
+                "password": "1234",
+            },
         )
+
         assert response.status_code == 200
         assert response.json()["access_token"]
         assert response.json()["token_type"] == "bearer"
 
-    async def test_invalid_credentials(self, async_client: AsyncClient, owner: User):
+    async def test_create_token_with_invalid_username(self, async_client: AsyncClient):
+        user = await UserFactory.create()
+
         response = await async_client.post(
-            "/api/security/token", data={"username": owner.username, "password": "invalid"}
+            self.url(),
+            data={
+                "username": "invalid-username",
+                "password": "1234",
+            },
         )
+
+        assert response.status_code == 401
+
+    async def test_create_token_with_invalid_password(self, async_client: AsyncClient):
+        user = await UserFactory.create()
+
+        response = await async_client.post(
+            self.url(),
+            data={
+                "username": user.username,
+                "password": "invalid-password",
+            },
+        )
+
         assert response.status_code == 401
