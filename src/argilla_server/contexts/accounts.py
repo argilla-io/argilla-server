@@ -24,6 +24,8 @@ from argilla_server.enums import UserRole
 from argilla_server.models import User, Workspace, WorkspaceUser
 from argilla_server.schemas.v0.users import UserCreate
 from argilla_server.schemas.v0.workspaces import WorkspaceCreate, WorkspaceUserCreate
+from argilla_server.security.authentication.jwt import JWT
+from argilla_server.security.authentication.userinfo import UserInfo
 
 _CRYPT_CONTEXT = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -186,6 +188,17 @@ def verify_password(password: str, password_hash: str) -> bool:
 
 def _generate_random_password() -> str:
     return secrets.token_urlsafe()
+
+
+def generate_user_token(user: User) -> str:
+    return JWT.create(
+        UserInfo(
+            identity=str(user.id),
+            name=user.first_name,
+            username=user.username,
+            role=user.role,
+        ),
+    )
 
 
 async def fetch_users_by_ids_as_dict(db: "AsyncSession", user_ids: List[UUID]) -> Dict[UUID, User]:
