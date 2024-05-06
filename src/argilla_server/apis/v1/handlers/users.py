@@ -21,10 +21,18 @@ from argilla_server.contexts import accounts
 from argilla_server.database import get_async_db
 from argilla_server.models import User
 from argilla_server.policies import UserPolicyV1, authorize
+from argilla_server.schemas.v1.users import User as UserSchema
 from argilla_server.schemas.v1.workspaces import Workspaces
 from argilla_server.security import auth
 
 router = APIRouter(tags=["users"])
+
+
+@router.get("/me", response_model=UserSchema)
+async def get_current_user(current_user: User = Security(auth.get_current_user)):
+    # TODO: Should we add telemetry.track_login?
+
+    return current_user
 
 
 @router.get("/users/{user_id}/workspaces", response_model=Workspaces)
