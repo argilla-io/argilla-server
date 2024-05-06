@@ -16,6 +16,8 @@ These are the section headers that we use:
 
 ## [Unreleased]()
 
+## [1.28.0](https://github.com/argilla-io/argilla-server/compare/v1.27.0...v1.28.0)
+
 ### Added
 
 - Added support to specify a list of score values for suggestions `score` attribute. ([#98](https://github.com/argilla-io/argilla-server/pull/98))
