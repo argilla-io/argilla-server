@@ -16,6 +16,10 @@ These are the section headers that we use:
 
 ## [Unreleased]()
 
+- Added `POST /api/v1/token` endpoint to generate a new API token for a user. ([#138](https://github.com/argilla-io/argilla-server/pull/138))
+
+## [Unreleased]()
+
 ### Added
 
 - Added support to specify a list of score values for suggestions `score` attribute. ([#98](https://github.com/argilla-io/argilla-server/pull/98))
