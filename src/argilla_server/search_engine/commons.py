@@ -33,6 +33,7 @@ from argilla_server.models import (
 )
 from argilla_server.search_engine.base import (
     AndFilter,
+    FieldFilterScope,
     Filter,
     FilterScope,
     FloatMetadataFilter,
@@ -43,6 +44,7 @@ from argilla_server.search_engine.base import (
     MetadataFilterScope,
     MetadataMetrics,
     Order,
+    QueryStringFilter,
     RangeFilter,
     RecordFilterScope,
     ResponseFilterScope,
@@ -463,6 +465,8 @@ class BaseElasticAndOpenSearchEngine(SearchEngine):
             return es_terms_query(es_field, values=filter.values)
         elif isinstance(filter, RangeFilter):
             return es_range_query(es_field, gte=filter.ge, lte=filter.le)
+        elif isinstance(filter, QueryStringFilter):
+            return es_simple_query_string(es_field, query=filter.query)
         else:
             raise ValueError(f"Cannot process request for filter {filter}")
 
@@ -485,6 +489,8 @@ class BaseElasticAndOpenSearchEngine(SearchEngine):
             return es_field_for_response_value(scope.user, question=scope.question)
         elif isinstance(scope, RecordFilterScope):
             return es_field_for_record_property(scope.property)
+        elif isinstance(scope, FieldFilterScope):
+            return es_field_for_record_field(scope.field)
         raise ValueError(f"Cannot process request for search scope {scope}")
 
     @staticmethod
@@ -782,7 +788,7 @@ class BaseElasticAndOpenSearchEngine(SearchEngine):
 
     async def __stats_aggregation(self, index_name: str, field_name: str, query: dict) -> dict:
         # See https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-metrics-stats-aggregation.html
-        aggregation_name = f"numeric_stats"
+        aggregation_name = "numeric_stats"
 
         stats_agg = {aggregation_name: {"stats": {"field": field_name}}}
 
