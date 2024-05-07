@@ -42,7 +42,7 @@ async def create_workspace(
     if await accounts.get_workspace_by_name(db, workspace_create.name):
         raise EntityAlreadyExistsError(name=workspace_create.name, type=Workspace)
 
-    workspace = await accounts.create_workspace(db, workspace_create)
+    workspace = await accounts.create_workspace(db, workspace_create.dict())
 
     return Workspace.from_orm(workspace)
 

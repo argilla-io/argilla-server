@@ -35,7 +35,7 @@ class TestsCreateToken:
             },
         )
 
-        assert response.status_code == 200
+        assert response.status_code == 201
         assert response.json()["access_token"]
         assert response.json()["token_type"] == "bearer"
 
