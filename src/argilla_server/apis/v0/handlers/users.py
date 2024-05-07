@@ -95,7 +95,7 @@ async def create_user(
         raise EntityAlreadyExistsError(name=user_create.username, type=User)
 
     try:
-        user = await accounts.create_user(db, user_create)
+        user = await accounts.create_user(db, user_create.dict(), user_create.workspaces)
         telemetry.track_user_created(user)
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e))
