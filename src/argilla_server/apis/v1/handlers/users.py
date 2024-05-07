@@ -50,7 +50,7 @@ async def list_users(
     return Users(items=users)
 
 
-@router.post("/users", response_model=User)
+@router.post("/users", status_code=status.HTTP_201_CREATED, response_model=User)
 async def create_user(
     *,
     db: AsyncSession = Depends(get_async_db),

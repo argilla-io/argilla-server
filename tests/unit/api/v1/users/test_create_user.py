@@ -43,7 +43,7 @@ class TestCreateUser:
             },
         )
 
-        assert response.status_code == 200
+        assert response.status_code == 201
 
         assert (await db.execute(select(func.count(User.id)))).scalar() == 2
         user = (await db.execute(select(User).filter_by(username="username"))).scalar_one()
@@ -74,7 +74,7 @@ class TestCreateUser:
             },
         )
 
-        assert response.status_code == 200
+        assert response.status_code == 201
 
         assert (await db.execute(select(func.count(User.id)))).scalar() == 2
         user = (await db.execute(select(User).filter_by(username="username"))).scalar_one()
@@ -96,7 +96,7 @@ class TestCreateUser:
             },
         )
 
-        assert response.status_code == 200
+        assert response.status_code == 201
 
         assert (await db.execute(select(func.count(User.id)))).scalar() == 2
         user = (await db.execute(select(User).filter_by(username="username"))).scalar_one()
@@ -117,7 +117,7 @@ class TestCreateUser:
             },
         )
 
-        assert response.status_code == 200
+        assert response.status_code == 201
 
         assert (await db.execute(select(func.count(User.id)))).scalar() == 2
         user = (await db.execute(select(User).filter_by(username="username"))).scalar_one()
@@ -140,7 +140,7 @@ class TestCreateUser:
             },
         )
 
-        assert response.status_code == 200
+        assert response.status_code == 201
 
         assert (await db.execute(select(func.count(User.id)))).scalar() == 2
         user = (await db.execute(select(User).filter_by(username="username"))).scalar_one()
