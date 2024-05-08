@@ -91,6 +91,16 @@ class WorkspaceUserPolicyV1:
     async def create(cls, actor: User) -> bool:
         return actor.is_owner
 
+    @classmethod
+    def delete(cls, workspace_user: WorkspaceUser) -> PolicyAction:
+        async def is_allowed(actor: User) -> bool:
+            return actor.is_owner or (
+                actor.is_admin
+                and await _exists_workspace_user_by_user_and_workspace_id(actor, workspace_user.workspace_id)
+            )
+
+        return is_allowed
+
 
 class WorkspacePolicy:
     @classmethod

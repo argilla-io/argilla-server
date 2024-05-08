@@ -167,3 +167,25 @@ async def create_workspace_user(
     workspace_user = await accounts.create_workspace_user(db, {"workspace_id": workspace_id, "user_id": user.id})
 
     return workspace_user.user
+
+
+@router.delete("/workspaces/{workspace_id}/users/{user_id}", response_model=User)
+async def delete_workspace_user(
+    *,
+    db: AsyncSession = Depends(get_async_db),
+    workspace_id: UUID,
+    user_id: UUID,
+    current_user: models.User = Security(auth.get_current_user),
+):
+    workspace_user = await accounts.get_workspace_user_by_workspace_id_and_user_id(db, workspace_id, user_id)
+    if workspace_user is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"User with id `{user_id}` not found in workspace with id `{workspace_id}`",
+        )
+
+    await authorize(current_user, WorkspaceUserPolicyV1.delete(workspace_user))
+
+    await accounts.delete_workspace_user(db, workspace_user)
+
+    return await workspace_user.awaitable_attrs.user
