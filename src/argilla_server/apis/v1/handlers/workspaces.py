@@ -17,13 +17,13 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Security, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from argilla_server import models
 from argilla_server.contexts import accounts, datasets
 from argilla_server.database import get_async_db
 from argilla_server.errors import EntityAlreadyExistsError
-from argilla_server.models import User
 from argilla_server.policies import WorkspacePolicyV1, WorkspaceUserPolicyV1, authorize
-from argilla_server.schemas.v1.users import Users
-from argilla_server.schemas.v1.workspaces import Workspace, WorkspaceCreate, Workspaces
+from argilla_server.schemas.v1.users import User, Users
+from argilla_server.schemas.v1.workspaces import Workspace, WorkspaceCreate, Workspaces, WorkspaceUserCreate
 from argilla_server.security import auth
 from argilla_server.services.datasets import DatasetsService
 
@@ -35,7 +35,7 @@ async def get_workspace(
     *,
     db: AsyncSession = Depends(get_async_db),
     workspace_id: UUID,
-    current_user: User = Security(auth.get_current_user),
+    current_user: models.User = Security(auth.get_current_user),
 ):
     await authorize(current_user, WorkspacePolicyV1.get(workspace_id))
 
@@ -54,7 +54,7 @@ async def create_workspace(
     *,
     db: AsyncSession = Depends(get_async_db),
     workspace_create: WorkspaceCreate,
-    current_user: User = Security(auth.get_current_user),
+    current_user: models.User = Security(auth.get_current_user),
 ):
     await authorize(current_user, WorkspacePolicyV1.create)
 
@@ -70,7 +70,7 @@ async def delete_workspace(
     db: AsyncSession = Depends(get_async_db),
     datasets_service: DatasetsService = Depends(DatasetsService.get_instance),
     workspace_id: UUID,
-    current_user: User = Security(auth.get_current_user),
+    current_user: models.User = Security(auth.get_current_user),
 ):
     await authorize(current_user, WorkspacePolicyV1.delete)
 
@@ -100,7 +100,7 @@ async def delete_workspace(
 async def list_workspaces_me(
     *,
     db: AsyncSession = Depends(get_async_db),
-    current_user: User = Security(auth.get_current_user),
+    current_user: models.User = Security(auth.get_current_user),
 ) -> Workspaces:
     await authorize(current_user, WorkspacePolicyV1.list_workspaces_me)
 
@@ -117,7 +117,7 @@ async def list_workspace_users(
     *,
     db: AsyncSession = Depends(get_async_db),
     workspace_id: UUID,
-    current_user: User = Security(auth.get_current_user),
+    current_user: models.User = Security(auth.get_current_user),
 ):
     await authorize(current_user, WorkspaceUserPolicyV1.list(workspace_id))
 
@@ -131,3 +131,39 @@ async def list_workspace_users(
     await workspace.awaitable_attrs.users
 
     return Users(items=workspace.users)
+
+
+@router.post("/workspaces/{workspace_id}/users", status_code=status.HTTP_201_CREATED, response_model=User)
+async def create_workspace_user(
+    *,
+    db: AsyncSession = Depends(get_async_db),
+    workspace_id: UUID,
+    workspace_user_create: WorkspaceUserCreate,
+    current_user: models.User = Security(auth.get_current_user),
+):
+    await authorize(current_user, WorkspaceUserPolicyV1.create)
+
+    workspace = await accounts.get_workspace_by_id(db, workspace_id)
+    if workspace is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Workspace with id `{workspace_id}` not found",
+        )
+
+    user = await accounts.get_user_by_id(db, workspace_user_create.user_id)
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"User with id `{workspace_user_create.user_id}` not found",
+        )
+
+    workspace_user = await accounts.get_workspace_user_by_workspace_id_and_user_id(db, workspace_id, user.id)
+    if workspace_user is not None:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"User with id `{user.id}` already exists in workspace with id `{workspace_id}`",
+        )
+
+    workspace_user = await accounts.create_workspace_user(db, {"workspace_id": workspace_id, "user_id": user.id})
+
+    return workspace_user.user

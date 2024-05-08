@@ -38,3 +38,7 @@ class WorkspaceCreate(BaseModel):
 
 class Workspaces(BaseModel):
     items: List[Workspace]
+
+
+class WorkspaceUserCreate(BaseModel):
+    user_id: UUID
