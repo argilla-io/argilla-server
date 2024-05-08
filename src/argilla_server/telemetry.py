@@ -54,13 +54,6 @@ class TelemetryClient:
     def __post_init__(self, enable_telemetry: bool, disable_send: bool, api_key: str, host: str):
         from argilla_server._version import __version__
 
-        self.client = None
-        if enable_telemetry:
-            try:
-                self.client = Client(write_key=api_key, gzip=True, host=host, send=not disable_send, max_retries=10)
-            except Exception as err:
-                _LOGGER.warning(f"Cannot initialize telemetry. Error: {err}. Disabling...")
-
         self._server_id = uuid.UUID(int=uuid.getnode())
         self._system_info = {
             "system": platform.system(),
@@ -74,19 +67,30 @@ class TelemetryClient:
         }
 
         _LOGGER.info("System Info:")
-        _LOGGER.info(json.dumps(self._system_info, indent=2))
+        _LOGGER.info(f"Server id: {self.server_id}")
+        _LOGGER.info(f"Context: {json.dumps(self._system_info, indent=2)}")
+
+        self.client: Optional[Client] = None
+        if enable_telemetry:
+            try:
+                client = Client(write_key=api_key, gzip=True, host=host, send=not disable_send, max_retries=10)
+                client.identify(user_id=str(self._server_id), traits=self._system_info)
+
+                self.client = client
+            except Exception as err:
+                _LOGGER.warning(f"Cannot initialize telemetry. Error: {err}. Disabling...")
 
     def track_data(self, action: str, data: Dict[str, Any], include_system_info: bool = True):
         if not self.client:
             return
 
         event_data = data.copy()
-        self.client.track(
-            user_id=str(self._server_id),
-            event=action,
-            properties=event_data,
-            context=self._system_info if include_system_info else {},
-        )
+
+        context = {}
+        if include_system_info:
+            context = self._system_info.copy()
+
+        self.client.track(user_id=str(self._server_id), event=action, properties=event_data, context=context)
 
 
 _CLIENT = TelemetryClient()
