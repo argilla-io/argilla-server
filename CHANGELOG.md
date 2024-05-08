@@ -20,6 +20,7 @@ These are the section headers that we use:
 - Added `GET /api/v1/me` endpoint to get the current user information. ([#140](https://github.com/argilla-io/argilla-server/pull/140))
 - Added `POST /api/v1/workspaces` endpoint to create a new workspace. ([#150](https://github.com/argilla-io/argilla-server/pull/150))
 - Added `GET /api/v1/workspaces/:workspace_id/users` endpoint to get the users of a workspace. ([#153](https://github.com/argilla-io/argilla-server/pull/153))
+- Added `POST /api/v1/workspaces/:workspace_id/users` endpoind to add a user to a workspace. ([#156](https://github.com/argilla-io/argilla-server/pull/156))
 
 ## [Unreleased]()
 
