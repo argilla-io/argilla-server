@@ -44,6 +44,7 @@ async def create_workspace_user(db: AsyncSession, workspace_user_attrs: dict) ->
         user_id=workspace_user_attrs["user_id"],
     )
 
+    # TODO: Once we delete API v0 endpoint we can reduce this to refresh only the user.
     await db.refresh(workspace_user, attribute_names=["workspace", "user"])
 
     return workspace_user
