@@ -31,8 +31,8 @@ def _get_argilla_settings() -> ArgillaSettings:
     argilla_settings = ArgillaSettings()
 
     if _get_huggingface_settings():
-        argilla_settings.show_huggingface_space_persistant_storage_warning = (
-            settings.show_huggingface_space_persistant_storage_warning
+        argilla_settings.show_huggingface_space_persistent_storage_warning = (
+            settings.show_huggingface_space_persistent_storage_warning
         )
 
     return argilla_settings

@@ -34,26 +34,26 @@ class TestGetSettings:
 
             assert response.status_code == 200
             assert response.json()["argilla"] == {
-                "show_huggingface_space_persistant_storage_warning": True,
+                "show_huggingface_space_persistent_storage_warning": True,
             }
 
     async def test_get_settings_for_argilla_settings_running_on_huggingface_with_disabled_storage_warning(
         self, async_client: AsyncClient
     ):
         with mock.patch.object(HUGGINGFACE_SETTINGS, "space_id", "space-id"):
-            with mock.patch.object(argilla_server_settings, "show_huggingface_space_persistant_storage_warning", False):
+            with mock.patch.object(argilla_server_settings, "show_huggingface_space_persistent_storage_warning", False):
                 response = await async_client.get(self.url())
 
                 assert response.status_code == 200
                 assert response.json()["argilla"] == {
-                    "show_huggingface_space_persistant_storage_warning": False,
+                    "show_huggingface_space_persistent_storage_warning": False,
                 }
 
     async def test_get_settings_for_argilla_settings_not_running_on_huggingface(self, async_client: AsyncClient):
         response = await async_client.get(self.url())
 
         assert response.status_code == 200
-        assert "show_huggingface_space_persistant_storage_warning" not in response.json()["argilla"]
+        assert "show_huggingface_space_persistent_storage_warning" not in response.json()["argilla"]
 
     async def test_get_settings_for_huggingface_settings_running_on_huggingface(self, async_client: AsyncClient):
         huggingface_os_environ = {
@@ -78,7 +78,7 @@ class TestGetSettings:
                     "space_host": "space-host",
                     "space_repo_name": "space-repo-name",
                     "space_author_name": "space-author-name",
-                    "space_persistant_storage_enabled": True,
+                    "space_persistent_storage_enabled": True,
                 }
 
     async def test_get_settings_for_huggingface_settings_not_running_on_huggingface(self, async_client: AsyncClient):
