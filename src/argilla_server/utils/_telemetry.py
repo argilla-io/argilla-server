@@ -23,11 +23,12 @@ def server_deployment_type() -> str:
     global _server_deployment_type
 
     if _server_deployment_type is None:
-        _server_deployment_type = "server"
-
-        if is_running_on_docker_container() and _is_quickstart_env():
+        if is_running_on_huggingface_space():
+            _server_deployment_type = "huggingface_space"
+        elif _is_quickstart_env():
             _server_deployment_type = "quickstart"
-
+        else:
+            _server_deployment_type = "server"
     return _server_deployment_type
 
 
@@ -42,13 +43,11 @@ def is_running_on_docker_container() -> bool:
     """Returns True if the current process is running inside a Docker container, False otherwise."""
     global _in_docker_container
 
-    if is_running_on_huggingface_space():
-        # HF Spaces have permission restrictions and the /.dockerenv and  /proc/self/cgroup are not available
-        # Also, HF Space are always running in Docker containers
-        _in_docker_container = True
-
     if _in_docker_container is None:
-        _in_docker_container = _has_docker_env() or _has_docker_cgroup()
+        if is_running_on_huggingface_space():
+            _in_docker_container = True
+        else:
+            _in_docker_container = _has_docker_env() or _has_docker_cgroup()
 
     return _in_docker_container
 

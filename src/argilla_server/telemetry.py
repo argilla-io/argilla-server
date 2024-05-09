@@ -63,7 +63,6 @@ class TelemetryClient:
             "sys_version": platform.version(),
             "deployment": server_deployment_type(),
             "docker": is_running_on_docker_container(),
-            "hf_space": is_running_on_huggingface_space(),
             "version": __version__,
         }
 
