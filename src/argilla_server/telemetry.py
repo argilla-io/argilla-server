@@ -25,7 +25,7 @@ from argilla_server.commons.models import TaskType
 from argilla_server.constants import DEFAULT_USERNAME
 from argilla_server.models import User
 from argilla_server.settings import settings
-from argilla_server.utils._telemetry import is_running_on_docker_container, server_deployment_type
+from argilla_server.utils._telemetry import is_running_on_docker_container, server_deployment_type, is_running_on_huggingface_space
 
 try:
     from analytics import Client  # This import works only for version 2.2.0
@@ -63,6 +63,7 @@ class TelemetryClient:
             "sys_version": platform.version(),
             "deployment": server_deployment_type(),
             "docker": is_running_on_docker_container(),
+            "hf_space": is_running_on_huggingface_space(),
             "version": __version__,
         }
 

@@ -31,7 +31,7 @@ def server_deployment_type() -> str:
     return _server_deployment_type
 
 
-def is_running_as_huggingface_space() -> bool:
+def is_running_on_huggingface_space() -> bool:
     """Returns True if the current process is running inside a Huggingface Space, False otherwise."""
     from argilla_server.schemas.v1.settings import HuggingfaceSettings
 
@@ -42,9 +42,7 @@ def is_running_on_docker_container() -> bool:
     """Returns True if the current process is running inside a Docker container, False otherwise."""
     global _in_docker_container
 
-    from argilla_server.schemas.v1.settings import HuggingfaceSettings
-
-    if HuggingfaceSettings().is_running_on_huggingface:
+    if is_running_on_huggingface_space():
         # HF Spaces have permission restrictions and the /.dockerenv and  /proc/self/cgroup are not available
         # Also, HF Space are always running in Docker containers
         _in_docker_container = True
