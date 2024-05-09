@@ -18,7 +18,7 @@ from argilla_server.pydantic_v1 import BaseModel, BaseSettings, Field
 
 
 class ArgillaSettings(BaseModel):
-    show_huggingface_space_persistant_storage_warning: Optional[bool]
+    show_huggingface_space_persistent_storage_warning: Optional[bool]
 
 
 class HuggingfaceSettings(BaseSettings):
@@ -28,7 +28,9 @@ class HuggingfaceSettings(BaseSettings):
     space_host: str = Field(None, env="SPACE_HOST")
     space_repo_name: str = Field(None, env="SPACE_REPO_NAME")
     space_author_name: str = Field(None, env="SPACE_AUTHOR_NAME")
-    space_persistant_storage_enabled: bool = Field(False, env="PERSISTANT_STORAGE_ENABLED")
+    # NOTE: Hugging Face has a typo in their environment variable name,
+    # using PERSISTANT instead of PERSISTENT. We will use the correct spelling in our code.
+    space_persistent_storage_enabled: bool = Field(False, env="PERSISTANT_STORAGE_ENABLED")
 
     @property
     def is_running_on_huggingface(self) -> bool:
