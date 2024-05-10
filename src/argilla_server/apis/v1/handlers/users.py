@@ -37,6 +37,25 @@ async def get_current_user(request: Request, current_user: models.User = Securit
     return current_user
 
 
+@router.get("/users/{user_id}", response_model=User)
+async def get_user(
+    *,
+    db: AsyncSession = Depends(get_async_db),
+    user_id: UUID,
+    current_user: models.User = Security(auth.get_current_user),
+):
+    await authorize(current_user, UserPolicyV1.get)
+
+    user = await accounts.get_user_by_id(db, user_id)
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"User with id `{user_id}` not found",
+        )
+
+    return user
+
+
 @router.get("/users", response_model=Users)
 async def list_users(
     *,
