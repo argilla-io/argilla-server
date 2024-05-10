@@ -17,15 +17,10 @@ import os
 import psutil
 
 from argilla_server._version import __version__
-from argilla_server.daos.backend import GenericElasticEngineBackend
 
 
 def argilla_version() -> str:
     return __version__
-
-
-def elasticsearch_status() -> dict:
-    return GenericElasticEngineBackend.get_instance().client.get_cluster_info()
 
 
 def memory_status() -> dict:

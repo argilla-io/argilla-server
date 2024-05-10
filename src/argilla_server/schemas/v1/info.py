@@ -21,5 +21,5 @@ class Version(BaseModel):
 
 class Status(BaseModel):
     version: str
-    elasticsearch: dict
+    search_engine: dict
     memory: dict
