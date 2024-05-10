@@ -21,6 +21,12 @@ class NotFoundError(Exception):
     pass
 
 
+class NotUniqueError(Exception):
+    """Custom Argilla not unique error. Use it for situations where an Argilla domain entity already exists violating a constraint."""
+
+    pass
+
+
 class AuthenticationError(Exception):
     """Custom Argilla unauthorized error. Use it for situations where an request is not authorized to perform an action."""
 

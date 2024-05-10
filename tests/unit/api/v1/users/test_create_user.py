@@ -12,7 +12,6 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from datetime import datetime
 from uuid import UUID
 
 import pytest
@@ -43,21 +42,21 @@ class TestCreateUser:
             },
         )
 
-        assert response.status_code == 200
+        assert response.status_code == 201
 
         assert (await db.execute(select(func.count(User.id)))).scalar() == 2
         user = (await db.execute(select(User).filter_by(username="username"))).scalar_one()
 
         response_json = response.json()
         assert response_json == {
-            "id": str(UUID(response_json["id"])),
+            "id": str(user.id),
             "first_name": "First name",
             "last_name": "Last name",
             "username": "username",
             "role": UserRole.annotator,
             "api_key": user.api_key,
-            "inserted_at": datetime.fromisoformat(response_json["inserted_at"]).isoformat(),
-            "updated_at": datetime.fromisoformat(response_json["updated_at"]).isoformat(),
+            "inserted_at": user.inserted_at.isoformat(),
+            "updated_at": user.updated_at.isoformat(),
         }
 
     async def test_create_user_with_first_name_including_leading_and_trailing_spaces(
@@ -74,7 +73,7 @@ class TestCreateUser:
             },
         )
 
-        assert response.status_code == 200
+        assert response.status_code == 201
 
         assert (await db.execute(select(func.count(User.id)))).scalar() == 2
         user = (await db.execute(select(User).filter_by(username="username"))).scalar_one()
@@ -96,7 +95,7 @@ class TestCreateUser:
             },
         )
 
-        assert response.status_code == 200
+        assert response.status_code == 201
 
         assert (await db.execute(select(func.count(User.id)))).scalar() == 2
         user = (await db.execute(select(User).filter_by(username="username"))).scalar_one()
@@ -117,7 +116,7 @@ class TestCreateUser:
             },
         )
 
-        assert response.status_code == 200
+        assert response.status_code == 201
 
         assert (await db.execute(select(func.count(User.id)))).scalar() == 2
         user = (await db.execute(select(User).filter_by(username="username"))).scalar_one()
@@ -140,7 +139,7 @@ class TestCreateUser:
             },
         )
 
-        assert response.status_code == 200
+        assert response.status_code == 201
 
         assert (await db.execute(select(func.count(User.id)))).scalar() == 2
         user = (await db.execute(select(User).filter_by(username="username"))).scalar_one()
@@ -199,6 +198,8 @@ class TestCreateUser:
         )
 
         assert response.status_code == 409
+        assert response.json() == {"detail": "Username `username` is not unique"}
+
         assert (await db.execute(select(func.count(User.id)))).scalar() == 2
 
     async def test_create_user_with_invalid_username(
