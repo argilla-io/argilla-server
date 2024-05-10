@@ -21,6 +21,7 @@ from argilla_server import models
 from argilla_server.contexts import accounts, datasets
 from argilla_server.database import get_async_db
 from argilla_server.errors import EntityAlreadyExistsError
+from argilla_server.errors.future import NotUniqueError
 from argilla_server.policies import WorkspacePolicyV1, WorkspaceUserPolicyV1, authorize
 from argilla_server.schemas.v1.users import User, Users
 from argilla_server.schemas.v1.workspaces import Workspace, WorkspaceCreate, Workspaces, WorkspaceUserCreate
@@ -157,13 +158,9 @@ async def create_workspace_user(
             detail=f"User with id `{workspace_user_create.user_id}` not found",
         )
 
-    workspace_user = await accounts.get_workspace_user_by_workspace_id_and_user_id(db, workspace_id, user.id)
-    if workspace_user is not None:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail=f"User with id `{user.id}` already exists in workspace with id `{workspace_id}`",
-        )
-
-    workspace_user = await accounts.create_workspace_user(db, {"workspace_id": workspace_id, "user_id": user.id})
+    try:
+        workspace_user = await accounts.create_workspace_user(db, {"workspace_id": workspace.id, "user_id": user.id})
+    except NotUniqueError as e:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
 
     return workspace_user.user

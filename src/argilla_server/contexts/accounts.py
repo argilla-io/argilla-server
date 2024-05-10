@@ -21,6 +21,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session, selectinload
 
 from argilla_server.enums import UserRole
+from argilla_server.errors.future import NotUniqueError
 from argilla_server.models import User, Workspace, WorkspaceUser
 from argilla_server.schemas.v0.users import UserCreate
 from argilla_server.schemas.v0.workspaces import WorkspaceCreate
@@ -38,11 +39,13 @@ async def get_workspace_user_by_workspace_id_and_user_id(
 
 
 async def create_workspace_user(db: AsyncSession, workspace_user_attrs: dict) -> WorkspaceUser:
-    workspace_user = await WorkspaceUser.create(
-        db,
-        workspace_id=workspace_user_attrs["workspace_id"],
-        user_id=workspace_user_attrs["user_id"],
-    )
+    workspace_id = workspace_user_attrs["workspace_id"]
+    user_id = workspace_user_attrs["user_id"]
+
+    if (await get_workspace_user_by_workspace_id_and_user_id(db, workspace_id, user_id)) is not None:
+        raise NotUniqueError(f"Workspace user with workspace_id `{workspace_id}` and user_id `{user_id}` is not unique")
+
+    workspace_user = await WorkspaceUser.create(db, workspace_id=workspace_id, user_id=user_id)
 
     # TODO: Once we delete API v0 endpoint we can reduce this to refresh only the user.
     await db.refresh(workspace_user, attribute_names=["workspace", "user"])
