@@ -198,6 +198,8 @@ class TestCreateUser:
         )
 
         assert response.status_code == 409
+        assert response.json() == {"detail": "User with username `username` already exists"}
+
         assert (await db.execute(select(func.count(User.id)))).scalar() == 2
 
     async def test_create_user_with_invalid_username(

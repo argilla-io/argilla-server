@@ -21,7 +21,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from argilla_server import models, telemetry
 from argilla_server.contexts import accounts
 from argilla_server.database import get_async_db
-from argilla_server.errors import EntityAlreadyExistsError
 from argilla_server.policies import UserPolicyV1, authorize
 from argilla_server.schemas.v1.users import User, UserCreate, Users
 from argilla_server.schemas.v1.workspaces import Workspaces
@@ -61,7 +60,10 @@ async def create_user(
 
     user = await accounts.get_user_by_username(db, user_create.username)
     if user is not None:
-        raise EntityAlreadyExistsError(name=user_create.username, type=User)
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"User with username `{user_create.username}` already exists",
+        )
 
     try:
         user = await accounts.create_user(db, user_create.dict())
