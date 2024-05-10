@@ -154,7 +154,7 @@ async def create_workspace_user(
     user = await accounts.get_user_by_id(db, workspace_user_create.user_id)
     if user is None:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=f"User with id `{workspace_user_create.user_id}` not found",
         )
 
