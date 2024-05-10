@@ -21,6 +21,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session, selectinload
 
 from argilla_server.enums import UserRole
+from argilla_server.errors.future.base_errors import NotUniqueError
 from argilla_server.models import User, Workspace, WorkspaceUser
 from argilla_server.schemas.v0.users import UserCreate
 from argilla_server.schemas.v0.workspaces import WorkspaceCreate, WorkspaceUserCreate
@@ -76,6 +77,9 @@ async def list_workspaces_by_user_id(db: AsyncSession, user_id: UUID) -> List[Wo
 
 
 async def create_workspace(db: AsyncSession, workspace_attrs: dict) -> Workspace:
+    if (await get_workspace_by_name(db, workspace_attrs["name"])) is not None:
+        raise NotUniqueError(f"Workspace name `{workspace_attrs['name']}` is not unique")
+
     return await Workspace.create(db, name=workspace_attrs["name"])
 
 
