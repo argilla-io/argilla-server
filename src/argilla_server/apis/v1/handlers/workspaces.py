@@ -19,7 +19,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from argilla_server.contexts import accounts, datasets
 from argilla_server.database import get_async_db
-from argilla_server.errors.future.base_errors import NotUniqueError
+from argilla_server.errors.future import NotUniqueError
 from argilla_server.models import User
 from argilla_server.policies import WorkspacePolicyV1, authorize
 from argilla_server.schemas.v1.workspaces import Workspace, WorkspaceCreate, Workspaces
