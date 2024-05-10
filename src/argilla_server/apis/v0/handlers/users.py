@@ -23,7 +23,7 @@ from argilla_server import models, telemetry
 from argilla_server.contexts import accounts
 from argilla_server.database import get_async_db
 from argilla_server.errors import EntityAlreadyExistsError, EntityNotFoundError
-from argilla_server.errors.future.base_errors import NotUniqueError
+from argilla_server.errors.future import NotUniqueError
 from argilla_server.policies import UserPolicy, authorize
 from argilla_server.pydantic_v1 import parse_obj_as
 from argilla_server.schemas.v0.users import User, UserCreate
@@ -95,7 +95,7 @@ async def create_user(
         user = await accounts.create_user(db, user_create.dict(), user_create.workspaces)
 
         telemetry.track_user_created(user)
-    except NotUniqueError as e:
+    except NotUniqueError:
         raise EntityAlreadyExistsError(name=user_create.username, type=User)
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e))
