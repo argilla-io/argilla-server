@@ -67,15 +67,15 @@ class TestListUsers:
             ]
         }
 
+    async def test_list_users_without_authentication(self, async_client: AsyncClient):
+        response = await async_client.get(self.url())
+
+        assert response.status_code == 401
+
     @pytest.mark.parametrize("user_role", [UserRole.admin, UserRole.annotator])
-    async def test_list_users_with_invalid_role(self, async_client: AsyncClient, user_role: UserRole):
+    async def test_list_users_with_unauthorized_role(self, async_client: AsyncClient, user_role: UserRole):
         user = await UserFactory.create(role=user_role)
 
         response = await async_client.get(self.url(), headers={API_KEY_HEADER_NAME: user.api_key})
 
         assert response.status_code == 403
-
-    async def test_list_users_without_authentication(self, async_client: AsyncClient):
-        response = await async_client.get(self.url())
-
-        assert response.status_code == 401
