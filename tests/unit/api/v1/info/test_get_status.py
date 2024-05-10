@@ -12,23 +12,22 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from fastapi import APIRouter
-
-from argilla_server.contexts import info
-from argilla_server.schemas.v1.info import Status, Version
-
-router = APIRouter(tags=["info"])
+import pytest
+from argilla_server._version import __version__
+from httpx import AsyncClient
 
 
-@router.get("/version", response_model=Version)
-async def get_version():
-    return Version(version=info.argilla_version())
+@pytest.mark.asyncio
+class TestGetStatus:
+    def url(self) -> str:
+        return "/api/v1/status"
 
+    async def test_get_status(self, async_client: AsyncClient):
+        response = await async_client.get(self.url())
 
-@router.get("/status", response_model=Status)
-async def get_status():
-    return Status(
-        version=info.argilla_version(),
-        elasticsearch=info.elasticsearch_status(),
-        memory=info.memory_status(),
-    )
+        assert response.status_code == 200
+
+        response_json = response.json()
+        assert response_json["version"] == __version__
+        assert "elasticsearch" in response_json
+        assert "memory" in response_json
