@@ -21,6 +21,8 @@ from argilla_server import models
 from argilla_server.contexts import accounts, datasets
 from argilla_server.database import get_async_db
 from argilla_server.errors import EntityAlreadyExistsError
+from argilla_server.errors.future import NotUniqueError
+from argilla_server.models import User
 from argilla_server.policies import WorkspacePolicyV1, WorkspaceUserPolicyV1, authorize
 from argilla_server.schemas.v1.users import User, Users
 from argilla_server.schemas.v1.workspaces import Workspace, WorkspaceCreate, Workspaces, WorkspaceUserCreate
@@ -58,10 +60,12 @@ async def create_workspace(
 ):
     await authorize(current_user, WorkspacePolicyV1.create)
 
-    if await accounts.get_workspace_by_name(db, workspace_create.name):
-        raise EntityAlreadyExistsError(name=workspace_create.name, type=Workspace)
+    try:
+        workspace = await accounts.create_workspace(db, workspace_create.dict())
+    except NotUniqueError as e:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
 
-    return await accounts.create_workspace(db, workspace_create.dict())
+    return workspace
 
 
 @router.delete("/workspaces/{workspace_id}", response_model=Workspace)
@@ -153,18 +157,14 @@ async def create_workspace_user(
     user = await accounts.get_user_by_id(db, workspace_user_create.user_id)
     if user is None:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=f"User with id `{workspace_user_create.user_id}` not found",
         )
 
-    workspace_user = await accounts.get_workspace_user_by_workspace_id_and_user_id(db, workspace_id, user.id)
-    if workspace_user is not None:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail=f"User with id `{user.id}` already exists in workspace with id `{workspace_id}`",
-        )
-
-    workspace_user = await accounts.create_workspace_user(db, {"workspace_id": workspace_id, "user_id": user.id})
+    try:
+        workspace_user = await accounts.create_workspace_user(db, {"workspace_id": workspace.id, "user_id": user.id})
+    except NotUniqueError as e:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
 
     return workspace_user.user
 

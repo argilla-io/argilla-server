@@ -21,6 +21,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from argilla_server.contexts import accounts
 from argilla_server.database import get_async_db
 from argilla_server.errors import EntityAlreadyExistsError, EntityNotFoundError
+from argilla_server.errors.future import NotUniqueError
 from argilla_server.policies import WorkspacePolicy, WorkspaceUserPolicy, authorize
 from argilla_server.pydantic_v1 import parse_obj_as
 from argilla_server.schemas.v0.users import User
@@ -39,10 +40,10 @@ async def create_workspace(
 ):
     await authorize(current_user, WorkspacePolicy.create)
 
-    if await accounts.get_workspace_by_name(db, workspace_create.name):
+    try:
+        workspace = await accounts.create_workspace(db, workspace_create.dict())
+    except NotUniqueError:
         raise EntityAlreadyExistsError(name=workspace_create.name, type=Workspace)
-
-    workspace = await accounts.create_workspace(db, workspace_create.dict())
 
     return Workspace.from_orm(workspace)
 
@@ -84,11 +85,10 @@ async def create_workspace_user(
     if not user:
         raise EntityNotFoundError(name=str(user_id), type=User)
 
-    workspace_user = await accounts.get_workspace_user_by_workspace_id_and_user_id(db, workspace_id, user_id)
-    if workspace_user is not None:
+    try:
+        workspace_user = await accounts.create_workspace_user(db, {"workspace_id": workspace_id, "user_id": user_id})
+    except NotUniqueError:
         raise EntityAlreadyExistsError(name=str(user_id), type=User)
-
-    workspace_user = await accounts.create_workspace_user(db, {"workspace_id": workspace_id, "user_id": user_id})
 
     await db.refresh(user, attribute_names=["workspaces"])
 

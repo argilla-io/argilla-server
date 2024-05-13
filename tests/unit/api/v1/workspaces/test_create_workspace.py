@@ -83,6 +83,8 @@ class TestCreateWorkspace:
         )
 
         assert response.status_code == 409
+        assert response.json() == {"detail": "Workspace name `workspace` is not unique"}
+
         assert (await db.execute(select(func.count(Workspace.id)))).scalar() == 1
 
     async def test_create_workspace_with_invalid_name(

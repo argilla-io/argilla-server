@@ -114,7 +114,7 @@ class TestCreateWorkspaceUser:
             json={"user_id": str(user_id)},
         )
 
-        assert response.status_code == 404
+        assert response.status_code == 422
         assert response.json() == {"detail": f"User with id `{user_id}` not found"}
 
         assert (await db.execute(select(func.count(WorkspaceUser.id)))).scalar() == 0
@@ -134,7 +134,7 @@ class TestCreateWorkspaceUser:
 
         assert response.status_code == 409
         assert response.json() == {
-            "detail": f"User with id `{user.id}` already exists in workspace with id `{workspace.id}`"
+            "detail": f"Workspace user with workspace_id `{workspace.id}` and user_id `{user.id}` is not unique",
         }
 
         assert (await db.execute(select(func.count(WorkspaceUser.id)))).scalar() == 1
