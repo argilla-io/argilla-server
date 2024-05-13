@@ -90,7 +90,8 @@ async def create_workspace_user(
         raise EntityAlreadyExistsError(name=str(user_id), type=User)
 
     workspace_user = await accounts.create_workspace_user(
-        db, WorkspaceUserCreate(workspace_id=workspace_id, user_id=user_id)
+        db,
+        WorkspaceUserCreate(workspace_id=workspace_id, user_id=user_id),
     )
     await db.refresh(user, attribute_names=["workspaces"])
 

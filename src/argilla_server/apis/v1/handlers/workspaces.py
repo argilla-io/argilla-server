@@ -19,9 +19,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from argilla_server.contexts import accounts, datasets
 from argilla_server.database import get_async_db
+from argilla_server.errors import EntityAlreadyExistsError
 from argilla_server.errors.future import NotUniqueError
 from argilla_server.models import User
-from argilla_server.policies import WorkspacePolicyV1, authorize
+from argilla_server.policies import WorkspacePolicyV1, WorkspaceUserPolicyV1, authorize
+from argilla_server.schemas.v1.users import Users
 from argilla_server.schemas.v1.workspaces import Workspace, WorkspaceCreate, Workspaces
 from argilla_server.security import auth
 from argilla_server.services.datasets import DatasetsService
@@ -99,7 +101,9 @@ async def delete_workspace(
 
 @router.get("/me/workspaces", response_model=Workspaces)
 async def list_workspaces_me(
-    *, db: AsyncSession = Depends(get_async_db), current_user: User = Security(auth.get_current_user)
+    *,
+    db: AsyncSession = Depends(get_async_db),
+    current_user: User = Security(auth.get_current_user),
 ) -> Workspaces:
     await authorize(current_user, WorkspacePolicyV1.list_workspaces_me)
 
@@ -109,3 +113,24 @@ async def list_workspaces_me(
         workspaces = await accounts.list_workspaces_by_user_id(db, current_user.id)
 
     return Workspaces(items=workspaces)
+
+
+@router.get("/workspaces/{workspace_id}/users", response_model=Users)
+async def list_workspace_users(
+    *,
+    db: AsyncSession = Depends(get_async_db),
+    workspace_id: UUID,
+    current_user: User = Security(auth.get_current_user),
+):
+    await authorize(current_user, WorkspaceUserPolicyV1.list(workspace_id))
+
+    workspace = await accounts.get_workspace_by_id(db, workspace_id)
+    if workspace is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Workspace with id `{workspace_id}` not found",
+        )
+
+    await workspace.awaitable_attrs.users
+
+    return Users(items=workspace.users)
