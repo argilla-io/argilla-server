@@ -31,10 +31,5 @@ class Workspace(BaseModel):
         orm_mode = True
 
 
-class WorkspaceUserCreate(BaseModel):
-    user_id: UUID
-    workspace_id: UUID
-
-
 class WorkspaceCreate(BaseModel):
     name: str = Field(..., regex=WORKSPACE_NAME_REGEX, min_length=1)

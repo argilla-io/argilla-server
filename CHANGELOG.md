@@ -18,6 +18,13 @@ These are the section headers that we use:
 
 - Added `POST /api/v1/token` endpoint to generate a new API token for a user. ([#138](https://github.com/argilla-io/argilla-server/pull/138))
 - Added `GET /api/v1/me` endpoint to get the current user information. ([#140](https://github.com/argilla-io/argilla-server/pull/140))
+- Added `GET /api/v1/users` endpoint to get a list of all users. ([#142](https://github.com/argilla-io/argilla-server/pull/142))
+- Added `POST /api/v1/users` endpoint to create a new user. ([#146](https://github.com/argilla-io/argilla-server/pull/146))
+- Added `DELETE /api/v1/users` endpoint to delete a user. ([#148](https://github.com/argilla-io/argilla-server/pull/148))
+- Added `POST /api/v1/workspaces` endpoint to create a new workspace. ([#150](https://github.com/argilla-io/argilla-server/pull/150))
+- Added `GET /api/v1/workspaces/:workspace_id/users` endpoint to get the users of a workspace. ([#153](https://github.com/argilla-io/argilla-server/pull/153))
+- Added `POST /api/v1/workspaces/:workspace_id/users` endpoind to add a user to a workspace. ([#156](https://github.com/argilla-io/argilla-server/pull/156))
+- Added `DELETE /api/v1/workspaces/:workspace_id/users/:user_id` endpoint to remove a user from a workspace. ([#158](https://github.com/argilla-io/argilla-server/pull/158))
 - Added `GET /api/v1/version` endpoint to get the current Argilla version. ([#162](https://github.com/argilla-io/argilla-server/pull/162))
 - Added `GET /api/v1/status` endpoint to get Argilla service status. ([#165](https://github.com/argilla-io/argilla-server/pull/165))
 

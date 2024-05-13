@@ -16,7 +16,10 @@ from datetime import datetime
 from typing import List
 from uuid import UUID
 
-from argilla_server.pydantic_v1 import BaseModel
+from argilla_server.constants import ES_INDEX_REGEX_PATTERN
+from argilla_server.pydantic_v1 import BaseModel, Field
+
+WORKSPACE_NAME_REGEX = ES_INDEX_REGEX_PATTERN
 
 
 class Workspace(BaseModel):
@@ -29,5 +32,13 @@ class Workspace(BaseModel):
         orm_mode = True
 
 
+class WorkspaceCreate(BaseModel):
+    name: str = Field(regex=WORKSPACE_NAME_REGEX, min_length=1)
+
+
 class Workspaces(BaseModel):
     items: List[Workspace]
+
+
+class WorkspaceUserCreate(BaseModel):
+    user_id: UUID
