@@ -29,13 +29,13 @@ These are the section headers that we use:
 - Added `GET /api/v1/version` endpoint to get the current Argilla version. ([#162](https://github.com/argilla-io/argilla-server/pull/162))
 - Added `GET /api/v1/status` endpoint to get Argilla service status. ([#165](https://github.com/argilla-io/argilla-server/pull/165))
 
-## [Unreleased]()
+## [1.28.0](https://github.com/argilla-io/argilla-server/compare/v1.27.0...v1.28.0)
 
 ### Added
 
 - Added support to specify a list of score values for suggestions `score` attribute. ([#98](https://github.com/argilla-io/argilla-server/pull/98))
 - Added `GET /api/v1/settings` new endpoint exposing Argilla and Hugging Face settings when available. ([#127](https://github.com/argilla-io/argilla-server/pull/127))
-- Added `ARGILLA_SHOW_HUGGINGFACE_SPACE_PERSISTANT_STORAGE_WARNING` new environment variable to disable warning message when Hugging Face Spaces persistent storage is disabled. ([#124](https://github.com/argilla-io/argilla-server/pull/124))
+- Added `ARGILLA_SHOW_HUGGINGFACE_SPACE_PERSISTENT_STORAGE_WARNING` new environment variable to disable warning message when Hugging Face Spaces persistent storage is disabled. ([#124](https://github.com/argilla-io/argilla-server/pull/124))
 - Added `options_order` new settings attribute to support specify an order for options in multi label selection questions. ([#133](https://github.com/argilla-io/argilla-server/pull/133))
 - Added `POST /api/v1/datasets/:dataset_id/records/bulk` endpoint. ([#106](https://github.com/argilla-io/argilla-server/pull/106))
 - Added `PUT /api/v1/datasets/:dataset_id/records/bulk` endpoint. ([#106](https://github.com/argilla-io/argilla-server/pull/106))

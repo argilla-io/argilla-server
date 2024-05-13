@@ -11,10 +11,10 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-
+import logging
 import os
 
-import psutil
+_LOGGER = logging.getLogger(__name__)
 
 
 def server_deployment_type() -> str:
@@ -22,12 +22,20 @@ def server_deployment_type() -> str:
     global _server_deployment_type
 
     if _server_deployment_type is None:
-        _server_deployment_type = "server"
-
-        if is_running_on_docker_container() and _is_quickstart_env():
+        if is_running_on_huggingface_space():
+            _server_deployment_type = "huggingface_space"
+        elif _is_quickstart_env():
             _server_deployment_type = "quickstart"
-
+        else:
+            _server_deployment_type = "server"
     return _server_deployment_type
+
+
+def is_running_on_huggingface_space() -> bool:
+    """Returns True if the current process is running inside a Huggingface Space, False otherwise."""
+    from argilla_server.schemas.v1.settings import HuggingfaceSettings
+
+    return HuggingfaceSettings().is_running_on_huggingface
 
 
 def is_running_on_docker_container() -> bool:
@@ -35,7 +43,10 @@ def is_running_on_docker_container() -> bool:
     global _in_docker_container
 
     if _in_docker_container is None:
-        _in_docker_container = _has_docker_env() or _has_docker_cgroup()
+        if is_running_on_huggingface_space():
+            _in_docker_container = True
+        else:
+            _in_docker_container = _has_docker_env() or _has_docker_cgroup()
 
     return _in_docker_container
 
@@ -43,7 +54,8 @@ def is_running_on_docker_container() -> bool:
 def _has_docker_env() -> bool:
     try:
         return os.path.exists("/.dockerenv")
-    except:
+    except Exception as e:
+        _LOGGER.warning(f"Error while checking if running in Docker: {e}")
         return False
 
 
@@ -55,21 +67,9 @@ def _has_docker_cgroup() -> bool:
             and os.path.isfile(cgroup_path)
             and any("docker" in line for line in open(cgroup_path))
         )
-    except:
+    except Exception as e:
+        _LOGGER.warning(f"Error while checking if running in Docker: {e}")
         return False
-
-
-def _is_quickstart_script_running() -> bool:
-    # TODO: Any modification in the `quickstart.Dockerfile` file should be reflected here
-
-    try:
-        cmdline_key = "cmdline"
-        for process in psutil.process_iter([cmdline_key]):
-            if "start_quickstart_argilla.sh" in process.info[cmdline_key]:
-                return True
-    except:
-        pass
-    return False
 
 
 def _is_quickstart_env():
@@ -84,7 +84,6 @@ def _is_quickstart_env():
         "ADMIN_API_KEY",
         "ANNOTATOR_USERNAME",
         "ANNOTATOR_PASSWORD",
-        "LOAD_DATASETS",
     ]:
         if env_var not in os.environ:
             return False
