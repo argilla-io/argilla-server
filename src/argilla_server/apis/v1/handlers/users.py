@@ -21,7 +21,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from argilla_server import models, telemetry
 from argilla_server.contexts import accounts
 from argilla_server.database import get_async_db
-from argilla_server.errors import EntityAlreadyExistsError, EntityNotFoundError
 from argilla_server.errors.future import NotUniqueError
 from argilla_server.policies import UserPolicyV1, authorize
 from argilla_server.schemas.v1.users import User, UserCreate, Users
