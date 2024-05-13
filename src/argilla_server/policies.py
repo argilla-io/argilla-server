@@ -159,6 +159,10 @@ class UserPolicy:
 
 class UserPolicyV1:
     @classmethod
+    async def get(cls, actor: User) -> bool:
+        return actor.is_owner
+
+    @classmethod
     async def list(cls, actor: User) -> bool:
         return actor.is_owner
 

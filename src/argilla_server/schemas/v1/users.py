@@ -30,6 +30,8 @@ class User(BaseModel):
     last_name: Optional[str]
     username: str
     role: UserRole
+    # TODO: We need to move `api_key` outside of this schema and think about a more
+    # secure way to expose it, along with ways to expire it and create new API keys.
     api_key: str
     inserted_at: datetime
     updated_at: datetime
