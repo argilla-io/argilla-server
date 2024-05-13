@@ -19,9 +19,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from argilla_server.contexts import accounts, datasets
 from argilla_server.database import get_async_db
+from argilla_server.errors.future import NotUniqueError
 from argilla_server.models import User
 from argilla_server.policies import WorkspacePolicyV1, authorize
-from argilla_server.schemas.v1.workspaces import Workspace, Workspaces
+from argilla_server.schemas.v1.workspaces import Workspace, WorkspaceCreate, Workspaces
 from argilla_server.security import auth
 from argilla_server.services.datasets import DatasetsService
 
@@ -43,6 +44,23 @@ async def get_workspace(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Workspace with id `{workspace_id}` not found",
         )
+
+    return workspace
+
+
+@router.post("/workspaces", status_code=status.HTTP_201_CREATED, response_model=Workspace)
+async def create_workspace(
+    *,
+    db: AsyncSession = Depends(get_async_db),
+    workspace_create: WorkspaceCreate,
+    current_user: User = Security(auth.get_current_user),
+):
+    await authorize(current_user, WorkspacePolicyV1.create)
+
+    try:
+        workspace = await accounts.create_workspace(db, workspace_create.dict())
+    except NotUniqueError as e:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
 
     return workspace
 

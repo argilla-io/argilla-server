@@ -21,6 +21,7 @@ These are the section headers that we use:
 - Added `GET /api/v1/users` endpoint to get a list of all users. ([#142](https://github.com/argilla-io/argilla-server/pull/142))
 - Added `POST /api/v1/users` endpoint to create a new user. ([#146](https://github.com/argilla-io/argilla-server/pull/146))
 - Added `DELETE /api/v1/users` endpoint to delete a user. ([#148](https://github.com/argilla-io/argilla-server/pull/148))
+- Added `POST /api/v1/workspaces` endpoint to create a new workspace. ([#150](https://github.com/argilla-io/argilla-server/pull/150))
 
 ## [Unreleased]()
 

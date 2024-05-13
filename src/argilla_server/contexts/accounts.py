@@ -76,8 +76,11 @@ async def list_workspaces_by_user_id(db: AsyncSession, user_id: UUID) -> List[Wo
     return result.scalars().all()
 
 
-async def create_workspace(db: AsyncSession, workspace_create: WorkspaceCreate) -> Workspace:
-    return await Workspace.create(db, schema=workspace_create)
+async def create_workspace(db: AsyncSession, workspace_attrs: dict) -> Workspace:
+    if (await get_workspace_by_name(db, workspace_attrs["name"])) is not None:
+        raise NotUniqueError(f"Workspace name `{workspace_attrs['name']}` is not unique")
+
+    return await Workspace.create(db, name=workspace_attrs["name"])
 
 
 async def delete_workspace(db: AsyncSession, workspace: Workspace):

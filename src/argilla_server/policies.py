@@ -103,6 +103,10 @@ class WorkspacePolicyV1:
         return is_allowed
 
     @classmethod
+    async def create(cls, actor: User) -> bool:
+        return actor.is_owner
+
+    @classmethod
     async def delete(cls, actor: User) -> bool:
         return actor.is_owner
 
