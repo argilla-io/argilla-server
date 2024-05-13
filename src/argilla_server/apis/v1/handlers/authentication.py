@@ -14,7 +14,7 @@
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Form
+from fastapi import APIRouter, Depends, Form, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from argilla_server.contexts import accounts
@@ -25,7 +25,7 @@ from argilla_server.schemas.v1.oauth2 import Token
 router = APIRouter(tags=["Authentication"])
 
 
-@router.post("/token", response_model=Token)
+@router.post("/token", status_code=status.HTTP_201_CREATED, response_model=Token)
 async def create_token(
     *,
     db: AsyncSession = Depends(get_async_db),
