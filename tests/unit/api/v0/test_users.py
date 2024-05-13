@@ -218,6 +218,53 @@ async def test_create_user_with_non_default_role(
 
 
 @pytest.mark.asyncio
+async def test_create_user_with_first_name_including_leading_and_trailing_spaces(
+    async_client: "AsyncClient", db: "AsyncSession", owner_auth_header: dict
+):
+    response = await async_client.post(
+        "/api/users",
+        headers=owner_auth_header,
+        json={
+            "first_name": "  First name  ",
+            "username": "username",
+            "password": "12345678",
+        },
+    )
+
+    assert response.status_code == 200
+
+    assert (await db.execute(select(func.count(User.id)))).scalar() == 2
+    user = (await db.execute(select(User).filter_by(username="username"))).scalar_one()
+
+    assert response.json()["first_name"] == "First name"
+    assert user.first_name == "First name"
+
+
+@pytest.mark.asyncio
+async def test_create_user_with_last_name_including_leading_and_trailing_spaces(
+    async_client: "AsyncClient", db: "AsyncSession", owner_auth_header: dict
+):
+    response = await async_client.post(
+        "/api/users",
+        headers=owner_auth_header,
+        json={
+            "first_name": "First name",
+            "last_name": "  Last name  ",
+            "username": "username",
+            "password": "12345678",
+        },
+    )
+
+    assert response.status_code == 200
+
+    assert (await db.execute(select(func.count(User.id)))).scalar() == 2
+    user = (await db.execute(select(User).filter_by(username="username"))).scalar_one()
+
+    assert response.json()["last_name"] == "Last name"
+    assert user.last_name == "Last name"
+
+
+@pytest.mark.asyncio
 async def test_create_user_without_authentication(async_client: "AsyncClient", db: "AsyncSession"):
     user = {"first_name": "first-name", "username": "username", "password": "12345678"}
 

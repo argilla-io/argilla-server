@@ -82,6 +82,9 @@ async def list_workspaces_by_user_id(db: AsyncSession, user_id: UUID) -> List[Wo
 
 
 async def create_workspace(db: AsyncSession, workspace_attrs: dict) -> Workspace:
+    if (await get_workspace_by_name(db, workspace_attrs["name"])) is not None:
+        raise NotUniqueError(f"Workspace name `{workspace_attrs['name']}` is not unique")
+
     return await Workspace.create(db, name=workspace_attrs["name"])
 
 
@@ -116,6 +119,8 @@ async def get_user_by_api_key(db: AsyncSession, api_key: str) -> Union[User, Non
 
 
 async def list_users(db: "AsyncSession") -> Sequence[User]:
+    # TODO: After removing API v0 implementation we can remove the workspaces eager loading
+    # because is not used in the new API v1 endpoints.
     result = await db.execute(select(User).order_by(User.inserted_at.asc()).options(selectinload(User.workspaces)))
     return result.scalars().all()
 
@@ -125,23 +130,29 @@ async def list_users_by_ids(db: AsyncSession, ids: Iterable[UUID]) -> Sequence[U
     return result.scalars().all()
 
 
-async def create_user(db: "AsyncSession", user_create: UserCreate) -> User:
+# TODO: After removing API v0 implementation we can remove the workspaces attribute.
+# With API v1 the workspaces will be created doing additional requests to other endpoints for it.
+async def create_user(db: AsyncSession, user_attrs: dict, workspaces: Union[List[str], None] = None) -> User:
+    if (await get_user_by_username(db, user_attrs["username"])) is not None:
+        raise NotUniqueError(f"Username `{user_attrs['username']}` is not unique")
+
     async with db.begin_nested():
         user = await User.create(
             db,
-            first_name=user_create.first_name,
-            last_name=user_create.last_name,
-            username=user_create.username,
-            role=user_create.role,
-            password_hash=hash_password(user_create.password),
+            first_name=user_attrs["first_name"],
+            last_name=user_attrs["last_name"],
+            username=user_attrs["username"],
+            role=user_attrs["role"],
+            password_hash=hash_password(user_attrs["password"]),
             autocommit=False,
         )
 
-        if user_create.workspaces:
-            for workspace_name in user_create.workspaces:
+        if workspaces is not None:
+            for workspace_name in workspaces:
                 workspace = await get_workspace_by_name(db, workspace_name)
                 if not workspace:
                     raise ValueError(f"Workspace '{workspace_name}' does not exist")
+
                 await WorkspaceUser.create(
                     db,
                     workspace_id=workspace.id,
@@ -158,15 +169,18 @@ async def create_user_with_random_password(
     db,
     username: str,
     first_name: str,
-    workspaces: List[str] = None,
     role: UserRole = UserRole.annotator,
+    workspaces: Union[List[str], None] = None,
 ) -> User:
-    password = _generate_random_password()
+    user_attrs = {
+        "first_name": first_name,
+        "last_name": None,
+        "username": username,
+        "role": role,
+        "password": _generate_random_password(),
+    }
 
-    user_create = UserCreate(
-        first_name=first_name, username=username, role=role, password=password, workspaces=workspaces
-    )
-    return await create_user(db, user_create)
+    return await create_user(db, user_attrs, workspaces)
 
 
 async def delete_user(db: AsyncSession, user: User) -> User:
