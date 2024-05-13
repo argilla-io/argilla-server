@@ -77,6 +77,25 @@ class TestDeleteWorkspaceUser:
         assert response.status_code == 200
         assert (await db.execute(select(func.count(WorkspaceUser.id)))).scalar() == 0
 
+    async def test_delete_workspace_user_as_admin_from_different_workspace(
+        self, db: AsyncSession, async_client: AsyncClient
+    ):
+        workspace = await WorkspaceFactory.create()
+        user = await AdminFactory.create()
+        await WorkspaceUserFactory.create(workspace_id=workspace.id, user_id=user.id)
+
+        other_workspace = await WorkspaceFactory.create()
+        admin = await AdminFactory.create()
+        await WorkspaceUserFactory.create(workspace_id=other_workspace.id, user_id=admin.id)
+
+        response = await async_client.delete(
+            self.url(workspace.id, user.id),
+            headers={API_KEY_HEADER_NAME: admin.api_key},
+        )
+
+        assert response.status_code == 403
+        assert (await db.execute(select(func.count(WorkspaceUser.id)))).scalar() == 2
+
     async def test_delete_workspace_user_as_annotator(self, db: AsyncSession, async_client: AsyncClient):
         workspace = await WorkspaceFactory.create()
         annotator = await AnnotatorFactory.create()
