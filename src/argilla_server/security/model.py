@@ -28,11 +28,6 @@ USER_PASSWORD_MIN_LENGTH = 8
 USER_PASSWORD_MAX_LENGTH = 100
 
 
-class WorkspaceUserCreate(BaseModel):
-    user_id: UUID
-    workspace_id: UUID
-
-
 class Workspace(BaseModel):
     id: UUID
     name: str

@@ -74,6 +74,9 @@ class TestDeleteUser:
         assert (await db.execute(select(func.count(User.id)))).scalar() == 2
 
     async def test_delete_user_with_nonexistent_user_id(self, async_client: AsyncClient, owner_auth_header: dict):
-        response = await async_client.delete(self.url(uuid4()), headers=owner_auth_header)
+        user_id = uuid4()
+
+        response = await async_client.delete(self.url(user_id), headers=owner_auth_header)
 
         assert response.status_code == 404
+        assert response.json() == {"detail": f"User with id `{user_id}` not found"}

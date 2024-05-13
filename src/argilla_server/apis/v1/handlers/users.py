@@ -22,6 +22,7 @@ from argilla_server import models, telemetry
 from argilla_server.contexts import accounts
 from argilla_server.database import get_async_db
 from argilla_server.errors import EntityAlreadyExistsError, EntityNotFoundError
+from argilla_server.errors.future import NotUniqueError
 from argilla_server.policies import UserPolicyV1, authorize
 from argilla_server.schemas.v1.users import User, UserCreate, Users
 from argilla_server.schemas.v1.workspaces import Workspaces
@@ -69,7 +70,7 @@ async def list_users(
     return Users(items=users)
 
 
-@router.post("/users", response_model=User)
+@router.post("/users", status_code=status.HTTP_201_CREATED, response_model=User)
 async def create_user(
     *,
     db: AsyncSession = Depends(get_async_db),
@@ -78,14 +79,12 @@ async def create_user(
 ):
     await authorize(current_user, UserPolicyV1.create)
 
-    user = await accounts.get_user_by_username(db, user_create.username)
-    if user is not None:
-        raise EntityAlreadyExistsError(name=user_create.username, type=User)
-
     try:
         user = await accounts.create_user(db, user_create.dict())
 
         telemetry.track_user_created(user)
+    except NotUniqueError as e:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e))
 
@@ -101,11 +100,10 @@ async def delete_user(
 ):
     user = await accounts.get_user_by_id(db, user_id)
     if user is None:
-        # TODO: Forcing here user_id to be an string.
-        # Not casting it is causing a `Object of type UUID is not JSON serializable`.
-        # Possible solution redefining JSONEncoder.default here:
-        # https://github.com/jazzband/django-push-notifications/issues/586
-        raise EntityNotFoundError(name=str(user_id), type=User)
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"User with id `{user_id}` not found",
+        )
 
     await authorize(current_user, UserPolicyV1.delete)
 

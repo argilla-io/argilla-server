@@ -77,6 +77,31 @@ class WorkspaceUserPolicy:
         return is_allowed
 
 
+class WorkspaceUserPolicyV1:
+    @classmethod
+    def list(cls, workspace_id: UUID) -> PolicyAction:
+        async def is_allowed(actor: User) -> bool:
+            return actor.is_owner or (
+                actor.is_admin and await _exists_workspace_user_by_user_and_workspace_id(actor, workspace_id)
+            )
+
+        return is_allowed
+
+    @classmethod
+    async def create(cls, actor: User) -> bool:
+        return actor.is_owner
+
+    @classmethod
+    def delete(cls, workspace_user: WorkspaceUser) -> PolicyAction:
+        async def is_allowed(actor: User) -> bool:
+            return actor.is_owner or (
+                actor.is_admin
+                and await _exists_workspace_user_by_user_and_workspace_id(actor, workspace_user.workspace_id)
+            )
+
+        return is_allowed
+
+
 class WorkspacePolicy:
     @classmethod
     async def list(cls, actor: User) -> bool:
@@ -101,6 +126,10 @@ class WorkspacePolicyV1:
             return actor.is_owner or await _exists_workspace_user_by_user_and_workspace_id(actor, workspace_id)
 
         return is_allowed
+
+    @classmethod
+    async def create(cls, actor: User) -> bool:
+        return actor.is_owner
 
     @classmethod
     async def delete(cls, actor: User) -> bool:
