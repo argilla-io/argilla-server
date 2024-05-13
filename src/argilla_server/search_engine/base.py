@@ -264,6 +264,10 @@ class SearchEngine(metaclass=ABCMeta):
     async def close(self):
         pass
 
+    @abstractmethod
+    async def info(self) -> dict:
+        pass
+
     @classmethod
     def register(cls, engine_name: str):
         def decorator(engine_class):

@@ -12,14 +12,24 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 
-from argilla_server._version import __version__
-from argilla_server.schemas.v1.info import Version
+from argilla_server.contexts import info
+from argilla_server.schemas.v1.info import Status, Version
+from argilla_server.search_engine import SearchEngine, get_search_engine
 
 router = APIRouter(tags=["info"])
 
 
 @router.get("/version", response_model=Version)
 async def get_version():
-    return Version(version=__version__)
+    return Version(version=info.argilla_version())
+
+
+@router.get("/status", response_model=Status)
+async def get_status(search_engine: SearchEngine = Depends(get_search_engine)):
+    return Status(
+        version=info.argilla_version(),
+        search_engine=await search_engine.info(),
+        memory=info.memory_status(),
+    )

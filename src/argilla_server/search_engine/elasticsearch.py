@@ -64,6 +64,9 @@ class ElasticSearchEngine(BaseElasticAndOpenSearchEngine):
     async def close(self):
         await self.client.close()
 
+    async def info(self) -> dict:
+        return await self.client.info()
+
     def _mapping_for_vector_settings(self, vector_settings: VectorSettings) -> dict:
         return {
             es_field_for_vector_settings(vector_settings): {
