@@ -21,8 +21,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from argilla_server import models, telemetry
 from argilla_server.contexts import accounts
 from argilla_server.database import get_async_db
+from argilla_server.errors.future import NotUniqueError
 from argilla_server.policies import UserPolicyV1, authorize
-from argilla_server.schemas.v1.users import User, Users
+from argilla_server.schemas.v1.users import User, UserCreate, Users
 from argilla_server.schemas.v1.workspaces import Workspaces
 from argilla_server.security import auth
 
@@ -47,6 +48,27 @@ async def list_users(
     users = await accounts.list_users(db)
 
     return Users(items=users)
+
+
+@router.post("/users", status_code=status.HTTP_201_CREATED, response_model=User)
+async def create_user(
+    *,
+    db: AsyncSession = Depends(get_async_db),
+    user_create: UserCreate,
+    current_user: models.User = Security(auth.get_current_user),
+):
+    await authorize(current_user, UserPolicyV1.create)
+
+    try:
+        user = await accounts.create_user(db, user_create.dict())
+
+        telemetry.track_user_created(user)
+    except NotUniqueError as e:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e))
+
+    return user
 
 
 @router.get("/users/{user_id}/workspaces", response_model=Workspaces)
