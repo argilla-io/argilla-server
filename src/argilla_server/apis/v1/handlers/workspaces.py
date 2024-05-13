@@ -20,6 +20,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from argilla_server.contexts import accounts, datasets
 from argilla_server.database import get_async_db
 from argilla_server.errors import EntityAlreadyExistsError
+from argilla_server.errors.future import NotUniqueError
 from argilla_server.models import User
 from argilla_server.policies import WorkspacePolicyV1, WorkspaceUserPolicyV1, authorize
 from argilla_server.schemas.v1.users import Users
@@ -58,10 +59,12 @@ async def create_workspace(
 ):
     await authorize(current_user, WorkspacePolicyV1.create)
 
-    if await accounts.get_workspace_by_name(db, workspace_create.name):
-        raise EntityAlreadyExistsError(name=workspace_create.name, type=Workspace)
+    try:
+        workspace = await accounts.create_workspace(db, workspace_create.dict())
+    except NotUniqueError as e:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
 
-    return await accounts.create_workspace(db, workspace_create.dict())
+    return workspace
 
 
 @router.delete("/workspaces/{workspace_id}", response_model=Workspace)
