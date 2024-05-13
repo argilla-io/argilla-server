@@ -12,6 +12,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+from typing import List
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Security, status
@@ -20,9 +21,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from argilla_server import models, telemetry
 from argilla_server.contexts import accounts
 from argilla_server.database import get_async_db
-from argilla_server.models import User
 from argilla_server.policies import UserPolicyV1, authorize
-from argilla_server.schemas.v1.users import User
+from argilla_server.schemas.v1.users import User, Users
 from argilla_server.schemas.v1.workspaces import Workspaces
 from argilla_server.security import auth
 
@@ -34,6 +34,19 @@ async def get_current_user(request: Request, current_user: models.User = Securit
     await telemetry.track_login(request, current_user)
 
     return current_user
+
+
+@router.get("/users", response_model=Users)
+async def list_users(
+    *,
+    db: AsyncSession = Depends(get_async_db),
+    current_user: models.User = Security(auth.get_current_user),
+):
+    await authorize(current_user, UserPolicyV1.list)
+
+    users = await accounts.list_users(db)
+
+    return Users(items=users)
 
 
 @router.get("/users/{user_id}/workspaces", response_model=Workspaces)

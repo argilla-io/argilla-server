@@ -13,7 +13,7 @@
 #  limitations under the License.
 
 from datetime import datetime
-from typing import Optional
+from typing import List, Optional
 from uuid import UUID
 
 from argilla_server.enums import UserRole
@@ -32,3 +32,7 @@ class User(BaseModel):
 
     class Config:
         orm_mode = True
+
+
+class Users(BaseModel):
+    items: List[User]

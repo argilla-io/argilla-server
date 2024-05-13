@@ -130,6 +130,10 @@ class UserPolicy:
 
 class UserPolicyV1:
     @classmethod
+    async def list(cls, actor: User) -> bool:
+        return actor.is_owner
+
+    @classmethod
     async def list_workspaces(cls, actor: User) -> bool:
         return actor.is_owner
 

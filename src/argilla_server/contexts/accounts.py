@@ -110,6 +110,8 @@ async def get_user_by_api_key(db: AsyncSession, api_key: str) -> Union[User, Non
 
 
 async def list_users(db: "AsyncSession") -> Sequence[User]:
+    # TODO: After removing API v0 implementation we can remove the workspaces eager loading
+    # because is not used in the new API v1 endpoints.
     result = await db.execute(select(User).order_by(User.inserted_at.asc()).options(selectinload(User.workspaces)))
     return result.scalars().all()
 
