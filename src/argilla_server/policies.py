@@ -138,6 +138,10 @@ class UserPolicyV1:
         return actor.is_owner
 
     @classmethod
+    async def delete(cls, actor: User) -> bool:
+        return actor.is_owner
+
+    @classmethod
     async def list_workspaces(cls, actor: User) -> bool:
         return actor.is_owner
 

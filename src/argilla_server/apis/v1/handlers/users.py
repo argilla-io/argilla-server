@@ -71,6 +71,27 @@ async def create_user(
     return user
 
 
+@router.delete("/users/{user_id}", response_model=User)
+async def delete_user(
+    *,
+    db: AsyncSession = Depends(get_async_db),
+    user_id: UUID,
+    current_user: models.User = Security(auth.get_current_user),
+):
+    user = await accounts.get_user_by_id(db, user_id)
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"User with id `{user_id}` not found",
+        )
+
+    await authorize(current_user, UserPolicyV1.delete)
+
+    await accounts.delete_user(db, user)
+
+    return user
+
+
 @router.get("/users/{user_id}/workspaces", response_model=Workspaces)
 async def list_user_workspaces(
     *,
