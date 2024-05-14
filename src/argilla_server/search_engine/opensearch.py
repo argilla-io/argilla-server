@@ -56,6 +56,9 @@ class OpenSearchEngine(BaseElasticAndOpenSearchEngine):
     async def close(self):
         await self.client.close()
 
+    async def info(self) -> dict:
+        return await self.client.info()
+
     def _configure_index_settings(self):
         base_settings = super()._configure_index_settings()
         return {**base_settings, "index.knn": False}

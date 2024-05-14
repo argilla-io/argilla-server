@@ -13,6 +13,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+# TODO: Once we delete all API v0 endpoints, we can remove this file.
+
 import os
 from typing import Any, Dict
 

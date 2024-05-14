@@ -12,33 +12,18 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from datetime import datetime
-from typing import List
-from uuid import UUID
-
-from argilla_server.constants import ES_INDEX_REGEX_PATTERN
-from argilla_server.pydantic_v1 import BaseModel, Field
-
-WORKSPACE_NAME_REGEX = ES_INDEX_REGEX_PATTERN
+import pytest
+from argilla_server._version import __version__
+from httpx import AsyncClient
 
 
-class Workspace(BaseModel):
-    id: UUID
-    name: str
-    inserted_at: datetime
-    updated_at: datetime
+@pytest.mark.asyncio
+class TestGetVersion:
+    def url(self) -> str:
+        return "/api/v1/version"
 
-    class Config:
-        orm_mode = True
+    async def test_get_version(self, async_client: AsyncClient):
+        response = await async_client.get(self.url())
 
-
-class WorkspaceCreate(BaseModel):
-    name: str = Field(regex=WORKSPACE_NAME_REGEX, min_length=1)
-
-
-class Workspaces(BaseModel):
-    items: List[Workspace]
-
-
-class WorkspaceUserCreate(BaseModel):
-    user_id: UUID
+        assert response.status_code == 200
+        assert response.json() == {"version": __version__}
