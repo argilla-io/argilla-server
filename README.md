@@ -1,3 +1,6 @@
+> [!IMPORTANT]
+> This repository has been archived and is no longer maintained. If you are looking for the latest version of the Argilla server, please visit the [Argilla mono repo](https://github.com/argilla-io/argilla), code for Argilla server is located at [`argilla-server`](https://github.com/argilla-io/argilla/tree/develop/argilla-server) folder.
+
 <h1 align="center">
   <a href=""><img src="https://github.com/dvsrepo/imgs/raw/main/rg.svg" alt="Argilla" width="150"></a>
   <br>
