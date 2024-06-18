@@ -49,6 +49,7 @@ __all__ = [
     "IntegerMetadataFilter",
     "FloatMetadataFilter",
     "UserResponseStatusFilter",
+    "QueryStringFilter",
     "SearchResponseItem",
     "SearchResponses",
     "SortBy",
@@ -92,7 +93,18 @@ class RecordFilterScope:
     property: str
 
 
-FilterScope = Union[SuggestionFilterScope, ResponseFilterScope, MetadataFilterScope, RecordFilterScope]
+@dataclasses.dataclass
+class FieldFilterScope:
+    field: str
+
+
+FilterScope = Union[
+    SuggestionFilterScope,
+    ResponseFilterScope,
+    MetadataFilterScope,
+    RecordFilterScope,
+    FieldFilterScope,
+]
 
 
 @dataclasses.dataclass
@@ -109,11 +121,22 @@ class RangeFilter:
 
 
 @dataclasses.dataclass
+class QueryStringFilter:
+    scope: FieldFilterScope
+    query: str
+
+
+@dataclasses.dataclass
 class AndFilter:
     filters: List["Filter"]
 
 
-Filter = Union[AndFilter, TermsFilter, RangeFilter]
+Filter = Union[
+    AndFilter,
+    TermsFilter,
+    RangeFilter,
+    QueryStringFilter,
+]
 
 
 @dataclasses.dataclass
